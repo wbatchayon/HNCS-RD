@@ -1,0 +1,26 @@
+# Documents sources confidentiels (cadrage HNCS) : jamais versionnés (spec § 13, H-30)
+*.docx
+Processus.md
+
+# Configuration locale du tenant et des membres (contient des adresses réelles)
+provisioning/config/tenant.json
+provisioning/config/membres.json
+testdata/personas.json
+tests/e2e/config.json
+
+# Artefacts de build
+flows/dist/
+*.zip
+!flows/solution/**/*.zip
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Power BI Desktop (caches locaux)
+powerbi/**/.pbi/localSettings.json
+powerbi/**/.pbi/cache.abf
+
+# Divers
+.vscode/
+*.log
+TestResults/
