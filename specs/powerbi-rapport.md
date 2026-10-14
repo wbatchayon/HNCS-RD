@@ -1,0 +1,20 @@
+# Sous-spécification — Rapport Power BI (visuels)
+
+> Alignée sur `spec.md` § 9 (qui prévaut). Toutes les mesures citées sont définies dans `spec.md` § 9.5 ; aucun visuel ne crée de mesure implicite sur une colonne `perso` ou `confidentiel` (aucune n'est importée).
+
+## Règles de présentation
+
+- Thème sobre, couleurs de statut cohérentes : vert = validé / actif, orange = vigilance / en revue, rouge = retard / bloqué, gris = clôturé.
+- Chaque page a un titre, une date de dernière actualisation et les filtres de page indiqués.
+- Les tableaux de détail n'affichent que des `IdHNCS`, des titres de sujets ou de livrables et des statuts. `NomAffichage` n'apparaît que sur les pages 3 et 7 (masqué par OLS pour le rôle `Direction`).
+
+| Page | Filtres de page | Visuels |
+| --- | --- | --- |
+| 1. Vue exécutive | Calendrier (année, trimestre) | Cartes : `[Alternants actifs]`, `[Candidatures reçues]`, `[Livrables validés]`, `[Livrables en retard]`, `[POC réalisés]`, `[Plans de stratégie formalisés]`, `[Communications publiées]`, `[Partenariats académiques actifs]`, `[Mobilisations commerciales]` ; jauges indicateur vs `[Cible]` (table `Objectifs`) ; jauge `[Couverture des domaines cibles]` ; histogramme `[Livrables]` par `Livrables[Statut]` |
+| 2. Recrutement | Canal, Offre, Calendrier, Statut | Cartes : `[Candidatures reçues]`, `[Candidatures actives]`, `[Candidatures en attente]`, `[Délai moyen de présélection (j)]`, `[Délai moyen de traitement (j)]`, `[Taux de présélection]`, `[Taux de transformation]` ; entonnoir : reçues → `[Candidatures analysées]` → `[Candidatures présélectionnées]` → `[Entretiens réalisés]` → `[Candidatures retenues]` → `[Candidatures intégrées]` ; histogramme empilé par mois (`Calendrier[AnneeMois]`) et `Candidatures[Canal]` ; barres `Candidatures[MotifCode]` (agrégé) ; tableau `Entretiens` à venir (IdHNCS, date, type) ; carte `[Doublons signalés]` |
+| 3. Effectifs et encadrement | Pôle, Établissement, Référent, Calendrier | Cartes : `[Alternants actifs]`, `[Alternants présents sur la période]`, `[Affectations actives]`, `[Affectations sans référent]`, `[Affectations incomplètes]`, `[Alternants sans affectation active]` ; barres par `Poles[Title]` ; barres par `Referents[Title]` avec `[Taux de charge référent]` ; matrice Établissement × Pôle ; tableau des affectations (IdHNCS, NomAffichage, sujet, référent, dates, statut) |
+| 4. Projets et livrables | Pôle (`SujetsRD[PoleNom]`), Sujet, Type de livrable, Calendrier | Cartes : `[Livrables validés]`, `[Taux de validation]`, `[Livrables en retard]`, `[Taux de remise à l'heure]`, `[Taux de validation au premier passage]`, `[Taux de capitalisation]`, `[Corrections en cours]`, `[Comptes rendus manquants]` ; barres empilées par `Livrables[TypeLivrable]` et statut ; courbe des échéances par semaine ; tableau par sujet avec `[Avancement moyen (dernier CR)]` ; tableau `GitlabSync` avec `[Écarts d'échéance GitLab]` |
+| 5. Établissements et partenariats | Établissement, Type de convention | Cartes : `[Établissements collaborants]`, `[Partenariats académiques actifs]`, `[Partenariats à évaluer]`, `[Conventions à renouveler]`, `[Bilans réalisés]` ; barres `[Alternants accueillis]` par `Etablissements[Title]` ; tableau des conventions (IdHNCS, établissement, type, fin, statut) ; répartition `BilansAlternance[RecommandationPartenariat]` |
+| 6. Communications et valorisation | Canal, Calendrier | Cartes : `[Communications publiées]`, `[Communications en préparation]`, `[Livrables valorisés]`, `[Mobilisations commerciales]` ; histogramme des publications par mois ; tableau des communications publiées (IdHNCS, titre, canal, date) |
+| 7. Comité R&D | Pôle, Référent | Tableaux : livrables `[Échéances à 14 jours]` et en retard ; affectations « À risque » / « Bloquée » ; sujets `[Sujets bloqués]` ; comptes rendus manquants ; `[Blocages signalés]` ; `[Actions en retard]` |
+| 8. Qualité des données | — | `[Affectations incomplètes]`, `[Livrables sans modèle]`, `[Doublons signalés]`, `[Transitions refusées]` par objet ; tableau des transitions refusées (IdHNCS, statut demandé, date) |
