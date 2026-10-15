@@ -1,6 +1,6 @@
 {
   "$comment": "FICHIER GÉNÉRÉ par tools/spec_extract.py à partir de spec.md — ne pas modifier à la main.",
-  "specVersion": "1.2.0",
+  "specVersion": "1.3.0",
   "site": {
     "url": "https://<tenant>.sharepoint.com/sites/HNCS-RD",
     "title": "HNCS-R&D",
@@ -1450,6 +1450,28 @@
           "unique": false,
           "hidden": false,
           "flux": true,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "DoublonVerifie",
+          "label": "Doublon vérifié (faux positif)",
+          "type": "Boolean",
+          "required": false,
+          "description": "Coché par la R&D après vérification : la candidature sort de la vue des doublons ; `DoublonPotentiel` reste tracé",
+          "enum": null,
+          "lookup": null,
+          "default": "Non",
+          "indexed": false,
+          "unique": false,
+          "hidden": false,
+          "flux": false,
           "perso": false,
           "confidentiel": false,
           "min": null,
@@ -5812,7 +5834,7 @@
           "label": "Empreinte des champs protégés",
           "type": "Text",
           "required": false,
-          "description": "JSON des champs protégés validés : `Affectation`, `Proprietaire`, `Reviseur`, `DoD1..5`, `NbCorrections`, `DecisionRevue`, `Valideur`, `DateValidation`, `VersionValidee`, dates de dépôt et de revue (P-09)",
+          "description": "JSON des champs protégés validés : `Affectation`, `Proprietaire`, `Reviseur`, `Echeance`, `DoD1..5`, `NbCorrections`, `DecisionRevue`, `Valideur`, `DateValidation`, `VersionValidee`, dates de dépôt et de revue (P-09). Habilités : RD et DIRECTION_RD pour tous ces champs ; le réviseur légitime pour `Echeance` et `DoD1..5` ; un `Reviseur` qui n'est ni le référent de l'affectation ni un membre de DIRECTION_RD est refusé dès sa désignation",
           "enum": null,
           "lookup": null,
           "default": null,
@@ -6414,7 +6436,7 @@
           "label": "Empreinte des champs protégés",
           "type": "Text",
           "required": false,
-          "description": "JSON : `Affectation`, `Valideur`, `DateValidation`, `DateRemise`, dernier `CommentaireReferent` (P-09)",
+          "description": "JSON : `Affectation`, `Valideur`, `Echeance`, `PeriodeDebut`, `PeriodeFin`, `DateValidation`, `DateRemise` (P-09). Habilités : RD et DIRECTION_RD ; l'alternant ne modifie que les champs de contenu ; le référent (valideur légitime) que `CommentaireReferent`",
           "enum": null,
           "lookup": null,
           "default": null,
@@ -11261,7 +11283,7 @@
       "G_ADM": "R",
       "G_REF": "CSS",
       "G_ALT": "R",
-      "G_DIR": "R",
+      "G_DIR": "CSS",
       "G_ECO": "R"
     },
     "Affectations": {
@@ -11734,7 +11756,7 @@
     {
       "code": "G_AFFECTATION_COMPLETE",
       "object": "Affectation",
-      "rule": "`Alternant`, `Sujet`, `Referent`, `DateDebut` renseignés ; alternant « À intégrer » ou « Actif » ; référent « Actif »",
+      "rule": "`Alternant`, `Sujet`, `Referent`, `DateDebut` renseignés ; alternant « À intégrer » ou « Actif » avec `CompteM365` renseigné (propriétaire des livrables et bénéficiaire des droits) ; référent « Actif »",
       "flow": "PA-05"
     },
     {
@@ -11800,7 +11822,7 @@
     {
       "code": "G_ACTION_FORMALITE",
       "object": "ActionsIntegration",
-      "rule": "Contexte « Formalités d'intégration » : `Bloquante` et le passage à « Terminée » / « Non applicable » ne sont modifiables que par ADMIN ou par le `Responsable` désigné ; sinon la valeur de `EmpreinteAction` est rétablie (P-09)",
+      "rule": "Contexte « Formalités d'intégration » : `Bloquante` n'est modifiable que par ADMIN ; une action bloquante ne passe à « Non applicable » que par ADMIN ; le passage à « Terminée » est possible par ADMIN ou par le `Responsable` désigné ; sinon la valeur de `EmpreinteAction` est rétablie (P-09)",
       "flow": "PA-04"
     },
     {
@@ -12377,6 +12399,7 @@
           "Title",
           "Email",
           "DoublonDe",
+          "DoublonVerifie",
           "DateReception",
           "Statut"
         ],
@@ -12386,6 +12409,13 @@
             "op": "=",
             "values": [
               "Oui"
+            ]
+          },
+          {
+            "field": "DoublonVerifie",
+            "op": "=",
+            "values": [
+              "Non"
             ]
           },
           {
@@ -14919,8 +14949,8 @@
       "flow": "PA-08",
       "recipients": "Alternant",
       "channel": "Mail+Teams",
-      "subject": "Compte rendu {IdHNCS} à compléter",
-      "content": "Commentaire du référent",
+      "subject": "Compte rendu {IdHNCS} {statut}",
+      "content": "« À compléter » : commentaire du référent ; « Validé » : confirmation de validation",
       "data": [
         "ID",
         "COMM"
@@ -15045,7 +15075,7 @@
       "recipients": "Auteur",
       "channel": "Mail+Teams",
       "subject": "Communication {IdHNCS} {statut}",
-      "content": "Décision et commentaire",
+      "content": "Validée, suspendue / refusée ou renvoyée « En rédaction » : décision et commentaire",
       "data": [
         "ID"
       ]
@@ -15510,6 +15540,11 @@
           {
             "name": "DoublonPotentiel",
             "source": "DoublonPotentiel",
+            "transform": null
+          },
+          {
+            "name": "DoublonVerifie",
+            "source": "DoublonVerifie",
             "transform": null
           },
           {
@@ -16519,7 +16554,7 @@
       "Cible",
       "Dernière actualisation"
     ],
-    "measuresDax": "// ---------- Recrutement ----------\nCandidatures reçues = COUNTROWS ( Candidatures )\nCandidatures actives = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstActive] = TRUE () )\nSeuil attente (j) =\n    VAR v = LOOKUPVALUE ( Parametres[Valeur], Parametres[Cle], \"Delai.SeuilAttenteCandidatureJours\" )\n    RETURN IF ( ISBLANK ( v ), 10, IFERROR ( VALUE ( v ), 10 ) )\nCandidatures en attente =\n    VAR Seuil = [Seuil attente (j)]\n    RETURN COUNTROWS ( FILTER ( Candidatures, Candidatures[EstActive] && DATEDIFF ( COALESCE ( Candidatures[DateStatut], Candidatures[DateReception] ), NOW (), DAY ) > Seuil ) )\nDélai moyen de présélection (j) = AVERAGE ( Candidatures[DelaiPreselectionJours] )\nDélai moyen de traitement (j) = AVERAGE ( Candidatures[DelaiTraitementJours] )\nCandidatures analysées = CALCULATE ( COUNTROWS ( Candidatures ), NOT ISBLANK ( Candidatures[DateDecisionPreselection] ) )\nCandidatures présélectionnées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstPreselectionnee] = TRUE () )\nTaux de présélection = DIVIDE ( [Candidatures présélectionnées], [Candidatures analysées] )\nEntretiens réalisés = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = \"Réalisé\" )\nCandidatures avec entretien réalisé = CALCULATE ( DISTINCTCOUNT ( Entretiens[CandidatureId] ), Entretiens[Statut] = \"Réalisé\" )\nEntretiens à venir = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = \"Planifié\", Entretiens[DateHeure] >= NOW () )\nCandidatures retenues = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] IN { \"Retenue\", \"Formalités en cours\", \"Intégrée\" } )\nCandidatures intégrées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] = \"Intégrée\" )\nTaux de transformation = DIVIDE ( [Candidatures intégrées], [Candidatures reçues] )\nDoublons signalés = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE () )\n\n// ---------- Effectifs et encadrement ----------\nAlternants actifs = CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { \"Actif\", \"Fin planifiée\" } )\nAlternants accueillis = COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { \"Actif\", \"Suspendu\", \"Fin planifiée\", \"Terminé\", \"Clôturé\" } && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) ) )\nAlternants présents sur la période =\n    VAR DebutP = MIN ( Calendrier[Date] )\n    VAR FinP = MAX ( Calendrier[Date] )\n    RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> \"À intégrer\" && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )\nAffectations actives = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } )\nAffectations sans référent = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"À préparer\", \"Active\", \"À risque\", \"Bloquée\" }, ISBLANK ( Affectations[ReferentId] ) )\nAffectations incomplètes =\n    COUNTROWS (\n        FILTER (\n            Affectations,\n            Affectations[Statut] IN { \"À préparer\", \"Active\", \"À risque\", \"Bloquée\" }\n                && ( ISBLANK ( Affectations[ReferentId] ) || ISBLANK ( Affectations[DateFin] ) || COUNTROWS ( RELATEDTABLE ( Livrables ) ) = 0 )\n        )\n    )\nAlternants sans affectation active =\n    COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { \"Actif\", \"Fin planifiée\" } && CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } ) = 0 ) )\nTaux de charge référent = DIVIDE ( CALCULATE ( DISTINCTCOUNT ( Affectations[AlternantId] ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } ), SUM ( Referents[CapaciteIndicative] ) )\n\n// ---------- Projets et livrables ----------\nLivrables = COUNTROWS ( Livrables )\nLivrables validés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } )\nLivrables soumis à revue = CALCULATE ( COUNTROWS ( Livrables ), NOT ISBLANK ( Livrables[DatePremierDepot] ) )\nTaux de validation = DIVIDE ( [Livrables validés], [Livrables soumis à revue] )\nLivrables en retard = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { \"À produire\", \"En cours\", \"Corrections demandées\" } && Livrables[Echeance] < TODAY () ) )\nLivrables arrivés à échéance = COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> \"Suspendu / abandonné\" ) )\nTaux de remise à l'heure =\n    DIVIDE (\n        COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> \"Suspendu / abandonné\" && NOT ISBLANK ( Livrables[DatePremierDepot] ) && Livrables[DatePremierDepotJour] <= Livrables[Echeance] ) ),\n        [Livrables arrivés à échéance]\n    )\nTaux de validation au premier passage =\n    DIVIDE (\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" }, Livrables[NbCorrections] = 0 ),\n        [Livrables soumis à revue]\n    )\nTaux de capitalisation =\n    DIVIDE (\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[CapitalisationComplete] = TRUE () ),\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } )\n    )\nCorrections en cours = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Corrections demandées\" )\nÉchéances à 14 jours = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { \"À produire\", \"En cours\", \"Corrections demandées\" } && Livrables[Echeance] >= TODAY () && Livrables[Echeance] <= TODAY () + 14 ) )\nLivrables sans modèle = CALCULATE ( COUNTROWS ( Livrables ), ISBLANK ( Livrables[ModeleId] ), Livrables[Statut] <> \"Suspendu / abandonné\" )\nPOC réalisés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[TypeLivrable] = \"POC / démonstrateur\", Livrables[DoDComplete] = TRUE () )\nPlans de stratégie formalisés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[TypeLivrable] = \"Plan de stratégie\", Livrables[DoDComplete] = TRUE () )\nCouverture des domaines cibles =\n    VAR DomCibles = FILTER ( ALL ( DomainesCibles ), DomainesCibles[Cible] = TRUE () && DomainesCibles[Statut] = \"Actif\" )\n    VAR SujetsValides = SELECTCOLUMNS ( FILTER ( ALL ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } ), \"SujetId\", RELATED ( Affectations[SujetId] ) )\n    VAR Couverts = FILTER ( DomCibles, NOT ISEMPTY ( FILTER ( ALL ( SujetDomaine ), SujetDomaine[DomaineId] = DomainesCibles[Id] && SujetDomaine[SujetId] IN SujetsValides ) ) )\n    RETURN DIVIDE ( COUNTROWS ( Couverts ), COUNTROWS ( DomCibles ) )\nSujets bloqués = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { \"Bloqué\", \"À arbitrer\" } )\nSujets actifs = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { \"Priorisé\", \"En cours\", \"Bloqué\" } )\nMobilisations commerciales = COUNTROWS ( Mobilisations )\n\n// ---------- Comptes rendus ----------\nComptes rendus attendus = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[Echeance] <= TODAY () )\nComptes rendus manquants = COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Statut] = \"Non remis\" || ( ComptesRendus[Statut] IN { \"Attendu\", \"En rédaction\" } && ComptesRendus[Echeance] < TODAY () ) ) )\nTaux de remise des comptes rendus =\n    DIVIDE (\n        COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATE ( YEAR ( ComptesRendus[DateRemise] ), MONTH ( ComptesRendus[DateRemise] ), DAY ( ComptesRendus[DateRemise] ) ) <= ComptesRendus[Echeance] ) ),\n        [Comptes rendus attendus]\n    )\nBlocages signalés = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[BlocageSignale] = TRUE () )\nAvancement moyen (dernier CR) =\n    AVERAGEX (\n        VALUES ( Affectations[Id] ),\n        VAR DernierePeriode = CALCULATE ( MAX ( ComptesRendus[PeriodeFin] ), ComptesRendus[Statut] IN { \"Remis\", \"Validé\", \"À compléter\" } )\n        RETURN CALCULATE ( MAX ( ComptesRendus[Avancement] ), ComptesRendus[PeriodeFin] = DernierePeriode )\n    )\n\n// ---------- Établissements et partenariats ----------\nPartenariats académiques actifs = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = \"Signée / active\", Conventions[TypeConvention] IN { \"Convention de partenariat\", \"Sponsoring\" } )\nConventions à renouveler = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = \"À renouveler\" )\nÉtablissements collaborants = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] IN { \"Établissement d'accueil\", \"Partenariat à évaluer\", \"Partenaire actif\" } )\nPartenariats à évaluer = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] = \"Partenariat à évaluer\" )\nBilans réalisés = CALCULATE ( COUNTROWS ( BilansAlternance ), BilansAlternance[Statut] = \"Réalisé\" )\n\n// ---------- Communications et valorisation ----------\nCommunications publiées = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = \"Publiée\", CommunicationsRD[Externe] = TRUE () )\nCommunications en préparation = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] IN { \"Idée\", \"À préparer\", \"En rédaction\", \"En revue\", \"Validée\", \"Programmée\" } )\nLivrables valorisés = CALCULATE ( DISTINCTCOUNTNOBLANK ( CommunicationsRD[LivrableSourceId] ), CommunicationsRD[Statut] = \"Publiée\" )\n\n// ---------- Actions et qualité des données ----------\nActions en retard = COUNTROWS ( FILTER ( ActionsIntegration, ActionsIntegration[Statut] IN { \"À faire\", \"En cours\", \"Bloquée\" } && ActionsIntegration[Echeance] < TODAY () ) )\nTransitions refusées = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = \"Refusée — annulée\" )\nÉcarts d'échéance GitLab = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE () )\n\n// ---------- Objectifs indicatifs (cadrage § 2.4) ----------\n// Cible : à utiliser dans un visuel filtré sur Objectifs[Indicateur]\nCible = SELECTEDVALUE ( Objectifs[Cible] )\nDernière actualisation = MAX ( Mesures[DerniereActualisation] )",
+    "measuresDax": "// ---------- Recrutement ----------\nCandidatures reçues = COUNTROWS ( Candidatures )\nCandidatures actives = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstActive] = TRUE () )\nSeuil attente (j) =\n    VAR v = LOOKUPVALUE ( Parametres[Valeur], Parametres[Cle], \"Delai.SeuilAttenteCandidatureJours\" )\n    RETURN IF ( ISBLANK ( v ), 10, IFERROR ( VALUE ( v ), 10 ) )\nCandidatures en attente =\n    VAR Seuil = [Seuil attente (j)]\n    RETURN COUNTROWS ( FILTER ( Candidatures, Candidatures[EstActive] && DATEDIFF ( COALESCE ( Candidatures[DateStatut], Candidatures[DateReception] ), NOW (), DAY ) > Seuil ) )\nDélai moyen de présélection (j) = AVERAGE ( Candidatures[DelaiPreselectionJours] )\nDélai moyen de traitement (j) = AVERAGE ( Candidatures[DelaiTraitementJours] )\nCandidatures analysées = CALCULATE ( COUNTROWS ( Candidatures ), NOT ISBLANK ( Candidatures[DateDecisionPreselection] ) )\nCandidatures présélectionnées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstPreselectionnee] = TRUE () )\nTaux de présélection = DIVIDE ( [Candidatures présélectionnées], [Candidatures analysées] )\nEntretiens réalisés = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = \"Réalisé\" )\nCandidatures avec entretien réalisé = CALCULATE ( DISTINCTCOUNT ( Entretiens[CandidatureId] ), Entretiens[Statut] = \"Réalisé\" )\nEntretiens à venir = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = \"Planifié\", Entretiens[DateHeure] >= NOW () )\nCandidatures retenues = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] IN { \"Retenue\", \"Formalités en cours\", \"Intégrée\" } )\nCandidatures intégrées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] = \"Intégrée\" )\nTaux de transformation = DIVIDE ( [Candidatures intégrées], [Candidatures reçues] )\nDoublons signalés = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE (), Candidatures[DoublonVerifie] = FALSE () )\n\n// ---------- Effectifs et encadrement ----------\nAlternants actifs = CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { \"Actif\", \"Fin planifiée\" } )\nAlternants accueillis = COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { \"Actif\", \"Suspendu\", \"Fin planifiée\", \"Terminé\", \"Clôturé\" } && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) ) )\nAlternants présents sur la période =\n    VAR DebutP = MIN ( Calendrier[Date] )\n    VAR FinP = MAX ( Calendrier[Date] )\n    RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> \"À intégrer\" && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )\nAffectations actives = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } )\nAffectations sans référent = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"À préparer\", \"Active\", \"À risque\", \"Bloquée\" }, ISBLANK ( Affectations[ReferentId] ) )\nAffectations incomplètes =\n    COUNTROWS (\n        FILTER (\n            Affectations,\n            Affectations[Statut] IN { \"À préparer\", \"Active\", \"À risque\", \"Bloquée\" }\n                && ( ISBLANK ( Affectations[ReferentId] ) || ISBLANK ( Affectations[DateFin] ) || COUNTROWS ( RELATEDTABLE ( Livrables ) ) = 0 )\n        )\n    )\nAlternants sans affectation active =\n    COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { \"Actif\", \"Fin planifiée\" } && CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } ) = 0 ) )\nTaux de charge référent = DIVIDE ( CALCULATE ( DISTINCTCOUNT ( Affectations[AlternantId] ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } ), SUM ( Referents[CapaciteIndicative] ) )\n\n// ---------- Projets et livrables ----------\nLivrables = COUNTROWS ( Livrables )\nLivrables validés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } )\nLivrables soumis à revue = CALCULATE ( COUNTROWS ( Livrables ), NOT ISBLANK ( Livrables[DatePremierDepot] ) )\nTaux de validation = DIVIDE ( [Livrables validés], [Livrables soumis à revue] )\nLivrables en retard = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { \"À produire\", \"En cours\", \"Corrections demandées\" } && Livrables[Echeance] < TODAY () ) )\nLivrables arrivés à échéance = COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> \"Suspendu / abandonné\" ) )\nTaux de remise à l'heure =\n    DIVIDE (\n        COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> \"Suspendu / abandonné\" && NOT ISBLANK ( Livrables[DatePremierDepot] ) && Livrables[DatePremierDepotJour] <= Livrables[Echeance] ) ),\n        [Livrables arrivés à échéance]\n    )\nTaux de validation au premier passage =\n    DIVIDE (\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" }, Livrables[NbCorrections] = 0 ),\n        [Livrables soumis à revue]\n    )\nTaux de capitalisation =\n    DIVIDE (\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[CapitalisationComplete] = TRUE () ),\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } )\n    )\nCorrections en cours = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Corrections demandées\" )\nÉchéances à 14 jours = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { \"À produire\", \"En cours\", \"Corrections demandées\" } && Livrables[Echeance] >= TODAY () && Livrables[Echeance] <= TODAY () + 14 ) )\nLivrables sans modèle = CALCULATE ( COUNTROWS ( Livrables ), ISBLANK ( Livrables[ModeleId] ), Livrables[Statut] <> \"Suspendu / abandonné\" )\nPOC réalisés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[TypeLivrable] = \"POC / démonstrateur\", Livrables[DoDComplete] = TRUE () )\nPlans de stratégie formalisés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[TypeLivrable] = \"Plan de stratégie\", Livrables[DoDComplete] = TRUE () )\nCouverture des domaines cibles =\n    VAR DomCibles = FILTER ( ALL ( DomainesCibles ), DomainesCibles[Cible] = TRUE () && DomainesCibles[Statut] = \"Actif\" )\n    VAR SujetsValides = SELECTCOLUMNS ( FILTER ( ALL ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } ), \"SujetId\", RELATED ( Affectations[SujetId] ) )\n    VAR Couverts = FILTER ( DomCibles, NOT ISEMPTY ( FILTER ( ALL ( SujetDomaine ), SujetDomaine[DomaineId] = DomainesCibles[Id] && SujetDomaine[SujetId] IN SujetsValides ) ) )\n    RETURN DIVIDE ( COUNTROWS ( Couverts ), COUNTROWS ( DomCibles ) )\nSujets bloqués = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { \"Bloqué\", \"À arbitrer\" } )\nSujets actifs = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { \"Priorisé\", \"En cours\", \"Bloqué\" } )\nMobilisations commerciales = COUNTROWS ( Mobilisations )\n\n// ---------- Comptes rendus ----------\nComptes rendus attendus = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[Echeance] <= TODAY () )\nComptes rendus manquants = COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Statut] = \"Non remis\" || ( ComptesRendus[Statut] IN { \"Attendu\", \"En rédaction\" } && ComptesRendus[Echeance] < TODAY () ) ) )\nTaux de remise des comptes rendus =\n    DIVIDE (\n        COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATE ( YEAR ( ComptesRendus[DateRemise] ), MONTH ( ComptesRendus[DateRemise] ), DAY ( ComptesRendus[DateRemise] ) ) <= ComptesRendus[Echeance] ) ),\n        [Comptes rendus attendus]\n    )\nBlocages signalés = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[BlocageSignale] = TRUE () )\nAvancement moyen (dernier CR) =\n    AVERAGEX (\n        VALUES ( Affectations[Id] ),\n        VAR DernierePeriode = CALCULATE ( MAX ( ComptesRendus[PeriodeFin] ), ComptesRendus[Statut] IN { \"Remis\", \"Validé\", \"À compléter\" } )\n        RETURN CALCULATE ( MAX ( ComptesRendus[Avancement] ), ComptesRendus[PeriodeFin] = DernierePeriode )\n    )\n\n// ---------- Établissements et partenariats ----------\nPartenariats académiques actifs = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = \"Signée / active\", Conventions[TypeConvention] IN { \"Convention de partenariat\", \"Sponsoring\" } )\nConventions à renouveler = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = \"À renouveler\" )\nÉtablissements collaborants = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] IN { \"Établissement d'accueil\", \"Partenariat à évaluer\", \"Partenaire actif\" } )\nPartenariats à évaluer = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] = \"Partenariat à évaluer\" )\nBilans réalisés = CALCULATE ( COUNTROWS ( BilansAlternance ), BilansAlternance[Statut] = \"Réalisé\" )\n\n// ---------- Communications et valorisation ----------\nCommunications publiées = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = \"Publiée\", CommunicationsRD[Externe] = TRUE () )\nCommunications en préparation = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] IN { \"Idée\", \"À préparer\", \"En rédaction\", \"En revue\", \"Validée\", \"Programmée\" } )\nLivrables valorisés = CALCULATE ( DISTINCTCOUNTNOBLANK ( CommunicationsRD[LivrableSourceId] ), CommunicationsRD[Statut] = \"Publiée\" )\n\n// ---------- Actions et qualité des données ----------\nActions en retard = COUNTROWS ( FILTER ( ActionsIntegration, ActionsIntegration[Statut] IN { \"À faire\", \"En cours\", \"Bloquée\" } && ActionsIntegration[Echeance] < TODAY () ) )\nTransitions refusées = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = \"Refusée — annulée\" )\nÉcarts d'échéance GitLab = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE () )\n\n// ---------- Objectifs indicatifs (cadrage § 2.4) ----------\n// Cible : à utiliser dans un visuel filtré sur Objectifs[Indicateur]\nCible = SELECTEDVALUE ( Objectifs[Cible] )\n\n// ---------- Technique ----------\nDernière actualisation = MAX ( Mesures[DerniereActualisation] )",
     "roles": [
       {
         "role": "Direction",
@@ -16789,6 +16824,14 @@
     {
       "id": "H-51",
       "subject": "Livrables ouverts lors d'un remplacement d'affectation"
+    },
+    {
+      "id": "H-53",
+      "subject": "Composition du Comité R&D"
+    },
+    {
+      "id": "H-54",
+      "subject": "Bibliothèque « 04 — Livrables R&D » et Direction"
     },
     {
       "id": "H-52",
@@ -18316,7 +18359,8 @@
       "actors": [
         "ADMIN",
         "ECOLES",
-        "RD"
+        "RD",
+        "DIRECTION_RD"
       ],
       "controls": [],
       "flow": "PA-10"
@@ -18331,7 +18375,8 @@
       "actors": [
         "ADMIN",
         "ECOLES",
-        "RD"
+        "RD",
+        "DIRECTION_RD"
       ],
       "controls": [],
       "flow": "PA-10"

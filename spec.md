@@ -2,7 +2,7 @@
 
 | Propriété | Valeur |
 | --- | --- |
-| Version de la spec | 1.2.0 |
+| Version de la spec | 1.3.0 |
 | Date | 2026-10-14 |
 | Statut | Lot 0 — à valider en atelier (voir § 13) ; v1.1.0 intègre la revue de conformité RC-01 à RC-39 et les retours des agents (§ 14.3) |
 | Sources fonctionnelles | `Processus.md` ; `Cadrage_Fonctionnel_Automatisation_R&D_HNCS.docx` (v0.1) ; schéma « Architecture cible — Système de suivi R&D HNCS » |
@@ -322,6 +322,7 @@ Règle : une colonne `Lookup` ne peut cibler qu'une liste d'un lot inférieur ou
 | IdAlternant | Identifiant alternant | Text | Non | flux | Renseigné par PA-04 |
 | DoublonPotentiel | Doublon potentiel | Boolean | Non | flux; default=Non | Signalement, jamais de fusion automatique |
 | DoublonDe | Doublon de | Text | Non | flux | `IdHNCS` de la candidature similaire |
+| DoublonVerifie | Doublon vérifié (faux positif) | Boolean | Non | default=Non | Coché par la R&D après vérification : la candidature sort de la vue des doublons ; `DoublonPotentiel` reste tracé |
 | AccuseReceptionEnvoye | Accusé de réception envoyé | Boolean | Non | flux; default=Non |  |
 | InformationCandidat | Candidat informé de l'issue | Boolean | Non | default=Non | Saisi par la personne qui informe (H-09) |
 | DateInformationCandidat | Date d'information du candidat | Date | Non |  |  |
@@ -650,7 +651,7 @@ Règle : une colonne `Lookup` ne peut cibler qu'une liste d'un lot inférieur ou
 | LivrableOrigine | Livrable d'origine | Lookup | Non | lookup=Livrables | Livrable repris d'une affectation remplacée (P-03) |
 | EnRetard | En retard | Boolean | Non | flux; default=Non | Recalculé chaque jour par PA-06 |
 | DernierRappel | Dernier rappel envoyé | Text | Non | hidden; flux | Ex. `J-7:2026-10-14` (évite les doublons de rappel) |
-| EmpreinteRevue | Empreinte des champs protégés | Text | Non | hidden; flux | JSON des champs protégés validés : `Affectation`, `Proprietaire`, `Reviseur`, `DoD1..5`, `NbCorrections`, `DecisionRevue`, `Valideur`, `DateValidation`, `VersionValidee`, dates de dépôt et de revue (P-09) |
+| EmpreinteRevue | Empreinte des champs protégés | Text | Non | hidden; flux | JSON des champs protégés validés : `Affectation`, `Proprietaire`, `Reviseur`, `Echeance`, `DoD1..5`, `NbCorrections`, `DecisionRevue`, `Valideur`, `DateValidation`, `VersionValidee`, dates de dépôt et de revue (P-09). Habilités : RD et DIRECTION_RD pour tous ces champs ; le réviseur légitime pour `Echeance` et `DoD1..5` ; un `Reviseur` qui n'est ni le référent de l'affectation ni un membre de DIRECTION_RD est refusé dès sa désignation |
 | EmpreinteCommentaire | Empreinte du commentaire de revue | Text | Non | hidden; flux | Valeur de `CommentaireRevue` lors de la décision précédente (`G_COMMENTAIRE_REVUE`) |
 
 ### LST: ComptesRendus
@@ -691,7 +692,7 @@ Règle : une colonne `Lookup` ne peut cibler qu'une liste d'un lot inférieur ou
 | DateValidation | Date de validation | DateTime | Non | flux |  |
 | CommentaireReferent | Commentaire du référent | Note | Non | appendonly | Obligatoire pour « À compléter » ; historique conservé |
 | DernierRappel | Dernier rappel envoyé | Text | Non | hidden; flux |  |
-| EmpreinteRevue | Empreinte des champs protégés | Text | Non | hidden; flux | JSON : `Affectation`, `Valideur`, `DateValidation`, `DateRemise`, dernier `CommentaireReferent` (P-09) |
+| EmpreinteRevue | Empreinte des champs protégés | Text | Non | hidden; flux | JSON : `Affectation`, `Valideur`, `Echeance`, `PeriodeDebut`, `PeriodeFin`, `DateValidation`, `DateRemise` (P-09). Habilités : RD et DIRECTION_RD ; l'alternant ne modifie que les champs de contenu ; le référent (valideur légitime) que `CommentaireReferent` |
 
 ### LST: RegistreModeles
 
@@ -1320,7 +1321,7 @@ Note : ALT-T02 et ALT-T04 par `FLUX` sont des constats de date (date de début a
 
 | Code | De | Vers | Acteurs | Contrôle | Flux responsable |
 | --- | --- | --- | --- | --- | --- |
-| CONV-T01 | ∅ | À préparer ; En discussion | ADMIN ; ECOLES ; RD |  | PA-10 |
+| CONV-T01 | ∅ | À préparer ; En discussion | ADMIN ; ECOLES ; RD ; DIRECTION_RD |  | PA-10 |
 | CONV-T02 | * | À préparer ; En discussion ; En validation ; À signer ; Clôturée | ADMIN ; ECOLES |  | PA-10 |
 | CONV-T03 | * | Signée / active | ADMIN ; ECOLES | G_PREUVE_SIGNATURE ; G_DECISION_PARTENARIAT | PA-10 |
 | CONV-T04 | Signée / active | À renouveler | FLUX ; ADMIN ; ECOLES |  | PA-10 |
@@ -1366,7 +1367,7 @@ Note : l'issue d'un GO/NO-GO négatif est « Suspendu » (report ou reformulatio
 | G_CR_COMPLET | CompteRendu | `Realisations`, `ProchainesEtapes` non vides et `Avancement` renseigné | PA-08 |
 | G_CR_ECHU | CompteRendu | Aujourd'hui > `Echeance` + `CR.DelaiNonRemisJours` | PA-08 |
 | G_COMMENTAIRE_REFERENT | CompteRendu | `CommentaireReferent` non vide | PA-08 |
-| G_AFFECTATION_COMPLETE | Affectation | `Alternant`, `Sujet`, `Referent`, `DateDebut` renseignés ; alternant « À intégrer » ou « Actif » ; référent « Actif » | PA-05 |
+| G_AFFECTATION_COMPLETE | Affectation | `Alternant`, `Sujet`, `Referent`, `DateDebut` renseignés ; alternant « À intégrer » ou « Actif » avec `CompteM365` renseigné (propriétaire des livrables et bénéficiaire des droits) ; référent « Actif » | PA-05 |
 | G_DATE_FIN | Affectation | `DateFin` renseignée | PA-05 |
 | G_LIVRABLES_CLOS | Affectation | Aucun livrable lié dans « À produire », « En cours », « Soumis à revue », « En revue », « Corrections demandées » | PA-05 |
 | G_SOURCE_ALTERNANT | Alternant | Création par `FLUX` : `CandidatureSource` liée au statut « Intégrée ». Création manuelle (DIRECTION_RD) : `CandidatureSource` vide **et** `Fonction.RepriseExistantActive` = Oui (reprise de l'existant, H-12) | PA-04 |
@@ -1377,7 +1378,7 @@ Note : l'issue d'un GO/NO-GO négatif est « Suspendu » (report ou reformulatio
 | G_PUBLICATION | Communication | `DateEffective` renseignée ; `UrlPublication` renseignée si `Externe` = Oui | PA-12 |
 | G_DECISION_PARTENARIAT | Convention | Si `TypeConvention` ∈ {Convention de partenariat ; Sponsoring} : `DecisionPartenariat` ∈ {Partenariat retenu ; Sponsoring retenu} et `DecideurPartenariat` renseigné (décision humaine préalable) | PA-10 |
 | G_MOTIF_DECISION | Sujet | `MotifDecision` non vide | PA-14 |
-| G_ACTION_FORMALITE | ActionsIntegration | Contexte « Formalités d'intégration » : `Bloquante` et le passage à « Terminée » / « Non applicable » ne sont modifiables que par ADMIN ou par le `Responsable` désigné ; sinon la valeur de `EmpreinteAction` est rétablie (P-09) | PA-04 |
+| G_ACTION_FORMALITE | ActionsIntegration | Contexte « Formalités d'intégration » : `Bloquante` n'est modifiable que par ADMIN ; une action bloquante ne passe à « Non applicable » que par ADMIN ; le passage à « Terminée » est possible par ADMIN ou par le `Responsable` désigné ; sinon la valeur de `EmpreinteAction` est rétablie (P-09) | PA-04 |
 | G_PREUVE_SIGNATURE | Convention | `DateSignature` et `PreuveSignature` renseignées (« aucun document n'est considéré signé sans preuve ») | PA-10 |
 | G_DATE_FIN_DEPASSEE | Convention | `DateFin` < aujourd'hui (non exigé pour une action humaine) | PA-10 |
 
@@ -1432,7 +1433,7 @@ L'héritage est rompu **sur toutes les listes et bibliothèques du modèle** (sa
 | Alternants | FC | CSS | CSS | CSS | IL(R) | — | — | — |
 | Poles | FC | CSS | R | R | R | R | R | R |
 | Referents | FC | CSS | CSS | R | R | R | R | R |
-| SujetsRD | FC | CSS | CSS | R | CSS | R | R | R |
+| SujetsRD | FC | CSS | CSS | R | CSS | R | CSS | R |
 | Affectations | FC | CSS | CSS | R | CSS | IL(R) | — | — |
 | Livrables | FC | CSS | CSS | — | CSS | IL(CSS) | — | — |
 | ComptesRendus | FC | CSS | CSS | — | IL(CSS) | IL(CSS) | — | — |
@@ -1461,8 +1462,8 @@ L'héritage est rompu **sur toutes les listes et bibliothèques du modèle** (sa
 | Objet | Moment | Attributions ajoutées (héritage copié puis complété) | Flux |
 | --- | --- | --- | --- |
 | Élément `Candidatures` + dossier `Recrutement/{AAAA}/{CAND}` | Transmission à l'administration | Selon `Recrutement.PartageTransmission` : `Groupe` (défaut) → G_ADM : CSS ; `Destinataire` → `DestinataireAdmin` seul : CSS (H-45) | PA-02 |
-| Élément `Entretiens` | Création ou modification des participants | Participants : R | PA-03 |
-| Dossier `Administration/Candidatures/{CAND}` | Lancement des formalités | Héritage de la bibliothèque (G_PROP, G_ADM) — aucun ajout | PA-04 |
+| Élément `Entretiens` | Création ou modification des participants | Participants : R (ils lisent l'évaluation de l'entretien auquel ils ont participé, H-28) | PA-03 |
+| Dossier `Administration/Candidatures/{CAND}` | Transmission à l'administration (grilles d'entretien), au plus tard au lancement des formalités | Héritage de la bibliothèque (G_PROP, G_ADM) — aucun ajout | PA-02 (création), PA-04 (vérification) |
 | Dossier `Administration/Alternants/{ALT}/Operationnel` | Création de l'alternant | G_RD : R (« accès R&D limité aux besoins opérationnels ») | PA-04 |
 | Élément `Alternants` | Création, changement de référent principal, activation d'affectation | Référent principal et référents des affectations : R | PA-04, PA-05 |
 | Dossier `SuiviAlternants/{ALT}` | Création de l'alternant, puis à chaque activation d'affectation ou changement de référent principal | Alternant (`CompteM365`) : CSS ; référent principal et référents des affectations : CSS (ajout uniquement, jamais de retrait automatique) | PA-04, PA-05 |
@@ -1686,7 +1687,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | Déclencheur fonctionnel | La R&D attribue, analyse, présélectionne ou écarte une candidature ; clôture ou réouverture |
 | Déclencheur technique | `Candidatures` modifié, statut cible ∈ partition PA-02, `Editor` ≠ compte de service |
 | Entrées | Élément, `StatutPrecedent`, `Editor` |
-| Traitement | 1. PA-00A puis contrôles `G_*` ; refus → PA-00B (annulation) et fin. 2. Effets par statut cible : **À analyser** / **En cours d'analyse** depuis « Reçue » : contrôle doublon si `Email` vient d'être renseigné (comme PA-01). **À analyser** : N-03 au responsable d'analyse. **En cours d'analyse** : `DateAnalyse` si vide. **Présélectionnée** : `DateDecisionPreselection`, `DecisionPreselection` = Présélectionnée ; rompre l'héritage de l'élément et du dossier CV, y ajouter G_ADM ou `DestinataireAdmin` (CSS) selon `Recrutement.PartageTransmission` ; `DestinataireAdmin` = `Destinataires.Administration` ; envoyer N-05 (lien vers l'élément et le dossier, **jamais** de pièce jointe ni de recopie de l'avis) ; `DateTransmissionAdmin` ; puis transition CAND-T05 → « Transmise à l'administration » (`FLUX`). **Non retenue** : `DateDecisionPreselection` et `DecisionPreselection` = Écartée (si depuis l'analyse) ou `DateDecisionFinale` (si depuis l'administration, CAND-T12 ou CAND-T17), `DateCloture` ; N-06 à G_RD (et à l'administration si après entretien) ; si `Fonction.InformationCandidatAuto` = Oui → N-07 au candidat et `InformationCandidat` = Oui, sinon tâche N-08 « informer le candidat ». **Clôturée** : `DateCloture` ; N-06. **Transmise à l'administration** (retour CAND-T08) : N-04 à l'administration. **À analyser (réouverture)** : `DateCloture` vidée, N-03. 3. PA-00B (acceptée). |
+| Traitement | 1. PA-00A puis contrôles `G_*` ; refus → PA-00B (annulation) et fin. 2. Effets par statut cible : **À analyser** / **En cours d'analyse** depuis « Reçue » : contrôle doublon si `Email` vient d'être renseigné (comme PA-01). **À analyser** : N-03 au responsable d'analyse. **En cours d'analyse** : `DateAnalyse` si vide. **Présélectionnée** : `DateDecisionPreselection`, `DecisionPreselection` = Présélectionnée ; rompre l'héritage de l'élément et du dossier CV, y ajouter G_ADM ou `DestinataireAdmin` (CSS) selon `Recrutement.PartageTransmission` ; `DestinataireAdmin` = `Destinataires.Administration` ; créer le dossier `Administration/Candidatures/{CAND}/` (grilles d'entretien) ; envoyer N-05 (lien vers l'élément et le dossier, **jamais** de pièce jointe ni de recopie de l'avis) ; `DateTransmissionAdmin` ; puis transition CAND-T05 → « Transmise à l'administration » (`FLUX`). **Non retenue** : `DateDecisionPreselection` et `DecisionPreselection` = Écartée (si depuis l'analyse) ou `DateDecisionFinale` (si depuis l'administration, CAND-T12 ou CAND-T17), `DateCloture` ; N-06 à G_RD (et à l'administration si après entretien) ; si `Fonction.InformationCandidatAuto` = Oui → N-07 au candidat et `InformationCandidat` = Oui, sinon tâche N-08 « informer le candidat ». **Clôturée** : `DateCloture` ; N-06. **Transmise à l'administration** (retour CAND-T08) : N-04 à l'administration. **À analyser (réouverture)** : `DateCloture` vidée, N-03. 3. PA-00B (acceptée). |
 | Sorties | Champs datés, permissions, notifications, historique |
 | Transitions | CAND-T02, T03, T04, T05, T06, T08, T12, T15, T16, T17 |
 | Décision humaine préservée | La présélection et le refus sont saisis par la R&D (ou l'administration après entretien) ; le flux exécute uniquement la transmission |
@@ -1727,7 +1728,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | Déclencheurs techniques | (a) `Candidatures` modifié, statut cible ∈ {Formalités en cours, Intégrée} ; (b) `Alternants` créé ou modifié, statut cible ∈ {À intégrer, Actif} ou `CompteM365` modifié ; (c) `ActionsIntegration` modifié, contexte « Formalités d'intégration » |
 | Traitement (a) — Formalités en cours | 1. PA-00A. 2. Générer les actions depuis `ModelesActions` (contexte « Formalités d'intégration », `Actif` = Oui) : une action par `Code`, liée à la candidature, échéance = aujourd'hui + `DelaiJours`, responsable résolu depuis `RoleResponsable` (ADMIN → `Destinataires.Administration`, RD → responsable d'analyse) ; **idempotent** par (`Candidature`, `CodeModeleAction`). 3. Créer `Administration/Candidatures/{CAND}/`. 4. N-15 à l'administration (liste des actions et échéances). 5. PA-00B. |
 | Traitement (a) — Intégrée | 1. PA-00A puis **`G_INTEGRATION`** ; échec → annulation (retour à « Formalités en cours ») et N-90 détaillant les éléments manquants. 2. Si une fiche `Alternants` liée existe déjà → ne rien recréer (idempotence). 3. Créer l'alternant : `Title`, `CandidatureSource`, `Etablissement`, `Formation`, `Pole` = `PolePressenti`, `ReferentPrincipal` = `ReferentPressenti` (et `EmpreinteReferent`), `DateDebut` = `DateDemarrageConfirmee`, `DateFin` = `DateFinPrevue`, `Statut` = À intégrer (ALT-T01, historisé). 4. Candidature : `IdAlternant`, `DateIntegration`. 5. Créer `SuiviAlternants/{ALT}/` et `/_Evaluations/`, `Administration/Alternants/{ALT}/` et son sous-dossier `Operationnel` (§ 7.4) ; donner au référent principal la lecture sur la fiche ; renseigner les liens. 6. Générer les actions de contexte « Accueil » (liées à l'alternant). 7. Si l'établissement est « Prospect » ou « Contact établi » → « Établissement d'accueil » (constat factuel, **pas** un partenariat). 8. N-16 à G_RD, au référent pressenti et à l'administration. |
-| Traitement (b) | **Création manuelle** (ALT-T01 par DIRECTION_RD, reprise de l'existant) : contrôle `G_SOURCE_ALTERNANT` (refus → règle § 6.1-3 bis), puis mêmes étapes 5 et 6 que le traitement (a). Statut **Actif** saisi à la main : `G_DATE_DEBUT_ATTEINTE` (depuis « À intégrer ») ou `G_DATE_FIN_REPORTEE` (prolongation depuis « Fin planifiée », ALT-T08). Changement de `CompteM365` : ajouter l'alternant (CSS) sur `SuiviAlternants/{ALT}` (hors `_Evaluations`). Modification manuelle de `ReferentPrincipal` : rétablie depuis `EmpreinteReferent`, N-91 (P-09). |
+| Traitement (b) | **Création manuelle** (ALT-T01 par DIRECTION_RD, reprise de l'existant) : contrôle `G_SOURCE_ALTERNANT` (refus → règle § 6.1-3 bis), puis mêmes étapes 5 et 6 que le traitement (a). Statut **Actif** saisi à la main : `G_DATE_DEBUT_ATTEINTE` (depuis « À intégrer ») ou `G_DATE_FIN_REPORTEE` (prolongation depuis « Fin planifiée », ALT-T08). Changement de `CompteM365` : ajouter l'alternant (CSS) sur `SuiviAlternants/{ALT}` (hors `_Evaluations`) et **rejouer** les attributions de PA-05 pour ses affectations actives (dossier `LivrablesRD/{SUJ}`, lecture de l'affectation, livrables et comptes rendus dont il est l'auteur). **Prolongation** (ALT-T08) : les actions de clôture encore ouvertes voient leur échéance recalculée sur la nouvelle `DateFin` ; le bilan « À réaliser » est conservé ; PA-09b détectera de nouveau la fin à la nouvelle échéance (génération idempotente). Modification manuelle de `ReferentPrincipal` : rétablie depuis `EmpreinteReferent`, N-91 (P-09). |
 | Traitement (c) | 1. Contrôle `G_ACTION_FORMALITE` (rétablissement depuis `EmpreinteAction`, N-92) ; mise à jour de l'empreinte et des permissions du `Responsable` (§ 7.4). 2. Si toutes les actions bloquantes de la candidature sont terminées ou non applicables justifiées → N-17 à l'administration (« les formalités sont complètes ; vous pouvez confirmer l'intégration »). **Aucun changement de statut automatique.** |
 | Transitions | CAND-T13, CAND-T14, ALT-T01, ALT-T02, ALT-T08 |
 | Décision humaine préservée | Le lancement des formalités et la confirmation d'intégration sont des actions de l'administration ; le flux vérifie et crée la fiche |
@@ -1746,7 +1747,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | --- | --- |
 | Déclencheur fonctionnel | Affectation d'un sujet à un alternant ; changement de sujet ou de référent ; changement d'état |
 | Déclencheur technique | `Affectations` créé ou modifié (changement de statut **ou** empreinte de verrouillage différente des valeurs courantes) |
-| Traitement | 1. `IdHNCS` ; `Title` = `{IdAlternant} – {IdSujet}` si vide. 2. **Contrôle de verrouillage** (P-03) : si l'affectation a une `EmpreinteVerrou` et que `Alternant`, `Sujet`, `Referent` ou `DateDebut` diffèrent → rétablir les valeurs de l'empreinte, `JournalFlux` Avertissement, N-91 à l'auteur de la modification (« pour changer de sujet ou de référent, créez une nouvelle affectation ») ; fin. 3. Transition : PA-00A + contrôles. 4. **Active** : figer `EmpreinteVerrou` ; créer `LivrablesRD/{SUJ}/` et y ajouter l'alternant (CSS) ; donner à l'alternant la lecture sur l'affectation ; ajouter le référent (CSS) sur `SuiviAlternants/{ALT}` ; proposer les livrables « À produire » à partir de `RegistreModeles` (`CreationAuto` = Oui, statut « Approuvé », `ApplicableA` contient le type du sujet) — idempotent par (affectation, modèle) ; créer le premier compte rendu « Attendu » si le lot 3 est déployé et la cadence ≠ « Par jalon » ; calculer `ProchaineEcheanceCR` ; N-20 à l'alternant et au référent (liens : sujet, GitLab, modèles, dossier de suivi). Mettre à jour `Alternants.ReferentPrincipal` (et `EmpreinteReferent`) avec le référent de l'affectation active la plus récente, historiser le changement dans `HistoriqueStatuts` (Objet = Alternant, `StatutAvant`/`StatutApres` = `IdHNCS` des référents, motif « Changement de référent principal ») et donner au nouveau référent ses accès (§ 7.4). Si `AffectationRemplacee` est renseignée et active → la terminer : `DateFin` = max(`DateDebut` de l'ancienne, `DateDebut` de la nouvelle − 1 jour), `MotifFin` = « Remplacée par {IdHNCS} », AFF-T05 (`FLUX`) et N-22 (règle § 6.1-8) ; **aucun autre champ de l'ancienne affectation n'est modifié**. Les livrables encore ouverts de l'ancienne affectation y restent rattachés ; N-22 les liste à G_RD, qui décide pour chacun (humain) : le poursuivre dans la nouvelle affectation en créant un livrable avec `LivrableOrigine`, puis suspendre l'ancien (motif « Transféré vers {IdHNCS} »), ou le clore normalement. 5. **À risque / Bloquée** : N-21 à G_DRD. 6. **Terminée** : N-22 (avec la liste des livrables encore ouverts). 7. **Clôturée** : contrôle `G_LIVRABLES_CLOS`. 8. PA-00B. |
+| Traitement | 1. `IdHNCS` ; `Title` = `{IdAlternant} – {IdSujet}` si vide. 2. **Contrôle de verrouillage** (P-03) : si l'affectation a une `EmpreinteVerrou` et que `Alternant`, `Sujet`, `Referent` ou `DateDebut` diffèrent → rétablir les valeurs de l'empreinte, `JournalFlux` Avertissement, N-91 à l'auteur de la modification (« pour changer de sujet ou de référent, créez une nouvelle affectation ») ; fin. 3. Transition : PA-00A + contrôles. 4. **Active** : figer `EmpreinteVerrou` ; créer `LivrablesRD/{SUJ}/` et y ajouter l'alternant (CSS) ; donner à l'alternant la lecture sur l'affectation ; ajouter le référent (CSS) sur `SuiviAlternants/{ALT}` ; proposer les livrables « À produire » (`Proprietaire` = `CompteM365` de l'alternant, `Reviseur` = compte du référent) à partir de `RegistreModeles` (`CreationAuto` = Oui, statut « Approuvé », `ApplicableA` contient le type du sujet) — idempotent par (affectation, modèle) ; créer le premier compte rendu « Attendu » si le lot 3 est déployé et la cadence ≠ « Par jalon » ; calculer `ProchaineEcheanceCR` ; N-20 à l'alternant et au référent (liens : sujet, GitLab, modèles, dossier de suivi). Mettre à jour `Alternants.ReferentPrincipal` (et `EmpreinteReferent`) avec le référent de l'affectation active la plus récente, historiser le changement dans `HistoriqueStatuts` (Objet = Alternant, `StatutAvant`/`StatutApres` = `IdHNCS` des référents, motif « Changement de référent principal ») et donner au nouveau référent ses accès (§ 7.4). Si `AffectationRemplacee` est renseignée et active → la terminer : `DateFin` = max(`DateDebut` de l'ancienne, `DateDebut` de la nouvelle − 1 jour), `MotifFin` = « Remplacée par {IdHNCS} », AFF-T05 (`FLUX`) et N-22 (règle § 6.1-8) ; **aucun autre champ de l'ancienne affectation n'est modifié**. Les livrables encore ouverts de l'ancienne affectation y restent rattachés ; N-22 les liste à G_RD, qui décide pour chacun (humain) : le poursuivre dans la nouvelle affectation en créant un livrable avec `LivrableOrigine`, puis suspendre l'ancien (motif « Transféré vers {IdHNCS} »), ou le clore normalement. 5. **À risque / Bloquée** : N-21 à G_DRD. 6. **Terminée** : N-22 (avec la liste des livrables encore ouverts). 7. **Clôturée** : contrôle `G_LIVRABLES_CLOS`. 8. PA-00B. |
 | Transitions | AFF-T01 à AFF-T07 |
 | Décision humaine préservée | Le choix du sujet, du référent et le remplacement sont faits par la R&D ; le flux ne fait qu'exécuter la conséquence (terminer l'ancienne affectation) et proposer des livrables modifiables |
 | Erreurs | PA-00C ; idempotence sur dossiers, permissions, livrables proposés et compte rendu |
@@ -1785,7 +1786,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | Déclencheur fonctionnel | Arrivée de la date de remise définie ; remise ou validation d'un compte rendu |
 | PA-08b — planifié (06:45) | Pour chaque affectation « Active », « À risque » ou « Bloquée » dont la cadence effective (`CadenceCR`, sinon `CR.CadenceGlobale`) n'est pas « Par jalon » : si aucun compte rendu ne couvre la période courante → en créer un « Attendu » (`PeriodeDebut`, `PeriodeFin` selon la cadence : Hebdomadaire = 7 j, Quinzaine = 14 j, Mensuelle = mois calendaire ; `Echeance` = `PeriodeFin` + `CR.DelaiRemiseJours`) ; mettre à jour `ProchaineEcheanceCR`. Rappel N-30 à l'alternant la veille de l'échéance. Si `G_CR_ECHU` → « Non remis » (CR-T04, `FLUX`) et N-31 au référent. |
 | PA-08 — déclencheur | `ComptesRendus` créé ou modifié, statut cible ∈ partition PA-08 |
-| Traitement | **Champs protégés** (P-09) : `EmpreinteRevue` comparée en premier ; modification non autorisée → rétablie, N-92. **Création** : `IdHNCS`, `Title`, `Alternant` (copié), `Valideur` = compte du référent de l'affectation ; permissions élément (§ 7.4). Transitions : PA-00A puis contrôles (dont `G_VALIDEUR_LEGITIME`). **Remis** : `G_CR_COMPLET`, `DateRemise`, N-32 au valideur ; si `BlocageSignale` = Oui → N-33 à G_DRD. **Validé** : `DateValidation`. **À compléter** : `G_COMMENTAIRE_REFERENT`, N-34 à l'alternant. PA-00B dans tous les cas. |
+| Traitement | **Champs protégés** (P-09) : `EmpreinteRevue` comparée en premier ; modification non autorisée → rétablie, N-92. **Création** : `IdHNCS`, `Title`, `Alternant` (copié), `Valideur` = compte du référent de l'affectation ; permissions élément (§ 7.4). Transitions : PA-00A puis contrôles (dont `G_VALIDEUR_LEGITIME`). **Remis** : `G_CR_COMPLET`, `DateRemise`, N-32 au valideur ; si `BlocageSignale` = Oui → N-33 à G_DRD. **Validé** : `DateValidation`, N-34 à l'alternant. **À compléter** : `G_COMMENTAIRE_REFERENT`, N-34 à l'alternant. PA-00B dans tous les cas. |
 | Transitions | CR-T01 à CR-T06 |
 | Décision humaine préservée | Validation du compte rendu par le référent ; « Non remis » est un constat de date |
 
@@ -1806,7 +1807,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | Élément | Contrat |
 | --- | --- |
 | Déclencheurs | `Conventions` créé ou modifié ; `InteractionsEcoles` créé ; PA-10b quotidien 07:10 |
-| Traitement Conventions | 1. `IdHNCS`. 2. Transition : PA-00A + contrôles (`G_PREUVE_SIGNATURE` : aucune convention n'est « Signée / active » sans preuve ; `G_DECISION_PARTENARIAT` : une convention de partenariat ou de sponsoring ne peut être signée qu'après la décision humaine de DIRECTION_RD / DIRECTION). 3. **Signée / active** d'une convention de type « Convention de partenariat » ou « Sponsoring » → établissement « Partenaire actif » (constat de signature). 4. **Décision de partenariat** : si `DecisionPartenariat` ≠ `EmpreinteDecision` → acteur DIRECTION_RD ou DIRECTION ? oui : `DecideurPartenariat`, `DateDecisionPartenariat`, empreinte mise à jour, N-39 ; non : valeur rétablie, N-90. 5. PA-00B. |
+| Traitement Conventions | 1. `IdHNCS`. 2. Transition : PA-00A + contrôles (`G_PREUVE_SIGNATURE` : aucune convention n'est « Signée / active » sans preuve ; `G_DECISION_PARTENARIAT` : une convention de partenariat ou de sponsoring ne peut être signée qu'après la décision humaine de DIRECTION_RD / DIRECTION). 3. **Signée / active** d'une convention de type « Convention de partenariat » ou « Sponsoring » → établissement « Partenaire actif » (constat de signature). 4. **Décision de partenariat** : si `DecisionPartenariat` ≠ `EmpreinteDecision` → acteur DIRECTION_RD ou DIRECTION ? oui : `DecideurPartenariat`, `DateDecisionPartenariat`, empreinte mise à jour, N-39 ; non : valeur rétablie, N-92 (P-09). 5. PA-00B. |
 | Traitement Interactions | `IdHNCS` ; établissement : `DateDerniereInteraction` = date de l'échange si plus récente ; `ProchaineAction`/`DateProchaineAction` reportées si renseignées. |
 | PA-10b | Conventions « Signée / active » dont `DateFin` est dans `Convention.AlerteExpirationJours` → « À renouveler » (CONV-T04, `FLUX`) + N-40 ; `DateFin` dépassée → « Expirée » (CONV-T05) + N-40 ; établissements dont `DateProchaineAction` est atteinte → N-41 au responsable HNCS. |
 | Décision humaine préservée | Aucun établissement n'est converti automatiquement en partenaire ou sponsor : seule une convention signée avec preuve, ou une décision tracée de DIRECTION_RD / DIRECTION, le permet |
@@ -1878,7 +1879,7 @@ Règle : aucune colonne `perso` ou `confidentiel` n'est importée, **sauf** `Alt
 | SujetsRD | SujetsRD | Id ; IdHNCS ; Title ; TypeSujet ; PoleId ; Priorite ; ReferentId ; DateDebutPrevue ; DateFinPrevue ; GitlabProjetId ; Statut |
 | SujetDomaine | SujetsRD (colonne `Domaines` développée) | SujetId ; DomaineId |
 | RegistreModeles | RegistreModeles | Id ; IdHNCS ; Title ; TypeModele ; Version ; Statut |
-| Candidatures | Candidatures | Id ; IdHNCS ; Canal ; ModeReception ; DateReception ; OffreId ; TypeContratVise ; EtablissementId ; PolePressentiId ; DateDecisionPreselection ; DateTransmissionAdmin ; DateDecisionFinale ; DateIntegration ; DateCloture ; MotifCode ; DoublonPotentiel ; Statut ; DateStatut |
+| Candidatures | Candidatures | Id ; IdHNCS ; Canal ; ModeReception ; DateReception ; OffreId ; TypeContratVise ; EtablissementId ; PolePressentiId ; DateDecisionPreselection ; DateTransmissionAdmin ; DateDecisionFinale ; DateIntegration ; DateCloture ; MotifCode ; DoublonPotentiel ; DoublonVerifie ; Statut ; DateStatut |
 | Entretiens | Entretiens | Id ; IdHNCS ; CandidatureId ; DateHeure ; TypeEntretien ; Modalite ; Resultat ; Statut |
 | Alternants | Alternants | Id ; IdHNCS ; Title (→ NomAffichage) ; CandidatureSourceId ; DateDebut ; DateFin ; DateFinReelle ; EtablissementId ; PoleId ; ReferentPrincipalId ; Statut |
 | Affectations | Affectations | Id ; IdHNCS ; AlternantId ; SujetId ; ReferentId ; DateDebut ; DateFin ; CadenceCR ; AffectationRemplaceeId ; Statut |
@@ -1975,7 +1976,7 @@ Entretiens à venir = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] =
 Candidatures retenues = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] IN { "Retenue", "Formalités en cours", "Intégrée" } )
 Candidatures intégrées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] = "Intégrée" )
 Taux de transformation = DIVIDE ( [Candidatures intégrées], [Candidatures reçues] )
-Doublons signalés = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE () )
+Doublons signalés = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE (), Candidatures[DoublonVerifie] = FALSE () )
 
 // ---------- Effectifs et encadrement ----------
 Alternants actifs = CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { "Actif", "Fin planifiée" } )
@@ -2070,6 +2071,8 @@ Transitions refusées = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueS
 // ---------- Objectifs indicatifs (cadrage § 2.4) ----------
 // Cible : à utiliser dans un visuel filtré sur Objectifs[Indicateur]
 Cible = SELECTEDVALUE ( Objectifs[Cible] )
+
+// ---------- Technique ----------
 Dernière actualisation = MAX ( Mesures[DerniereActualisation] )
 ```
 
@@ -2102,7 +2105,7 @@ Les alternants n'ont pas accès au rapport (H-19). L'affectation des membres aux
 | 7 | Comité R&D | PilotageRD, Referent | Échéances à 14 jours, blocages, affectations à risque, sujets bloqués, comptes rendus manquants, actions en retard |
 | 8 | Qualité des données | PilotageRD | Affectations incomplètes, livrables sans modèle, doublons signalés, transitions refusées |
 
-Détail des visuels : `specs/powerbi-rapport.md`.
+Détail des visuels : `specs/powerbi-rapport.md`. La RLS et l'OLS protègent les **données** mais ne masquent pas les pages : la restriction des pages par public se fait par les **audiences de l'application Power BI** (Direction : pages 1, 3, 4, 5, 6 ; Administration : 2, 3, 5 ; RelationEcoles : 3, 5 ; Referent : 3, 4, 7 ; PilotageRD : toutes). Les liens `LienDocument` (page 4) sont visibles de la Direction, qui a la lecture sur « 04 — Livrables R&D » : ce sont des travaux, sans donnée personnelle. La RLS du rôle Administration ne filtre pas `ActionsIntegration` par candidature (aucune relation sur `CandidatureId`) ; l'administration voit de toute façon ces actions dans SharePoint. Le taux de capitalisation compte un livrable validé mais pas encore archivé comme « non encore capitalisé » (effet voulu).
 
 ---
 
@@ -2129,7 +2132,7 @@ Détail des visuels : `specs/powerbi-rapport.md`.
 
 | Composant | Rôle | Lot |
 | --- | --- | --- |
-| `gitlab/scripts/New-GitlabProjetSujet.ps1` | Création **à la demande d'un humain** d'un projet GitLab à partir d'un sujet SharePoint (projet, labels, jalons des livrables), puis report de l'URL et de l'ID dans le sujet | 3 |
+| `gitlab/scripts/New-GitlabProjetSujet.ps1` | Création **à la demande d'un humain** (un membre de l'équipe R&D propriétaire du groupe GitLab `hncs-rd`, à la demande du référent du sujet) d'un projet GitLab à partir d'un sujet SharePoint (projet, labels, jalons des livrables), puis report de l'URL et de l'ID dans le sujet | 3 |
 | `gitlab/templates/` | Modèles d'issues, de MR et de README de projet R&D | 3 |
 | `gitlab/sync/sync_gitlab_sharepoint.py` | Synchronisation **lecture GitLab → liste `GitlabSync`** : pour chaque sujet ayant un `GitlabProjetId`, lire les jalons (échéance, état), compter les issues et MR, détecter un écart entre échéance du jalon et échéance du livrable (`IdLivrable` = premier `LIV-…` du titre du jalon ; jalon sans échéance face à un livrable daté = écart ; livrable introuvable = pas d'écart, avertissement). `DerniereActivite` = dernière activité du projet. Idempotente (clé `CleSynchro`, aucune écriture si rien ne change). Les lignes orphelines (jalon supprimé, sujet détaché) sont conservées et signalées, jamais supprimées. | 5 |
 | `gitlab/ci/.gitlab-ci.yml` | Pipeline planifié (quotidien 05:30) exécutant la synchronisation | 5 |
@@ -2226,7 +2229,7 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | H-25 | Définition d'un « partenariat actif » | Convention de type « Convention de partenariat » ou « Sponsoring » au statut « Signée / active » | Modifier la mesure | Direction Générale |
 | H-26 | Issue d'un GO/NO-GO négatif | Statuts de sujet « Suspendu » (report ou reformulation) ou « Abandonné », avec `MotifDecision` | — | Direction R&D |
 | H-27 | Exceptions au parcours de recrutement | Aucune exception implémentée (pas de passage direct à « Intégrée ») | Ajouter une transition DIRECTION_RD | Direction Générale |
-| H-28 | Visibilité des entretiens pour la R&D | La R&D ne voit pas la liste `Entretiens` (contenu d'évaluation limité à l'administration) ; elle voit le statut de la candidature et reçoit N-11 | Donner `R` à G_RD | Administration + Direction R&D |
+| H-28 | Visibilité des entretiens pour la R&D | La R&D ne voit pas la liste `Entretiens` (contenu d'évaluation limité à l'administration), **sauf** les participants désignés d'un entretien, qui lisent cet entretien ; elle voit le statut de la candidature et reçoit N-11 | Donner `R` à G_RD | Administration + Direction R&D |
 | H-29 | Administration et candidatures non transmises | L'administration ne voit une candidature et son CV **qu'à partir** de sa transmission (permission par élément posée par PA-02) | Donner `R` à G_ADM sur la liste | Administration |
 | H-30 | Dépôts publics | Le dépôt GitHub `wbatchayon/HNCS-RD` est **public** alors que le cadrage est confidentiel : les documents sources ne sont pas versionnés ; seul le jeu de test fictif l'est | Rendre le dépôt privé recommandé | Propriétaire du dépôt |
 | H-31 | Permissions de la synchronisation GitLab | `Lists.SelectedOperations.Selected` (GitlabSync en écriture, SujetsRD et Livrables en lecture) si disponible dans le tenant ; à défaut `Sites.Selected` en écriture avec restriction par le code (risque : accès technique à tout le site, CV compris) ; secret masqué et protégé ou identité fédérée OIDC | Désactiver la synchronisation (lot 5 facultatif) | DSI + Direction R&D |
@@ -2250,6 +2253,8 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | H-49 | Création des livrables | Les livrables sont créés par le référent ou la R&D lors du cadrage (ou proposés par PA-05) ; un alternant ne peut pas en créer, car SharePoint ne permet pas d'autoriser l'ajout sans donner la lecture de toute la liste | Formulaire Power Apps (lot 5) | Direction R&D |
 | H-50 | Lot 1 sans automatisation | Contrôles P-01 à P-03 et P-09 effectifs à partir du lot 2 ; en lot 1, partage manuel par G_PROP selon `docs/exploitation.md` | — | Direction R&D |
 | H-51 | Livrables ouverts lors d'un remplacement d'affectation | Décision humaine de la R&D pour chaque livrable (poursuite via `LivrableOrigine`, suspension motivée ou clôture) ; aucun transfert automatique | Automatiser une proposition de transfert | Direction R&D |
+| H-53 | Composition du Comité R&D | Direction R&D, équipe R&D et référents ; la synthèse N-42 est envoyée à G_DRD et publiée dans le canal Teams du comité, dont ces personnes sont membres | Ajuster la liste de diffusion | Direction R&D |
+| H-54 | Bibliothèque « 04 — Livrables R&D » et Direction | La Direction lit les documents des livrables (travaux, sans donnée personnelle ; colonnes de recherche affichées en `IdHNCS`) | Retirer `R` à G_DIR | Direction Générale |
 | H-52 | Publics Power BI complémentaires | Pas de rôle « Communication » ni « Avant-vente » : ces publics passent par PilotageRD ou par la Direction R&D | Ajouter des rôles | Direction R&D |
 
 ---
@@ -2276,5 +2281,6 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | Version | Date | Auteur | Modification |
 | --- | --- | --- | --- |
 | 1.0.0 | 2026-10-14 | Équipe projet | Première version complète (lot 0) |
+| 1.3.0 | 2026-10-15 | Équipe projet | Retours des guides (18 points) et de Power BI (E-01–E-05) : doublon vérifié, échéance et réviseur protégés, champs protégés des comptes rendus, compte Microsoft 365 requis pour activer une affectation, `G_ACTION_FORMALITE` renforcé, arbitrage des sujets par la Direction Générale, prolongation d'alternance, dossier administratif dès la transmission, notifications complétées, audiences Power BI, H-53 et H-54 |
 | 1.2.0 | 2026-10-15 | Équipe projet | Retours du provisionnement : `IdHNCS` sans contrainte d'unicité SharePoint, définition de `hidden`, noms internes dans les validations, titre des documents facultatif, listes système et groupes par défaut, liens dans les vues, paramètres vides complétés, propriétaire des modèles initiaux, conventions d'URL et de lot 0 |
 | 1.1.0 | 2026-10-15 | Équipe projet | Revue de conformité RC-01 à RC-39 (contrôle `G_VALIDEUR_LEGITIME`, champs protégés P-09, transitions des sujets et PA-14, décision de partenariat avant signature, création d'alternant contrôlée, référent principal dérivé, matrice d'accès resserrée, RACI et escalade, scénarios de recette, H-31 à H-52) ; retours des agents GitLab (G1–G10) et Power BI (D-01–D-13) ; flux PA-00F |

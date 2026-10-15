@@ -27,7 +27,7 @@
 | Mes analyses | Non | IdHNCS, Title, Canal, DateReception, PosteVise, Statut | ResponsableAnalyse = [Moi] ET Statut in (Reçue; À analyser; En cours d'analyse) | DateReception asc | — |
 | À attribuer | Non | IdHNCS, Title, Canal, ModeReception, DateReception, DoublonPotentiel | Statut = Reçue ET ResponsableAnalyse est vide | DateReception asc | — |
 | Transmises à l'administration | Non | IdHNCS, Title, PosteVise, DateTransmissionAdmin, DestinataireAdmin, Statut | Statut in (Transmise à l'administration; Entretien planifié; Entretien réalisé; En attente de décision; Retenue; Formalités en cours) | DateTransmissionAdmin asc | Statut |
-| Doublons potentiels | Non | IdHNCS, Title, Email, DoublonDe, DateReception, Statut | DoublonPotentiel = Oui ET Statut notin (Non retenue; Clôturée) | DateReception desc | — |
+| Doublons potentiels | Non | IdHNCS, Title, Email, DoublonDe, DoublonVerifie, DateReception, Statut | DoublonPotentiel = Oui ET DoublonVerifie = Non ET Statut notin (Non retenue; Clôturée) | DateReception desc | — |
 | Candidatures clôturées | Non | IdHNCS, Title, Statut, MotifCode, DateCloture, InformationCandidat | Statut in (Non retenue; Clôturée) | DateCloture desc | MotifCode |
 | Candidat à informer | Non | IdHNCS, Title, Statut, MotifCode, DateCloture | Statut in (Non retenue; Clôturée) ET InformationCandidat = Non | DateCloture asc | — |
 

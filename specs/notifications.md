@@ -48,7 +48,7 @@
 | N-31 | PA-08b | Référent (valideur) | Mail | Compte rendu {IdHNCS} non remis | Période, échéance | ID ; NOM |
 | N-32 | PA-08 | Valideur | Mail+Teams | Compte rendu {IdHNCS} remis | État général, avancement, lien | ID ; NOM |
 | N-33 | PA-08 | G_DRD | Mail | Blocage signalé ({IdHNCS}) | Lien vers le compte rendu | ID |
-| N-34 | PA-08 | Alternant | Mail+Teams | Compte rendu {IdHNCS} à compléter | Commentaire du référent | ID ; COMM |
+| N-34 | PA-08 | Alternant | Mail+Teams | Compte rendu {IdHNCS} {statut} | « À compléter » : commentaire du référent ; « Validé » : confirmation de validation | ID ; COMM |
 | N-35 | PA-09 | Référent principal, G_RD, responsable HNCS de l'école | Mail | Fin d'alternance planifiée : {IdAlternant} | Date de fin, checklist de clôture, bilan à réaliser | ID ; NOM |
 | N-36 | PA-09 | Référent principal, G_RD | Mail | {IdAlternant} suspendu | Lien | ID ; NOM |
 | N-37 | PA-09 | G_RD, référent principal, Destinataires.Administration, Destinataires.Support | Mail | Fin d'alternance enregistrée : {IdAlternant} | Affectations terminées, checklist de clôture (dont retrait des accès, action humaine) | ID ; NOM |
@@ -59,7 +59,7 @@
 | N-42 | PA-11 | G_DRD, canal Teams du comité | Mail+Teams | Synthèse Comité R&D du {date} | Synthèse opérationnelle (§ 8.4 PA-11) | ID |
 | N-43 | PA-11 | G_DRD (relaie à Destinataires.Direction après relecture) | Mail | Synthèse {Point Direction / Revue trimestrielle} à relire et transmettre | Agrégats et points d'arbitrage, sans nom de personne | ID |
 | N-44 | PA-12 | Approbateur, sinon G_DRD | Mail+Teams | Communication {IdHNCS} à valider | Canal, date prévue, autorisations, lien | ID |
-| N-45 | PA-12 | Auteur | Mail+Teams | Communication {IdHNCS} {statut} | Décision et commentaire | ID |
+| N-45 | PA-12 | Auteur | Mail+Teams | Communication {IdHNCS} {statut} | Validée, suspendue / refusée ou renvoyée « En rédaction » : décision et commentaire | ID |
 | N-47 | PA-14 | G_DRD (À arbitrer, Bloqué) ; référent du sujet et G_RD (Priorisé, Suspendu, Abandonné) | Mail+Teams | Sujet {IdHNCS} {statut} | Décision ou demande d'arbitrage, motif | ID |
 | N-46 | PA-13 | G_DRD, G_PROP | Mail | Candidatures arrivées en fin de conservation | Liste d'identifiants, procédure de traitement manuel | ID |
 | N-90 | PA-00B | Auteur de la modification | Mail+Teams | Changement de statut refusé ({IdHNCS}) | Statut demandé, motif du refus, statut rétabli, marche à suivre | ID |
