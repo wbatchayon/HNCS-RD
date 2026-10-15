@@ -50,6 +50,7 @@ class FauxServeur:
         self.appels: list[tuple[str, str]] = []
         self.pannes: list[tuple[str, int, dict]] = []  # (fragment d'URL, statut, en-têtes) consommées une fois
         self.par_page_graph = 2
+        self.listes_selectionnees = False
         self.projets = {
             42: {
                 "id": 42, "path_with_namespace": "hncs-rd/suj-2026-0003-sauvegarde-pra",
@@ -127,6 +128,9 @@ class FauxServeur:
         morceaux = urllib.parse.urlsplit(url)
         chemin = morceaux.path[len("/v1.0"):]
         params = dict(urllib.parse.parse_qsl(morceaux.query))
+        if self.listes_selectionnees and not chemin.startswith(f"/sites/{SITE_ID}/lists/"):
+            # Lists.SelectedOperations.Selected : aucun accès au site ni à l'énumération des listes.
+            return reponse({"error": {"code": "accessDenied"}}, 403)
         if chemin == "/sites/contoso.sharepoint.com:/sites/HNCS-RD":
             return reponse({"id": SITE_ID})
         if chemin == f"/sites/{SITE_ID}/lists":
@@ -473,6 +477,23 @@ class TestExecutionComplete(unittest.TestCase):
         self.assertEqual(self.executer(serveur, filtre_sujet="SUJ-2026-0003"), 0)
         self.assertEqual(self.executer(serveur, filtre_sujet="SUJ-2026-0004"), 1)
 
+    def test_listes_selectionnees_avec_identifiants_configures(self):
+        serveur = FauxServeur()
+        serveur.listes_selectionnees = True
+        config = sync.Config(**{**CONFIG.__dict__, "site_id": SITE_ID, "listes_ids": dict(LISTES)})
+        code = sync.executer(config, http=client(serveur), horloge=lambda: "2026-10-14T05:30:00Z")
+        self.assertEqual(code, 0)
+        self.assertEqual(len(serveur.sync_items), 3)
+        for _, url in serveur.appels:
+            if url.startswith(GRAPH):
+                self.assertIn(f"/sites/{SITE_ID}/lists/l-", url, "aucune requête de niveau site")
+
+    def test_listes_selectionnees_sans_identifiants_code_2(self):
+        serveur = FauxServeur()
+        serveur.listes_selectionnees = True
+        self.assertEqual(self.executer(serveur), 2)
+        self.assertEqual(serveur.ecritures(), [])
+
     def test_site_ou_liste_introuvable_code_2(self):
         serveur = FauxServeur()
         serveur.pannes.append(("/sites/contoso.sharepoint.com:", 404, {}))
@@ -504,6 +525,13 @@ class TestConfiguration(unittest.TestCase):
             sync.charger_config(env)
         self.assertIn("GITLAB_TOKEN", str(contexte.exception))
         self.assertIn("HNCS_CLIENT_ASSERTION", str(contexte.exception))
+
+    def test_identifiants_graph_facultatifs(self):
+        self.assertIsNone(sync.charger_config(self.ENV).site_id)
+        env = dict(self.ENV, HNCS_SITE_ID="s-id", HNCS_LISTE_ID_GITLABSYNC="l-sync")
+        config = sync.charger_config(env)
+        self.assertEqual(config.site_id, "s-id")
+        self.assertEqual(dict(config.listes_ids), {"GitlabSync": "l-sync"})
 
     def test_assertion_a_la_place_du_secret(self):
         env = dict(self.ENV)

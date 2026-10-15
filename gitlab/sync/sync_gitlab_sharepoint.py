@@ -19,13 +19,18 @@ Configuration (variables d'environnement, jamais de secret dans le code ni dans 
   GITLAB_URL            ex. https://gitlab.example.com
   GITLAB_TOKEN          jeton d'accès de groupe, portée `read_api`
   HNCS_TENANT_ID        identifiant du tenant Entra
-  HNCS_CLIENT_ID        identifiant de l'application Entra (permission `Sites.Selected`, droit `write`)
+  HNCS_CLIENT_ID        identifiant de l'application Entra : `Lists.SelectedOperations.Selected`
+                        (GitlabSync en écriture, SujetsRD et Livrables en lecture), à défaut
+                        `Sites.Selected` en écriture sur le site (spec § 10.3, H-31)
   HNCS_CLIENT_SECRET    secret de l'application            } l'un ou l'autre
   HNCS_CLIENT_ASSERTION assertion JWT (identité fédérée     }
                         GitLab OIDC ou JWT signé par certificat, produit hors de ce script)
   HNCS_SITE_URL         ex. https://<tenant>.sharepoint.com/sites/HNCS-RD
 Facultatives : HNCS_GRAPH_URL (défaut https://graph.microsoft.com/v1.0),
-               HNCS_LOGIN_URL (défaut https://login.microsoftonline.com).
+               HNCS_LOGIN_URL (défaut https://login.microsoftonline.com),
+               HNCS_SITE_ID et HNCS_LISTE_ID_SUJETSRD / _LIVRABLES / _GITLABSYNC (identifiants Graph,
+               non secrets) : obligatoires avec la permission `Lists.SelectedOperations.Selected`
+               (spec § 10.3, H-31), qui ne donne accès ni au site ni à l'énumération de ses listes.
 
 Usage :
     python gitlab/sync/sync_gitlab_sharepoint.py [--dry-run] [--sujet SUJ-aaaa-nnnn] [--verbose]
@@ -58,6 +63,12 @@ LOG = logging.getLogger("hncs.gitlabsync")
 LISTE_SUJETS = "SujetsRD"
 LISTE_LIVRABLES = "Livrables"
 LISTE_SYNC = "GitlabSync"
+# Identifiants Graph facultatifs (mode `Lists.SelectedOperations.Selected`, spec § 10.3 / H-31).
+VARIABLES_LISTES = {
+    LISTE_SUJETS: "HNCS_LISTE_ID_SUJETSRD",
+    LISTE_LIVRABLES: "HNCS_LISTE_ID_LIVRABLES",
+    LISTE_SYNC: "HNCS_LISTE_ID_GITLABSYNC",
+}
 
 REGEX_LIVRABLE = re.compile(r"LIV-\d{4}-\d{4,}")
 REGEX_SUJET = re.compile(r"^SUJ-\d{4}-\d{4,}$")
@@ -432,6 +443,8 @@ class Config:
     site_chemin: str
     graph_url: str = "https://graph.microsoft.com/v1.0"
     login_url: str = "https://login.microsoftonline.com"
+    site_id: Optional[str] = None
+    listes_ids: Mapping[str, str] = field(default_factory=dict)
 
     def __repr__(self) -> str:  # jamais de secret dans les journaux
         return f"Config(gitlab_url={self.gitlab_url!r}, site={self.site_hote}{self.site_chemin}, client_id={self.client_id!r})"
@@ -469,6 +482,8 @@ def charger_config(env: Mapping[str, str]) -> Config:
         site_chemin=chemin,
         graph_url=(lire("HNCS_GRAPH_URL") or "https://graph.microsoft.com/v1.0").rstrip("/"),
         login_url=(lire("HNCS_LOGIN_URL") or "https://login.microsoftonline.com").rstrip("/"),
+        site_id=lire("HNCS_SITE_ID") or None,
+        listes_ids={nom: lire(variable) for nom, variable in VARIABLES_LISTES.items() if lire(variable)},
     )
 
 
@@ -719,6 +734,30 @@ def maintenant_utc() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def resoudre_cibles(graph: ClientGraph, config: Config) -> tuple[str, dict[str, str]]:
+    """Identifiants Graph du site et des trois listes.
+
+    Avec `Lists.SelectedOperations.Selected` (recommandé, H-31), l'application n'a accès qu'aux listes
+    octroyées : ni `GET /sites/{hôte}:{chemin}` ni l'énumération des listes ne sont permis. Les
+    identifiants sont alors fournis par la configuration (`HNCS_SITE_ID`, `HNCS_LISTE_ID_*`) et aucune
+    requête de niveau site n'est émise. Avec `Sites.Selected`, ils sont résolus automatiquement."""
+    noms = [LISTE_SUJETS, LISTE_LIVRABLES, LISTE_SYNC]
+    listes = {nom: config.listes_ids[nom] for nom in noms if config.listes_ids.get(nom)}
+    try:
+        site_id = config.site_id or graph.site_id()
+        if len(listes) < len(noms):
+            resolues = graph.listes(site_id, [nom for nom in noms if nom not in listes])
+            listes.update(resolues)
+    except ErreurHttp as erreur:
+        if erreur.statut in (401, 403):
+            raise ErreurConfig(
+                f"{erreur} — accès refusé au niveau du site : avec Lists.SelectedOperations.Selected, "
+                "renseigner HNCS_SITE_ID et HNCS_LISTE_ID_SUJETSRD / _LIVRABLES / _GITLABSYNC."
+            ) from erreur
+        raise
+    return site_id, listes
+
+
 def executer(config: Config, dry_run: bool = False, http: Optional[ClientHttp] = None,
              filtre_sujet: Optional[str] = None, horloge: Callable[[], str] = maintenant_utc) -> int:
     http = http or ClientHttp()
@@ -729,8 +768,7 @@ def executer(config: Config, dry_run: bool = False, http: Optional[ClientHttp] =
              config.site_hote, config.site_chemin)
 
     try:
-        site_id = graph.site_id()
-        listes = graph.listes(site_id, [LISTE_SUJETS, LISTE_LIVRABLES, LISTE_SYNC])
+        site_id, listes = resoudre_cibles(graph, config)
         sujets = lire_sujets(graph.elements(site_id, listes[LISTE_SUJETS], ["IdHNCS", "GitlabProjetId"]))
         echeances = indexer_livrables(graph.elements(site_id, listes[LISTE_LIVRABLES], ["IdHNCS", "Echeance"]))
         existants = graph.elements(site_id, listes[LISTE_SYNC], [*CHAMPS_SYNC, CHAMP_DATE_SYNCHRO])

@@ -12,10 +12,13 @@
 #   GITLAB_URL           URL de l'instance GitLab (ex. https://gitlab.example.com)        non secret
 #   GITLAB_TOKEN         jeton d'accès du groupe hncs-rd, rôle Reporter, portée read_api  MASQUÉE
 #   HNCS_TENANT_ID       identifiant du tenant Entra                                      non secret
-#   HNCS_CLIENT_ID       identifiant de l'application Entra (Sites.Selected, write)       non secret
+#   HNCS_CLIENT_ID       identifiant de l'application Entra                               non secret
+#                        (Lists.SelectedOperations.Selected recommandé, sinon Sites.Selected write — H-31)
 #   HNCS_CLIENT_SECRET   secret de l'application Entra                                    MASQUÉE
-#                        (inutile si l'identité fédérée OIDC ci-dessous est utilisée)
+#                        (inutile si l'identité fédérée OIDC ci-dessous est utilisée, recommandée)
 #   HNCS_SITE_URL        https://<tenant>.sharepoint.com/sites/HNCS-RD                    non secret
+#   HNCS_SITE_ID, HNCS_LISTE_ID_SUJETSRD, HNCS_LISTE_ID_LIVRABLES, HNCS_LISTE_ID_GITLABSYNC
+#                        identifiants Graph, obligatoires avec Lists.SelectedOperations.Selected  non secrets
 # Aucun secret ne doit figurer dans ce fichier ni dans le dépôt (spec § 10.1).
 
 stages:

@@ -18,8 +18,9 @@
     -WhatIf affiche les créations et la mise à jour prévues sans rien écrire.
 
     Authentification :
-      - GitLab : jeton dans $env:GITLAB_TOKEN (jeton personnel ou de groupe, portée « api », rôle
-        Maintainer au moins sur le groupe cible). Jamais en paramètre, jamais dans un fichier.
+      - GitLab : jeton PERSONNEL de la personne qui exécute le script (portée « api », rôle Maintainer
+        au moins sur le groupe cible), dans $env:GITLAB_TOKEN pour la session uniquement ; jamais en
+        paramètre, jamais stocké (spec § 10.3).
       - SharePoint : module provisioning/modules/HNCSRD.Provisioning.psm1 s'il existe
         (Get-HNCSRDConfig, Connect-HNCSRD), sinon Connect-PnPOnline -Interactive avec -ClientId.
 
@@ -394,7 +395,7 @@ if ($MyInvocation.InvocationName -eq '.') { return }
 
 if ([string]::IsNullOrWhiteSpace($GitlabUrl)) { throw 'Préciser -GitlabUrl ou $env:GITLAB_URL.' }
 if (-not $GitlabUrl.StartsWith('https://')) { throw 'GitlabUrl doit être une URL https.' }
-if ([string]::IsNullOrWhiteSpace($env:GITLAB_TOKEN)) { throw 'Variable d''environnement GITLAB_TOKEN absente (jeton GitLab de portée api).' }
+if ([string]::IsNullOrWhiteSpace($env:GITLAB_TOKEN)) { throw 'Variable d''environnement GITLAB_TOKEN absente (jeton GitLab personnel de portée api, jamais stocké).' }
 $script:GitlabApi = $GitlabUrl.TrimEnd('/') + '/api/v4'
 $script:GitlabToken = $env:GITLAB_TOKEN
 if ($PSVersionTable.PSVersion.Major -lt 6) {

@@ -49,51 +49,91 @@ GitLab Premium ; sur GitLab Free ce sont des labels ordinaires, ce qui ne change
    groupe, rôle **Reporter**, portée **`read_api`** uniquement, expiration d'un an au plus, rotation
    inscrite au calendrier d'exploitation. Il est saisi directement dans la variable CI masquée
    `GITLAB_TOKEN` (jamais dans un fichier).
-3. **Jeton de création de projet** (script `New-GitlabProjetSujet.ps1`) : jeton personnel de la
-   personne qui lance le script, portée **`api`**, rôle Maintainer sur le groupe cible, durée courte.
-   Il est saisi dans `$env:GITLAB_TOKEN` pour la session uniquement.
+3. **Jeton de création de projet** (script `New-GitlabProjetSujet.ps1`, spec § 10.3) : jeton
+   **personnel** de la personne qui lance le script, portée **`api`**, rôle Maintainer sur le groupe
+   cible, durée courte. Il est saisi dans `$env:GITLAB_TOKEN` pour la session uniquement et **jamais
+   stocké** (ni fichier, ni variable CI, ni profil PowerShell). Le jeton de groupe `read_api` de la
+   synchronisation ne permet pas de créer un projet.
 4. Créer un projet d'outillage (ex. `hncs-rd/outillage-suivi-rd`) contenant une copie du dossier
    `gitlab/` de ce dépôt (même arborescence) et `ci/.gitlab-ci.yml` placé à sa racine sous le nom
    `.gitlab-ci.yml`. Protéger la branche `main`.
 
-### 2. Application Entra (`Sites.Selected`)
+### 2. Application Entra (permissions « Selected », spec § 10.3 et H-31)
 
 1. *Entra ID > Inscriptions d'applications > Nouvelle inscription* : « HNCS-RD GitLab Sync », comptes
    de ce tenant uniquement, sans URI de redirection.
-2. *Autorisations d'API > Microsoft Graph > Autorisations d'application* : **`Sites.Selected`**, puis
-   **consentement administrateur**. Aucune autre permission (ni `Sites.ReadWrite.All`).
-3. Octroyer le droit **`write`** sur le **seul** site HNCS-RD (opération d'un administrateur disposant
-   de `Sites.FullControl.All`, par ex. depuis Graph Explorer) :
+2. Choisir **une** des deux permissions d'application Microsoft Graph ci-dessous, puis donner le
+   **consentement administrateur**. Aucune autre permission (ni `Sites.Read.All`, ni
+   `Sites.ReadWrite.All`). Les octrois sont faits par un administrateur disposant de
+   `Sites.FullControl.All` (par ex. depuis Graph Explorer), qui relève d'abord les identifiants :
 
    ```http
    GET https://graph.microsoft.com/v1.0/sites/<tenant>.sharepoint.com:/sites/HNCS-RD?$select=id
-
-   POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
-   Content-Type: application/json
-
-   {
-     "roles": ["write"],
-     "grantedToIdentities": [
-       { "application": { "id": "<client-id>", "displayName": "HNCS-RD GitLab Sync" } }
-     ]
-   }
+   GET https://graph.microsoft.com/v1.0/sites/{site-id}/lists?$select=id,name,displayName
    ```
 
-   Équivalent PnP.PowerShell (connecté au centre d'administration) :
-   `Grant-PnPAzureADAppSitePermission -AppId <client-id> -DisplayName "HNCS-RD GitLab Sync" -Site <url du site> -Permissions Write`.
-   Vérification : `GET /sites/{site-id}/permissions`.
-4. Informations d'identification, au choix :
-   - **identité fédérée GitLab OIDC (recommandée, sans secret)** : *Certificats et secrets >
-     Informations d'identification fédérées > Autre émetteur* — émetteur = URL de l'instance GitLab,
-     sujet = `project_path:hncs-rd/outillage-suivi-rd:ref_type:branch:ref:main`, audience
-     `api://AzureADTokenExchange` ; décommenter le bloc `id_tokens` du job `synchro-gitlab-sharepoint`,
-     qui fournit `HNCS_CLIENT_ASSERTION` ;
-   - **secret client** : durée de 6 à 12 mois, saisi dans la variable CI masquée `HNCS_CLIENT_SECRET`,
-     rotation planifiée.
+#### Option recommandée : `Lists.SelectedOperations.Selected` (accès limité à trois listes)
 
-   Un certificat n'est pas utilisable directement : signer l'assertion JWT exige une bibliothèque
-   cryptographique hors de la bibliothèque standard. Une assertion produite par un outil externe peut
-   être fournie dans `HNCS_CLIENT_ASSERTION`.
+L'application n'accède qu'aux listes octroyées : **`GitlabSync` en écriture**, **`SujetsRD` et
+`Livrables` en lecture**. Elle ne voit ni le reste du site (CV compris), ni la liste de ses listes.
+
+```http
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/lists/{id-GitlabSync}/permissions
+Content-Type: application/json
+
+{ "roles": ["write"], "grantedTo": { "application": { "id": "<client-id>" } } }
+```
+
+Même requête avec `"roles": ["read"]` sur `{id-SujetsRD}` puis sur `{id-Livrables}`. Vérification :
+`GET /sites/{site-id}/lists/{list-id}/permissions`. Selon l'état de déploiement dans le tenant, ces
+points d'accès peuvent n'exister qu'en `beta` : vérifier la documentation Microsoft Graph le jour de la
+mise en place.
+
+Comme l'application ne peut ni résoudre le site ni énumérer ses listes, renseigner les variables CI
+**`HNCS_SITE_ID`**, **`HNCS_LISTE_ID_SUJETSRD`**, **`HNCS_LISTE_ID_LIVRABLES`** et
+**`HNCS_LISTE_ID_GITLABSYNC`** (identifiants relevés ci-dessus, non secrets). Le script n'émet alors
+aucune requête de niveau site ; sans elles, il s'arrête avec le code 2 et un message explicite.
+
+#### Option de repli : `Sites.Selected` en écriture sur le site (risque accepté, H-31)
+
+À n'utiliser que si `Lists.SelectedOperations.Selected` n'est pas disponible dans le tenant. Le droit
+`write` porte sur **tout** le site HNCS-RD, y compris les listes et bibliothèques de recrutement : la
+restriction à `GitlabSync` (et à la lecture de `SujetsRD` / `Livrables`) n'est garantie **que par le
+code** de la synchronisation, revu et testé (aucune écriture hors `GitlabSync`). Ce risque doit être
+accepté explicitement par la DSI et la Direction R&D (H-31, à confirmer) ; la mesure compensatoire est
+la protection des informations d'identification (identité fédérée de préférence, variables protégées).
+À défaut d'acceptation, la synchronisation (lot 5, facultative) reste désactivée.
+
+```http
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+Content-Type: application/json
+
+{
+  "roles": ["write"],
+  "grantedToIdentities": [
+    { "application": { "id": "<client-id>", "displayName": "HNCS-RD GitLab Sync" } }
+  ]
+}
+```
+
+Équivalent PnP.PowerShell (connecté au centre d'administration) :
+`Grant-PnPAzureADAppSitePermission -AppId <client-id> -DisplayName "HNCS-RD GitLab Sync" -Site <url du site> -Permissions Write`.
+Vérification : `GET /sites/{site-id}/permissions`. Les variables `HNCS_SITE_ID` et `HNCS_LISTE_ID_*`
+sont alors facultatives (résolution automatique).
+
+#### Informations d'identification
+
+- **Identité fédérée GitLab OIDC (recommandée, aucun secret)** : *Certificats et secrets >
+  Informations d'identification fédérées > Autre émetteur* — émetteur = URL de l'instance GitLab,
+  sujet = `project_path:hncs-rd/outillage-suivi-rd:ref_type:branch:ref:main`, audience
+  `api://AzureADTokenExchange` ; décommenter le bloc `id_tokens` du job `synchro-gitlab-sharepoint`,
+  qui fournit `HNCS_CLIENT_ASSERTION`, et ne pas définir `HNCS_CLIENT_SECRET` (prioritaire s'il existe).
+- **Secret client** (à défaut) : durée de 6 à 12 mois, saisi dans la variable CI masquée et protégée
+  `HNCS_CLIENT_SECRET`, rotation planifiée.
+
+Un certificat n'est pas utilisable directement : signer l'assertion JWT exige une bibliothèque
+cryptographique hors de la bibliothèque standard. Une assertion produite par un outil externe peut
+être fournie dans `HNCS_CLIENT_ASSERTION`.
 
 ### 3. Variables CI/CD du projet d'outillage
 
@@ -107,6 +147,8 @@ Toutes **protégées** (branche `main` uniquement) ; les secrets **masqués**.
 | `HNCS_CLIENT_ID` | identifiant de l'application Entra | Non |
 | `HNCS_CLIENT_SECRET` | secret de l'application (sauf identité fédérée) | **Oui** |
 | `HNCS_SITE_URL` | `https://<tenant>.sharepoint.com/sites/HNCS-RD` | Non |
+| `HNCS_SITE_ID` | identifiant Graph du site (obligatoire avec `Lists.SelectedOperations.Selected`) | Non |
+| `HNCS_LISTE_ID_SUJETSRD`, `HNCS_LISTE_ID_LIVRABLES`, `HNCS_LISTE_ID_GITLABSYNC` | identifiants Graph des listes (idem) | Non |
 
 Facultatives : `HNCS_GRAPH_URL`, `HNCS_LOGIN_URL` (clouds souverains uniquement).
 
@@ -169,7 +211,8 @@ Incidents courants :
 | Symptôme | Cause probable | Action |
 | --- | --- | --- |
 | Code 2, `invalid_client` / `AADSTS…` | secret expiré, mauvaise application, identité fédérée mal déclarée | renouveler le secret ou corriger l'identifiant fédéré |
-| Code 2, HTTP 403 sur le site | droit `Sites.Selected` non octroyé sur le site | refaire l'étape « Octroyer le droit write » |
+| Code 2, « accès refusé au niveau du site » | `Lists.SelectedOperations.Selected` sans `HNCS_SITE_ID` / `HNCS_LISTE_ID_*` | renseigner les quatre identifiants |
+| Code 2 ou 1, HTTP 403 sur une liste | octroi manquant sur la liste (ou sur le site en repli `Sites.Selected`) | refaire l'octroi de l'étape 2 |
 | Code 1, HTTP 404 sur un projet | `GitlabProjetId` erroné, projet supprimé, jeton sans accès au sous-groupe | corriger le sujet ou les droits du jeton |
 | Code 1, HTTP 401 GitLab | jeton expiré ou révoqué | régénérer le jeton de groupe, mettre à jour `GITLAB_TOKEN` |
 | Avertissement « livrable introuvable » | identifiant mal saisi dans le titre du jalon | corriger le titre du jalon dans GitLab |
@@ -219,7 +262,9 @@ sortie, sans aucun accès réseau.
 - Jalons de **projet** uniquement (les jalons de groupe ne sont pas lus).
 - Comptage des issues par `issues_statistics` (filtre sur le **titre** du jalon) : renommer un jalon
   est sans effet sur la clé (`milestoneId`), mais deux jalons de même titre seraient confondus.
-- Pas de suppression des lignes orphelines ; pas de mise à jour de `DateSynchro` sans changement.
+- Pas de suppression des lignes orphelines ; pas de mise à jour de `DateSynchro` sans changement
+  (`DateSynchro` = date de la dernière écriture de la ligne, spec § 4).
+- En repli `Sites.Selected`, la limitation à `GitlabSync` repose sur le code (H-31).
 - Un livrable doit avoir un `IdHNCS` (attribué par PA-00D) pour recevoir un jalon.
 - Le script de création ne crée ni groupe ni sous-groupe, et ne modifie jamais un jalon existant.
 - Validé hors ligne uniquement : appels Graph et GitLab à recetter sur un vrai tenant et une vraie instance.
