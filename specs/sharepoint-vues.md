@@ -10,6 +10,7 @@
 - **Tri** : `Colonne asc` ou `Colonne desc`, plusieurs séparés par `, `.
 - **Regroupement** : une colonne ou `—`.
 - Une seule vue « Par défaut » = `Oui` par liste. Toutes les vues sont publiques ; limite de 30 éléments par page sauf mention.
+- Rendu : dans une liste, `Title` est affiché sous la forme du titre cliquable (`LinkTitle`) ; une vue qui ne cite pas `Title` reçoit `LinkTitle` en première position, afin que chaque ligne ouvre l'élément. Dans une bibliothèque, les colonnes `DocIcon` et `LinkFilename` (nom de fichier cliquable) sont toujours ajoutées en tête. Les regroupements sont dépliés (`Collapse` = FALSE).
 
 ### VUES: Offres
 

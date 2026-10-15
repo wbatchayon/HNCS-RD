@@ -1,7 +1,7 @@
 # Sous-spécification — Référentiels initiaux
 
 > Alignée sur `spec.md` (qui prévaut). Lue par `tools/spec_extract.py` et injectée par le provisioning (étape « référentiels »).
-> Toutes les valeurs ci-dessous sont des **propositions** à valider (spec § 13, H-22 à H-24). Le provisioning ne les écrase **jamais** si la clé existe déjà (idempotence : une valeur modifiée par la Direction R&D est conservée).
+> Toutes les valeurs ci-dessous sont des **propositions** à valider (spec § 13, H-22 à H-24). Le provisioning n'écrase **jamais** une valeur non vide d'une clé existante (idempotence : une valeur modifiée par la Direction R&D est conservée) ; il complète en revanche une valeur **vide** lorsque la configuration la fournit (ex. `Lien.RapportPowerBI` renseigné après le lot 4).
 
 ## Paramètres
 
@@ -102,15 +102,15 @@ Entrées créées au statut « Brouillon » : les fichiers sont à produire et a
 
 ### SEED: RegistreModeles
 
-| IdHNCS | Title | TypeModele | TypeLivrableCible | Version | ApplicableA | CreationAuto | DelaiStandardJours | Statut |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| MOD-2026-0001 | Fiche de cadrage de sujet | Cadrage de sujet | Fiche de cadrage | 0.1 | POC / démonstrateur;Plan de stratégie;Communication;Partenariat / talents;Autre | Oui | 10 | Brouillon |
-| MOD-2026-0002 | Rapport d'avancement | Rapport d'avancement | Autre | 0.1 |  | Non |  | Brouillon |
-| MOD-2026-0003 | Fiche POC | Fiche POC | POC / démonstrateur | 0.1 | POC / démonstrateur | Oui | 90 | Brouillon |
-| MOD-2026-0004 | Plan de stratégie | Plan de stratégie | Plan de stratégie | 0.1 | Plan de stratégie | Oui | 90 | Brouillon |
-| MOD-2026-0005 | Fiche méthodologie | Fiche méthodologie | Fiche méthodologie | 0.1 | POC / démonstrateur;Plan de stratégie | Oui | 100 | Brouillon |
-| MOD-2026-0006 | Support de restitution | Restitution | Restitution | 0.1 | POC / démonstrateur;Plan de stratégie | Oui | 110 | Brouillon |
-| MOD-2026-0007 | Grille de revue de livrable | Revue de livrable | Autre | 0.1 |  | Non |  | Brouillon |
-| MOD-2026-0008 | Bilan de clôture d'alternance | Clôture d'alternance | Autre | 0.1 |  | Non |  | Brouillon |
+| IdHNCS | Title | TypeModele | TypeLivrableCible | Version | ApplicableA | CreationAuto | DelaiStandardJours | Proprietaire | Statut |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MOD-2026-0001 | Fiche de cadrage de sujet | Cadrage de sujet | Fiche de cadrage | 0.1 | POC / démonstrateur;Plan de stratégie;Communication;Partenariat / talents;Autre | Oui | 10 | `<EmailDirectionRD>` | Brouillon |
+| MOD-2026-0002 | Rapport d'avancement | Rapport d'avancement | Autre | 0.1 |  | Non |  | `<EmailDirectionRD>` | Brouillon |
+| MOD-2026-0003 | Fiche POC | Fiche POC | POC / démonstrateur | 0.1 | POC / démonstrateur | Oui | 90 | `<EmailDirectionRD>` | Brouillon |
+| MOD-2026-0004 | Plan de stratégie | Plan de stratégie | Plan de stratégie | 0.1 | Plan de stratégie | Oui | 90 | `<EmailDirectionRD>` | Brouillon |
+| MOD-2026-0005 | Fiche méthodologie | Fiche méthodologie | Fiche méthodologie | 0.1 | POC / démonstrateur;Plan de stratégie | Oui | 100 | `<EmailDirectionRD>` | Brouillon |
+| MOD-2026-0006 | Support de restitution | Restitution | Restitution | 0.1 | POC / démonstrateur;Plan de stratégie | Oui | 110 | `<EmailDirectionRD>` | Brouillon |
+| MOD-2026-0007 | Grille de revue de livrable | Revue de livrable | Autre | 0.1 |  | Non |  | `<EmailDirectionRD>` | Brouillon |
+| MOD-2026-0008 | Bilan de clôture d'alternance | Clôture d'alternance | Autre | 0.1 |  | Non |  | `<EmailDirectionRD>` | Brouillon |
 
-Le `Proprietaire` des modèles est la personne `<EmailDirectionRD>` au déploiement, à réattribuer.
+Le `Proprietaire` des modèles est la personne `<EmailDirectionRD>` (marqueur résolu au déploiement), à réattribuer ensuite.

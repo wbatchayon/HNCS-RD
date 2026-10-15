@@ -193,7 +193,7 @@ def parse_lists(lines):
             "initialStatus": props.get("Statut initial"),
             "personalData": props.get("Données personnelles") == "Oui",
             "titleLabel": props.get("Libellé Title"),
-            "titleRequired": props.get("Title obligatoire", "Oui") == "Oui",
+            "titleRequired": props.get("Title obligatoire", "Oui" if kind == "list" else "Non") == "Oui",
             "validation": props.get("Validation"),
             "validationMessage": props.get("Message de validation"),
             "versioning": props.get("Versioning"),
@@ -213,7 +213,7 @@ def parse_lists(lines):
         implicit = []
         if obj["prefix"]:
             implicit.append({"name": "IdHNCS", "label": "Identifiant HNCS", "type": "Text", "required": False,
-                             "indexed": True, "unique": True, "flux": True})
+                             "indexed": True, "unique": False, "flux": True})
         if obj["statusEnum"]:
             implicit += [
                 {"name": "Statut", "label": "Statut", "type": "Choice", "required": True,

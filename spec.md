@@ -2,7 +2,7 @@
 
 | Propriété | Valeur |
 | --- | --- |
-| Version de la spec | 1.1.0 |
+| Version de la spec | 1.2.0 |
 | Date | 2026-10-14 |
 | Statut | Lot 0 — à valider en atelier (voir § 13) ; v1.1.0 intègre la revue de conformité RC-01 à RC-39 et les retours des agents (§ 14.3) |
 | Sources fonctionnelles | `Processus.md` ; `Cadrage_Fonctionnel_Automatisation_R&D_HNCS.docx` (v0.1) ; schéma « Architecture cible — Système de suivi R&D HNCS » |
@@ -75,10 +75,10 @@ flowchart LR
 | --- | --- | --- |
 | Site | Site d'équipe **sans** groupe Microsoft 365 (modèle `STS#3`), langue française (1036), fuseau Paris | `https://<tenant>.sharepoint.com/sites/HNCS-RD`, titre « HNCS-R&D » |
 | Équipe Teams | Équipe « HNCS R&D » distincte du site de référence (canaux Général, Comité R&D, Alternants), créée par le provisioning si demandé ; ses fichiers ne sont pas la référence (H-44) | Onglet vers le site HNCS-R&D |
-| Liste / bibliothèque (nom interne = URL) | PascalCase ASCII, sans accent ni espace | `Candidatures`, `LivrablesRD` |
+| Liste / bibliothèque (nom interne = URL) | PascalCase ASCII, sans accent ni espace ; URL `<site>/Lists/<NomInterne>` pour une liste, `<site>/<NomInterne>` pour une bibliothèque | `Candidatures`, `LivrablesRD` |
 | Titre affiché | Français accentué | « Candidatures », « 04 — Livrables R&D » |
 | Colonne (nom interne) | PascalCase ASCII, sans accent, ≤ 32 caractères, jamais renommée après création | `DateTransmissionAdmin` |
-| Identifiant métier | Colonne `IdHNCS`, format `{PREFIXE}-{AAAA}-{NNNN}` (AAAA = année de création, NNNN = ID SharePoint sur 4 chiffres minimum) ; exception `Poles` : `POL-{CodePole}` | `CAND-2026-0042`, `POL-P1` |
+| Identifiant métier | Colonne `IdHNCS` (indexée, **sans** contrainte d'unicité SharePoint : l'unicité est garantie par construction à partir de l'ID SharePoint et vérifiée par `tests/offline` et `Test-HNCSRDDeploiement.ps1`), format `{PREFIXE}-{AAAA}-{NNNN}` (AAAA = année de création, NNNN = ID SharePoint sur 4 chiffres minimum) ; exception `Poles` : `POL-{CodePole}` | `CAND-2026-0042`, `POL-P1` |
 | Colonnes de recherche (lookup) | Affichent toujours `IdHNCS` de la cible (jamais un nom de personne) | `Candidature` → `CAND-2026-0042` |
 | Groupes SharePoint | `HNCS-RD-<Rôle>` sans accent ni `&` | `HNCS-RD-Administration` |
 | Flux | `HNCS-RD PA-xx[lettre] — <Libellé>` | `HNCS-RD PA-01b — Candidature reçue par la boîte R&D` |
@@ -95,7 +95,7 @@ flowchart LR
 
 | Condition | Colonne | Type | Paramètres | Rôle |
 | --- | --- | --- | --- | --- |
-| La liste a un « Préfixe ID » différent de `—` | `IdHNCS` | Text | indexed; unique; flux | Identifiant métier stable |
+| La liste a un « Préfixe ID » différent de `—` | `IdHNCS` | Text | indexed; flux | Identifiant métier stable (pas de contrainte `unique` : plusieurs éléments peuvent être sans identifiant entre leur création et le passage de PA-00D) |
 | La liste a une « Énumération de statut » | `Statut` | Choice | enum=<énumération>; default=<statut initial>; indexed | Statut courant |
 | idem | `StatutPrecedent` | Text | hidden; flux | Dernier statut **validé** (sert à détecter et, si besoin, annuler une transition) |
 | idem | `DateStatut` | DateTime | flux | Date du dernier changement validé |
@@ -109,9 +109,10 @@ Les colonnes système SharePoint (`ID`, `Created`, `Modified`, `Author`, `Editor
   - `flux` : renseignée uniquement par les flux (lecture seule par convention, affichée en lecture dans les vues) ;
   - `perso` : donnée personnelle — **jamais** importée dans Power BI ni affichée hors des groupes habilités ;
   - `confidentiel` : contenu d'évaluation ou commentaire restreint — même règle que `perso` ;
-  - `appendonly` : colonne `Note` en mode « ajout uniquement » (`AppendOnly`, historique des commentaires conservé grâce au versioning).
+  - `appendonly` : colonne `Note` en mode « ajout uniquement » (`AppendOnly`, historique des commentaires conservé grâce au versioning) ;
+  - `hidden` : colonne masquée des formulaires (nouveau, modification, affichage : `ShowInNewForm`/`ShowInEditForm`/`ShowInDisplayForm` = FALSE) mais **visible** du connecteur Power Automate, de l'API REST et des vues ; ce n'est pas l'attribut SharePoint `Hidden`.
 - La ligne `Title` d'un tableau redéfinit le libellé (et l'obligation) de la colonne Titre native.
-- Les **règles de validation de liste** (propriété `Validation`) utilisent la syntaxe invariante SharePoint (noms de fonctions anglais, séparateur `,`). Elles ne peuvent référencer ni colonnes `Note`, `URL`, `Lookup`, `LookupMulti`, `User`, `UserMulti` ni `MultiChoice` : ces contrôles sont faits par les flux (§ 6.6).
+- Les **règles de validation de liste** (propriété `Validation`) utilisent la syntaxe invariante SharePoint (noms de fonctions anglais, séparateur `,`). Elles sont écrites avec les **noms internes** des colonnes ; le provisionnement les traduit en noms affichés au déploiement (SharePoint résout les noms affichés). Elles ne peuvent référencer ni colonnes `Note`, `URL`, `Lookup`, `LookupMulti`, `User`, `UserMulti` ni `MultiChoice` : ces contrôles sont faits par les flux (§ 6.6).
 - Dans les filtres OData des flux, une apostrophe dans une valeur est doublée (`'En cours d''analyse'`).
 
 ---
@@ -1041,7 +1042,7 @@ Règle : une colonne `Lookup` ne peut cibler qu'une liste d'un lot inférieur ou
 
 ## 5. Bibliothèques documentaires
 
-Toutes les bibliothèques ont le versioning activé. Les dossiers sont nommés par `IdHNCS`. Les permissions uniques sont posées **au niveau dossier** par les flux (jamais au niveau fichier), afin de limiter les permissions uniques (cadrage § 5.2).
+Toutes les bibliothèques ont le versioning activé. La colonne Titre des documents reste facultative et n'est pas modifiée par le provisionnement. Les dossiers sont nommés par `IdHNCS`. Les permissions uniques sont posées **au niveau dossier** par les flux (jamais au niveau fichier), afin de limiter les permissions uniques (cadrage § 5.2).
 
 ### LIB: Recrutement
 
@@ -1414,7 +1415,7 @@ Les niveaux natifs sont référencés par leur **type** (`RoleTypeKind`) et non 
 | IL(x) | Accès au niveau élément ou dossier | Héritage rompu par un flux sur l'élément ou le dossier concerné, niveau `x` accordé à la personne ou au groupe concerné uniquement |
 | R+IL(x) | Lecture de la liste et écriture ciblée | `R` au niveau de la liste pour tout le groupe, plus `x` sur les seuls éléments dont la personne est responsable (§ 7.4) |
 
-L'héritage est rompu **sur toutes les listes et bibliothèques** (sans copie des attributions) ; seules les attributions ci-dessous existent. Au niveau du site, tous les groupes ont `R` (accès à la page d'accueil) sauf G_PROP (`FC`) ; aucune liste n'hérite du site.
+L'héritage est rompu **sur toutes les listes et bibliothèques du modèle** (sans copie des attributions) ; seules les attributions ci-dessous existent. Au niveau du site, tous les groupes ont `R` (accès à la page d'accueil) sauf G_PROP (`FC`) ; aucune liste du modèle n'hérite du site. Les listes et bibliothèques **système** du modèle de site (« Documents », « Pages du site », etc.) héritent du site (lecture pour tous les groupes) et ne doivent contenir **aucune donnée métier** ; les groupes SharePoint créés par défaut avec le site restent vides et sans attribution.
 
 ### 7.3 Matrice d'accès
 
@@ -2153,7 +2154,7 @@ Les serveurs et environnements de démonstration (Proxmox, OVH) sont référenc�
 | 4 — Power BI | Liste `Mobilisations` ; `powerbi/` (PBIP, TMDL, PBIR, RLS/OLS, déploiement) | Vue exécutive et pages opérationnelles | Réconciliation des indicateurs avec SharePoint (`tests/e2e/reconciliation`) et validation des droits |
 | 5 — Stabilisation | `GitlabSync`, `gitlab/sync`, `gitlab/ci` ; PA-13 ; `docs/exploitation.md` ; backlog | Service maintenable et évolutif | Responsables, procédure de support et backlog établis |
 
-Le script de déploiement accepte `-Lot <n>` et déploie **cumulativement** tous les objets des lots ≤ n.
+Le script de déploiement accepte `-Lot <n>` et déploie **cumulativement** tous les objets des lots ≤ n ; `-Lot 0` contrôle seulement le modèle et la configuration. La liste `TransitionsStatuts` est toujours synchronisée **en entier**, quel que soit le lot (les lignes d'objets non encore déployés sont inertes). Les éléments de référentiel injectés reçoivent `StatutPrecedent` = `Statut` et `DateStatut` = date du déploiement. La navigation regroupe les listes par domaine (A à D), puis « Bibliothèques », puis « Technique ».
 
 ---
 
@@ -2275,4 +2276,5 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | Version | Date | Auteur | Modification |
 | --- | --- | --- | --- |
 | 1.0.0 | 2026-10-14 | Équipe projet | Première version complète (lot 0) |
+| 1.2.0 | 2026-10-15 | Équipe projet | Retours du provisionnement : `IdHNCS` sans contrainte d'unicité SharePoint, définition de `hidden`, noms internes dans les validations, titre des documents facultatif, listes système et groupes par défaut, liens dans les vues, paramètres vides complétés, propriétaire des modèles initiaux, conventions d'URL et de lot 0 |
 | 1.1.0 | 2026-10-15 | Équipe projet | Revue de conformité RC-01 à RC-39 (contrôle `G_VALIDEUR_LEGITIME`, champs protégés P-09, transitions des sujets et PA-14, décision de partenariat avant signature, création d'alternant contrôlée, référent principal dérivé, matrice d'accès resserrée, RACI et escalade, scénarios de recette, H-31 à H-52) ; retours des agents GitLab (G1–G10) et Power BI (D-01–D-13) ; flux PA-00F |
