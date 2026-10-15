@@ -60,6 +60,7 @@ FOLDERS = {
     "Communications et valorisation": "Communications",
     "Actions et qualité des données": "Qualité",
     "Objectifs indicatifs (cadrage § 2.4)": "Objectifs",
+    "Technique": "Technique",  # spec v1.3.0 (E-01)
 }
 
 # Corrections de la spec (signalées dans README.md § Divergences). Spec v1.1.0 : aucune
@@ -69,8 +70,8 @@ MEASURE_OVERRIDES: dict[str, str] = {}
 # Mesures techniques hors spec : aucune depuis la v1.1.0.
 EXTRA_MEASURES: list[tuple[str, str, str, str]] = []
 
-# Dossier d'affichage imposé : la spec range [Dernière actualisation] dans la section « Objectifs ».
-FOLDER_OVERRIDES = {"Dernière actualisation": "Technique"}
+# Dossier d'affichage imposé par mesure (aucun depuis la v1.3.0).
+FOLDER_OVERRIDES: dict[str, str] = {}  # v1.3.0 : section « Technique » dans la spec (E-01)
 
 # Format des mesures non numériques.
 FORMAT_OVERRIDES = {"Dernière actualisation": "dd/MM/yyyy HH:mm"}

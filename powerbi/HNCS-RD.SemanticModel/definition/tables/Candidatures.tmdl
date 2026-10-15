@@ -143,6 +143,14 @@ table Candidatures
 
 		annotation SummarizationSetBy = Automatic
 
+	column DoublonVerifie
+		dataType: boolean
+		lineageTag: a8b18efa-633b-5d06-93d2-1bd6de9b12af
+		summarizeBy: none
+		sourceColumn: DoublonVerifie
+
+		annotation SummarizationSetBy = Automatic
+
 	column Statut
 		dataType: string
 		lineageTag: e34c7569-ade2-59fa-a455-7b0ee97e54cc
@@ -213,9 +221,9 @@ table Candidatures
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Candidatures", {"Id", "IdHNCS", "Canal", "ModeReception", "DateReception", "OffreId", "TypeContratVise", "EtablissementId", "PolePressentiId", "DateDecisionPreselection", "DateTransmissionAdmin", "DateDecisionFinale", "DateIntegration", "DateCloture", "MotifCode", "DoublonPotentiel", "Statut", "DateStatut"}, {}, false),
-					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Canal", "text"}, {"ModeReception", "text"}, {"DateReception", "datetime"}, {"OffreId", "int"}, {"TypeContratVise", "text"}, {"EtablissementId", "int"}, {"PolePressentiId", "int"}, {"DateDecisionPreselection", "datetime"}, {"DateTransmissionAdmin", "datetime"}, {"DateDecisionFinale", "datetime"}, {"DateIntegration", "datetime"}, {"DateCloture", "datetime"}, {"MotifCode", "text"}, {"DoublonPotentiel", "bool"}, {"Statut", "text"}, {"DateStatut", "datetime"}}),
-					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Canal", "ModeReception", "DateReception", "OffreId", "TypeContratVise", "EtablissementId", "PolePressentiId", "DateDecisionPreselection", "DateTransmissionAdmin", "DateDecisionFinale", "DateIntegration", "DateCloture", "MotifCode", "DoublonPotentiel", "Statut", "DateStatut"})
+					Source = fnLireListeSharePoint("Candidatures", {"Id", "IdHNCS", "Canal", "ModeReception", "DateReception", "OffreId", "TypeContratVise", "EtablissementId", "PolePressentiId", "DateDecisionPreselection", "DateTransmissionAdmin", "DateDecisionFinale", "DateIntegration", "DateCloture", "MotifCode", "DoublonPotentiel", "DoublonVerifie", "Statut", "DateStatut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Canal", "text"}, {"ModeReception", "text"}, {"DateReception", "datetime"}, {"OffreId", "int"}, {"TypeContratVise", "text"}, {"EtablissementId", "int"}, {"PolePressentiId", "int"}, {"DateDecisionPreselection", "datetime"}, {"DateTransmissionAdmin", "datetime"}, {"DateDecisionFinale", "datetime"}, {"DateIntegration", "datetime"}, {"DateCloture", "datetime"}, {"MotifCode", "text"}, {"DoublonPotentiel", "bool"}, {"DoublonVerifie", "bool"}, {"Statut", "text"}, {"DateStatut", "datetime"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Canal", "ModeReception", "DateReception", "OffreId", "TypeContratVise", "EtablissementId", "PolePressentiId", "DateDecisionPreselection", "DateTransmissionAdmin", "DateDecisionFinale", "DateIntegration", "DateCloture", "MotifCode", "DoublonPotentiel", "DoublonVerifie", "Statut", "DateStatut"})
 				in
 					Resultat
 

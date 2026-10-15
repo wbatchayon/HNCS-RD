@@ -80,7 +80,7 @@ table Mesures
 		displayFolder: Recrutement
 		lineageTag: ef828a17-3f74-5a18-8533-a22fd9145aab
 
-	measure 'Doublons signalés' = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE () )
+	measure 'Doublons signalés' = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE (), Candidatures[DoublonVerifie] = FALSE () )
 		formatString: #,##0
 		displayFolder: Recrutement
 		lineageTag: 3237f7f7-ede2-59ca-add2-9d70090e4b07

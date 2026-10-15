@@ -1,7 +1,7 @@
 # Power BI — HNCS-RD (lot 4)
 
 Projet Power BI du système de suivi R&D, au format **PBIP** : modèle sémantique en **TMDL**, rapport au format
-**PBIR**. Il met en œuvre `spec.md` § 9 (v1.2.0, qui prévaut) et `specs/powerbi-rapport.md`. Reporting **en lecture
+**PBIR**. Il met en œuvre `spec.md` § 9 (v1.3.0, qui prévaut) et `specs/powerbi-rapport.md`. Reporting **en lecture
 seule** : aucune réécriture vers SharePoint.
 
 ## 1. Structure
@@ -118,8 +118,7 @@ modification faite dans Desktop puis enregistrée doit être reportée dans le g
 - Relations : exactement `PBI_RELATIONS` (plusieurs-à-un, filtrage simple, inactives activables par
   `USERELATIONSHIP`).
 - Mesures : les 60 mesures de § 9.5, noms et DAX identiques, rangées en dossiers Recrutement / Effectifs / Livrables /
-  Comptes rendus / Écoles / Communications / Qualité / Objectifs ; `[Dernière actualisation]` est rangée dans le
-  dossier « Technique ». Détail : `MESURES.md`.
+  Comptes rendus / Écoles / Communications / Qualité / Objectifs / Technique (sections de § 9.5). Détail : `MESURES.md`.
 - Mesures implicites désactivées (`discourageImplicitMeasures`) ; date/heure automatique désactivée.
 
 **Portée du filtre `Calendrier`** (relations actives) : candidatures par `DateReceptionJour`, livrables et comptes
@@ -149,6 +148,27 @@ la période sélectionnée). Les relations communications → livrable source et
 - `NomAffichage` n'est utilisé par aucun visuel : l'OLS est une défense en profondeur, et aucun visuel n'est en erreur
   pour la Direction. Les tableaux identifient les alternants par leur `IdHNCS`.
 - La RLS `Referent` compare `USERPRINCIPALNAME ()` à l'adresse `EMail` du compte SharePoint (UPN = adresse, H-47).
+
+### 5.1 Pages par public : audiences de l'application Power BI
+
+La RLS et l'OLS protègent les **données**, pas les **pages** : un membre d'un rôle voit toutes les pages du
+rapport (avec des données filtrées). La restriction des pages par public se fait par les **audiences de
+l'application Power BI** publiée depuis l'espace « HNCS-R&D Pilotage » (spec § 9.7) :
+
+| Audience (= rôle) | Pages visibles |
+| --- | --- |
+| Direction | 1 Vue exécutive, 3 Effectifs et encadrement, 4 Projets et livrables, 5 Établissements et partenariats, 6 Communications et valorisation |
+| Administration | 2 Recrutement, 3 Effectifs et encadrement, 5 Établissements et partenariats |
+| RelationEcoles | 3 Effectifs et encadrement, 5 Établissements et partenariats |
+| Referent | 3 Effectifs et encadrement, 4 Projets et livrables, 7 Comité R&D |
+| PilotageRD | toutes (1 à 8) |
+
+Mise en place (manuelle, après publication) : *Espace de travail > Créer une application > Audience* : une audience
+par public ci-dessus, pages masquées / affichées en conséquence, accès donné aux mêmes groupes Entra que le rôle RLS
+correspondant. Chaque membre d'une audience doit aussi être affecté au rôle de même nom (§ 5) ; une personne relève
+d'une seule audience et d'un seul rôle. Les audiences ne sont pas une mesure de sécurité : la sécurité reste la
+RLS / OLS. Les liens `LienDocument` (page 4) sont visibles de la Direction, qui a la lecture sur « 04 — Livrables R&D »
+(travaux sans donnée personnelle, spec § 9.7).
 
 ## 6. Rapport
 
@@ -201,7 +221,8 @@ Ouvrir le PBIP dans Desktop (§ 2), actualiser, *Fichier > Publier* vers « HNCS
    en cas d'échec — si `-ConfigurerPlanification` n'a pas pu l'appliquer (identifiants absents).
 3. **Rôles** : affecter les groupes Entra / personnes à `Direction`, `PilotageRD`, `Administration`,
    `RelationEcoles`, `Referent` (H-16) — une personne dans un seul rôle.
-4. **Accès** : publics en Lecteur ; lien du rapport dans le paramètre `Lien.RapportPowerBI` (synthèses PA-11).
+4. **Application et audiences** : publier l'application de l'espace avec les audiences du § 5.1 ; lien de
+   l'application dans le paramètre `Lien.RapportPowerBI` (synthèses PA-11).
 
 ## 8. Actualisation
 
@@ -232,7 +253,7 @@ apostrophe est doublée (`'Établissement d''accueil'`) et un booléen vaut `1` 
 | Entretiens à venir | Entretiens | `Statut eq 'Planifié' and DateHeure ge datetime'<maintenant UTC>'` | Entretiens à venir |
 | Candidatures retenues | Candidatures | `Statut eq 'Retenue' or Statut eq 'Formalités en cours' or Statut eq 'Intégrée'` | — |
 | Candidatures intégrées | Candidatures | `Statut eq 'Intégrée'` | — |
-| Doublons signalés | Candidatures | `DoublonPotentiel eq 1` | Doublons potentiels (sans les clôturées) |
+| Doublons signalés | Candidatures | `DoublonPotentiel eq 1 and DoublonVerifie ne 1` (vide = Non) | Doublons potentiels (sans les clôturées) |
 | Alternants actifs | Alternants | `Statut eq 'Actif' or Statut eq 'Fin planifiée'` | Alternants actifs (inclut À intégrer, Suspendu) |
 | Alternants accueillis | Alternants | `Statut ne 'À intégrer'` et (`DateFinReelle` vide ou ≥ `DateDebut`) | Historique des alternants |
 | Affectations actives | Affectations | `Statut eq 'Active' or Statut eq 'À risque' or Statut eq 'Bloquée'` | Affectations en cours (inclut À préparer) |
@@ -277,15 +298,12 @@ D-08 `GetList`, D-09 `DATE ( YEAR, MONTH, DAY )` et H-48, D-10 `NomAffichage` ab
 non-cumul des rôles, D-11 dénominateur du premier passage, D-12 `GitlabSync` facultative, D-13 tableau GitLab complet.
 Le projet n'a plus **aucune** surcharge de mesure ni mesure hors spec.
 
-### 10.2 Points ouverts (spec v1.2.0)
+### 10.2 Points E-01 à E-05 : intégrés en v1.3.0
 
-| ID | Section | Constat | Implémenté | Proposition |
-| --- | --- | --- | --- | --- |
-| E-01 | § 9.5 `[Dernière actualisation]` | La mesure figure dans la section « Objectifs indicatifs » du bloc MESURES | Dossier d'affichage « Technique » (DAX inchangé) | Lui donner une section `// ---------- Technique ----------` |
-| E-02 | § 9.5 `[Communications publiées]` / `specs/powerbi-rapport.md` p. 6 | La mesure ne compte que les communications **externes**, alors que le tableau « communications publiées » liste toutes les publiées | Tableau filtré sur `Statut = Publiée` avec une colonne `Externe` ; histogramme titré « Publications externes par mois » | Préciser si le tableau doit être limité aux externes |
-| E-03 | `specs/powerbi-rapport.md` p. 4 (`LienDocument`, « rôles PilotageRD et Referent ») | La page 4 est aussi destinée à la Direction, qui n'a pas d'accès SharePoint aux livrables (§ 7) ; aucune OLS ne masque `LienDocument` pour `Direction` | Colonne visible pour tous les rôles ayant accès aux livrables (liens inopérants pour la Direction) | Soit OLS `Livrables[LienDocument]` pour `Direction` et tableau déplacé sur une page hors Direction (p. 7), soit accepter l'exposition de l'URL |
-| E-04 | § 9.5 `[Taux de capitalisation]` | Numérateur : archivés ; dénominateur : validés ou archivés — un livrable validé en attente d'archivage (G_CAPITALISATION non satisfait) fait baisser le taux | Spec | Confirmer que c'est l'effet recherché (signal de capitalisation en retard) |
-| E-05 | § 9.6 Administration | La RLS sur `Candidatures` se propage aux entretiens, mais pas aux actions d'intégration (`ActionsIntegration[CandidatureId]` sans relation) | Spec | Sans effet pratique (les actions de formalités n'existent qu'après transmission) ; à mentionner |
+E-01 section « Technique » de § 9.5, E-02 tableau des communications publiées avec colonne `Externe`, E-03
+`LienDocument` visible de la Direction (accepté), E-04 taux de capitalisation (effet voulu), E-05 RLS Administration
+sans filtre des actions (documenté). v1.3.0 ajoute `Candidatures.DoublonVerifie` et le filtre correspondant de
+`[Doublons signalés]`. Aucun point ouvert côté Power BI.
 
 ## 11. Limites
 
