@@ -2,7 +2,7 @@
 
 > Public : membres de l'équipe R&D (groupe SharePoint `HNCS-RD-EquipeRD`). La Direction R&D, souvent membre de ce groupe,
 > lit aussi le guide [Direction](direction.md). Règles communes (statuts refusés, champs protégés, validations,
-> notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence : `spec.md` 1.2.0.
+> notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence : `spec.md` 1.3.0.
 
 ## 1. Votre rôle dans le processus
 
@@ -28,12 +28,13 @@ Contribution sans suppression » : vous créez et modifiez, vous ne supprimez pa
 | --- | --- |
 | Modification | Candidatures, « 01 — Recrutement » (CV), Offres, Écoles et établissements, Conventions et partenariats, Échanges avec les écoles, Alternants, Référents, Sujets R&D, Affectations, Livrables, Comptes rendus de suivi, Actions d'intégration et checklists, Bilans d'alternance, Communications R&D, Ressources techniques, Mobilisations commerciales, « 04 — Livrables R&D » |
 | Lecture seule | Pôles R&D, Registre des modèles R&D, « 03 — Modèles R&D », Modèles de checklists, Domaines cibles, Paramètres, Transitions de statuts, Historique des statuts, Synchronisation GitLab, « 05 — Suivi des alternants » (hors sous-dossiers `_Evaluations`), « 06 — Écoles et partenariats » |
-| Lecture, au cas par cas | Dans « 02 — Administration », le seul sous-dossier `Alternants/ALT-…/Operationnel` (« accès R&D limité aux besoins opérationnels ») ; dans « Entretiens », les entretiens dont vous êtes participant |
+| Lecture, au cas par cas | Dans « 02 — Administration », le seul sous-dossier `Alternants/ALT-…/Operationnel` (« accès R&D limité aux besoins opérationnels ») ; dans « Entretiens », les entretiens dont vous êtes participant, évaluation comprise (H-28) |
 | Aucun accès | Liste Entretiens (en dehors de vos participations), reste de « 02 — Administration », Journal des flux, sous-dossiers d'évaluation `_Evaluations` |
 
 **Pourquoi ces limites ?** Les CV et les données personnelles sont cloisonnés (P-04) :
 
-- la liste **Entretiens** et les grilles d'évaluation restent à l'administration : vous voyez le statut de la candidature et
+- la liste **Entretiens** et les grilles d'évaluation restent à l'administration, sauf pour les participants désignés d'un
+  entretien, qui le lisent (évaluation comprise) : vous voyez le statut de la candidature et
   recevez N-11 « Entretien réalisé », sans commentaire (H-28) ;
 - la bibliothèque **« 02 — Administration »** (contrats, pièces administratives) est réservée à l'administration ;
 - les **évaluations** d'un alternant (`05 — Suivi des alternants/ALT-…/_Evaluations`) ne sont visibles que des référents
@@ -122,7 +123,9 @@ candidature et le signale dans N-01. **Il ne fusionne et ne clôture jamais rien
 3. Si c'est un vrai doublon : sur la candidature à abandonner, posez « Clôturée » avec « Motif codifié » = Doublon et, dans
    « Commentaire de motif », l'identifiant de la candidature conservée. Si le nouveau message apporte une pièce utile (CV à
    jour), déposez-la dans le dossier de la candidature conservée.
-4. Si ce n'est pas un doublon (nouvelle demande légitime) : poursuivez normalement l'analyse des deux.
+4. Si ce n'est pas un doublon (faux positif) : cochez **« Doublon vérifié (faux positif) »** sur la candidature signalée. Elle
+   sort de la vue « Doublons potentiels » et de l'indicateur « Doublons signalés » ; le signalement initial reste tracé.
+   Poursuivez normalement l'analyse des deux.
 
 ### 3.4 Analyser une candidature
 
@@ -191,8 +194,9 @@ d'intégration et checklists », vue **« Mes actions »**) :
 | FORM-05 Confirmer le pôle, le référent pressenti et le sujet pressenti | Oui | Renseigner « Pôle pressenti », « Référent pressenti », « Sujet pressenti » sur la candidature, puis passer l'action à « Terminée » avec, dans « Preuve / lien », le lien de la candidature |
 | FORM-06 Informer le référent pressenti de l'arrivée | Non | Prévenir le référent, puis passer l'action à « Terminée » |
 
-Pour les formalités, seuls l'administration et le responsable désigné de l'action peuvent la passer à « Terminée » ou « Non
-applicable » ou modifier son caractère bloquant (`G_ACTION_FORMALITE`) ; sinon la valeur est rétablie (N-92). Une action
+Pour les formalités, vous pouvez passer votre action à « Terminée » ; en revanche, seule l'administration peut décocher
+« Bloquante pour l'étape » ou passer une action bloquante en « Non applicable » (`G_ACTION_FORMALITE`) ; sinon la valeur est
+rétablie (N-92). Une action
 bloquante non terminée avec preuve empêche l'intégration (`G_INTEGRATION`). Rappel N-19 deux jours avant l'échéance. À
 l'intégration, vous recevez **N-16** (date de début, pôle, référent, liens vers la fiche et le dossier de suivi), et l'action
 d'accueil **ACC-05 « Créer l'affectation »** est générée.
@@ -213,14 +217,15 @@ L'**arbitrage** est une décision de la Direction R&D ou de la Direction (PA-14)
 poser « En cours » (`SUJ-T04`, depuis « Priorisé » ou « Bloqué »), « Bloqué » (`SUJ-T05`, N-47 à la Direction R&D) et
 « Terminé » (`SUJ-T08`).
 
-Projet GitLab : il est créé **à la demande** par le script de création de projet (spec § 10.3), exécuté avec le jeton
-personnel de la personne qui le lance ; il reporte l'URL et l'identifiant dans « Projet GitLab » et « ID projet GitLab ». Nom
+Projet GitLab : à la demande du référent du sujet, un membre de l'équipe R&D propriétaire du groupe GitLab `hncs-rd` lance le
+script de création de projet (spec § 10.3), avec son jeton personnel (jamais stocké) ; il reporte l'URL et l'identifiant dans « Projet GitLab » et « ID projet GitLab ». Nom
 du projet : `suj-aaaa-nnnn-<slug>` dans le groupe `hncs-rd`.
 
 ### 3.11 Créer et activer une affectation
 
 1. Vérifiez sur la fiche **Alternants** que « Compte Microsoft 365 » est renseigné (action d'accueil ACC-01) : c'est ce compte
-   qui reçoit les droits sur le sujet.
+   qui reçoit les droits sur le sujet et devient propriétaire des livrables. Sans lui, l'activation est refusée
+   (`G_AFFECTATION_COMPLETE`, N-90). S'il change plus tard, les droits sont rejoués automatiquement (PA-04).
 2. Liste **Affectations** > **Nouveau** :
    - obligatoires : « Alternant », « Sujet », « Date de début » ; « Référent » est exigé pour activer ;
    - « Date de fin », « Objectifs », « Charge et cadence » (ex. « 3 j/semaine »), « Plan de travail » (lien) ;
@@ -229,20 +234,21 @@ du projet : `suj-aaaa-nnnn-<slug>` dans le groupe `hncs-rd`.
    - laissez « Affectation remplacée » vide pour une première affectation.
 3. Enregistrez : statut « À préparer » (`AFF-T01`), libellé automatique `ALT-… – SUJ-…`.
 4. Posez **« Active »** (`AFF-T02`). Contrôle `G_AFFECTATION_COMPLETE` : alternant, sujet, référent, date de début
-   renseignés ; alternant « À intégrer » ou « Actif » ; référent « Actif » dans la liste Référents.
+   renseignés ; alternant « À intégrer » ou « Actif » avec « Compte Microsoft 365 » renseigné ; référent « Actif » dans la
+   liste Référents.
 
 Ce que fait le système (PA-05) : il **verrouille** l'alternant, le sujet, le référent et la date de début ; crée le dossier
 `04 — Livrables R&D/SUJ-…/` et y donne accès à l'alternant ; lui donne la lecture sur l'affectation ; donne au référent l'accès
 au dossier de suivi et à la fiche ; met à jour le **« Référent principal »** de la fiche alternant (dérivé de l'affectation
 active la plus récente — ne le modifiez pas à la main, la modification serait annulée avec N-91) ; propose les livrables « À
-produire » issus des modèles **approuvés** du registre ; crée le premier compte rendu « Attendu » (à partir du lot 3, sauf
+produire » issus des modèles **approuvés** du registre (propriétaire = compte de l'alternant, réviseur = référent) ; crée le premier compte rendu « Attendu » (à partir du lot 3, sauf
 cadence « Par jalon ») ; envoie **N-20** à l'alternant et au référent.
 
 Aucun livrable n'est proposé tant que les modèles du « Registre des modèles R&D » ne sont pas « Approuvé » (registre initial en
 « Brouillon »). En attendant, créez les livrables vous-même (un alternant ne peut pas en créer, H-49) : liste **Livrables** >
 **Nouveau** (« Titre du livrable », « Affectation », « Type de livrable », « Propriétaire (auteur) » = l'alternant,
-« Échéance »). Le « Réviseur » est par défaut le référent de l'affectation ; ne désignez pas une autre personne que ce référent
-ou un membre de la Direction R&D : personne d'autre ne pourrait valider (`G_VALIDEUR_LEGITIME`).
+« Échéance »). Le « Réviseur » est par défaut le référent de l'affectation ; seul ce référent ou un membre de la Direction R&D
+peut être désigné : toute autre désignation est refusée dès l'enregistrement (P-09, N-92).
 
 ### 3.12 Remplacer une affectation (changement de sujet ou de référent)
 
@@ -284,7 +290,7 @@ Autres changements d'état d'une affectation :
   Vous pouvez suspendre ou abandonner un livrable : statut « Suspendu / abandonné » (`LIV-T09`) avec « Motif de suspension /
   abandon » (obligatoire) et « Impacts et suite envisagée » ; N-29 au propriétaire et au réviseur ; réactivation possible
   (`LIV-T10`). Avec la Direction R&D, vous êtes seuls habilités à modifier les champs protégés d'un livrable (affectation,
-  propriétaire, réviseur…, P-09). La **validation** reste réservée au référent de l'affectation désigné réviseur.
+  propriétaire, réviseur, échéance…, P-09 ; le réviseur légitime peut aussi changer l'échéance et la Definition of Done). La **validation** reste réservée au référent de l'affectation désigné réviseur.
 - **Comptes rendus de suivi** : vues « Comptes rendus ouverts », « Non remis » et « Blocages signalés ». Pour une affectation à
   cadence « Par jalon », aucun compte rendu n'est créé automatiquement : c'est à vous de les créer (`CR-T01`).
 
@@ -314,7 +320,8 @@ Autres changements d'état d'une affectation :
 
 **Prolongation** : si l'alternance est prolongée alors que l'alternant est en « Fin planifiée », reportez « Date de fin
 prévue » sur la fiche puis reposez **« Actif »** (`ALT-T08`). Le statut n'est accepté que si la nouvelle date de fin est à
-plus de 30 jours (`G_DATE_FIN_REPORTEE`).
+plus de 30 jours (`G_DATE_FIN_REPORTEE`). Les actions de clôture encore ouvertes voient leur échéance recalculée sur la
+nouvelle date de fin ; le bilan « À réaliser » est conservé ; la fin sera de nouveau détectée 30 jours avant la nouvelle date.
 
 Le **retrait des accès** n'est jamais automatique : c'est l'action CLO-06 de la checklist (H-18). Suspension : « Suspendu »
 (`ALT-T03`, N-36), reprise par « Actif ».
@@ -380,7 +387,7 @@ origine « Humain », résultat), en plus du versioning de l'élément. Vous con
 | N-35 | Fin d'alternance planifiée | Lancer le retour d'expérience (CLO-04) |
 | N-36 | Alternant suspendu | Prendre note, adapter les affectations |
 | N-37 | Fin d'alternance enregistrée | Suivre la checklist de clôture |
-| N-45 | Décision sur une communication dont vous êtes l'auteur | Programmer, publier ou retravailler |
+| N-45 | Décision sur une communication dont vous êtes l'auteur (validée, refusée ou renvoyée « En rédaction ») | Programmer, publier ou retravailler |
 | N-90 | Changement de statut refusé | Lire le motif, corriger |
 | N-91 / N-92 | Modification annulée (champ verrouillé ou protégé) | Passer par la bonne procédure |
 
@@ -407,7 +414,7 @@ quotidienne à 06:00.
 
 | Rituel | Fréquence | Ce que prépare le système | Votre contribution |
 | --- | --- | --- | --- |
-| Comité R&D | Hebdomadaire (lundi 08:00, `Gouvernance.ComiteJourHeure`) | Synthèse PA-11 (N-42) envoyée à la Direction R&D et au canal Teams « Comité R&D » : livrables en retard escaladés (plus de 7 jours), échéances à 14 jours, comptes rendus non remis, blocages, affectations à risque ou bloquées, sujets bloqués ou à arbitrer, conventions à renouveler, écoles à évaluer, communications en revue, candidatures en attente (en nombre par statut) | Mettre à jour statuts et échéances **avant** le lundi matin (la synthèse est calculée à l'envoi) ; préparer les sujets « À arbitrer » ; page Power BI 7 |
+| Comité R&D (Direction R&D, équipe R&D, référents, H-53) | Hebdomadaire (lundi 08:00, `Gouvernance.ComiteJourHeure`) | Synthèse PA-11 (N-42) envoyée à la Direction R&D et publiée dans le canal Teams « Comité R&D », dont vous êtes membre : livrables en retard escaladés (plus de 7 jours), échéances à 14 jours, comptes rendus non remis, blocages, affectations à risque ou bloquées, sujets bloqués ou à arbitrer, conventions à renouveler, écoles à évaluer, communications en revue, candidatures en attente (en nombre par statut) | Mettre à jour statuts et échéances **avant** le lundi matin (la synthèse est calculée à l'envoi) ; préparer les sujets « À arbitrer » ; page Power BI 7 |
 | Point Direction | Mensuel (1er lundi) | Synthèse agrégée N-43 envoyée à la Direction R&D, qui la relit et la transmet à la Direction Générale | Fiabiliser les données (page 8 « Qualité des données ») |
 | Revue de gouvernance | Trimestrielle (1er lundi du trimestre) | Synthèse agrégée N-43, même circuit | Idem |
 
@@ -435,8 +442,8 @@ est restée en « Présélectionnée », le partage a échoué et le support a �
 
 ### Puis-je lire le compte rendu d'entretien ?
 
-Non : la liste Entretiens est réservée à l'administration (H-28) ; vous ne voyez que les entretiens dont vous êtes
-participant. Vous voyez le statut de la candidature et recevez N-11.
+Seulement si vous y avez participé : les participants désignés lisent l'entretien, évaluation comprise (H-28). Les autres
+entretiens restent réservés à l'administration. Vous voyez le statut de la candidature et recevez N-11.
 
 ### Je me suis trompé de statut ou de candidat. Puis-je supprimer ?
 

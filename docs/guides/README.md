@@ -10,7 +10,7 @@ Ces guides expliquent, rôle par rôle, comment utiliser le système de suivi R&
 - **GitLab** reste la référence du code, des issues, des merge requests et des jalons ;
 - **Power BI** sert au pilotage, en lecture seule.
 
-> Les guides décrivent le comportement défini par la spécification [`spec.md`](../../spec.md) (version **1.2.0**), qui fait
+> Les guides décrivent le comportement défini par la spécification [`spec.md`](../../spec.md) (version **1.3.0**), qui fait
 > foi en cas d'écart. Les codes cités entre parenthèses (`CAND-T04`, `N-05`, `PA-02`, `G_INTEGRATION`, `H-09`…) permettent
 > au support de retrouver la règle exacte dans la spec.
 
@@ -100,7 +100,7 @@ R = réalise ; A = responsable final / approbateur ; C = consulté ; I = inform�
 | Rédiger une communication | Équipe R&D, référent, Direction R&D (un alternant peut en être l'auteur) | PA-12 : droits de l'auteur, notifications | N-44 |
 | **Valider une communication externe** | Direction R&D ou Direction Générale | PA-12 : date de validation | N-45 |
 | Rouvrir une candidature clôturée ou non retenue | Direction R&D uniquement | PA-02 : retour à « À analyser » | N-03 |
-| Gouvernance (Comité R&D, Point Direction, revue trimestrielle) | Direction R&D (prépare et relaie), Direction Générale | PA-11 : synthèses automatiques | N-42, N-43 |
+| Gouvernance (Comité R&D, Point Direction, revue trimestrielle) | Direction R&D (prépare et relaie), Direction Générale ; le Comité R&D réunit Direction R&D, équipe R&D et référents (H-53) | PA-11 : synthèses automatiques | N-42, N-43 |
 
 ### Circuit d'escalade (spec § 7.7)
 
@@ -162,8 +162,8 @@ après** l'enregistrement (SharePoint n'empêche pas la saisie, H-17) :
 
 ### Les champs protégés (P-09)
 
-Certains champs portent ou qualifient une décision : réviseur et valideur, cases de la Definition of Done, décision de
-partenariat, référent principal d'un alternant, caractère bloquant d'une formalité… Ils ne sont modifiables que par les rôles
+Certains champs portent ou qualifient une décision : réviseur et valideur, échéance d'un livrable, cases de la Definition of
+Done, décision de partenariat, référent principal d'un alternant, caractère bloquant d'une formalité… Ils ne sont modifiables que par les rôles
 habilités. Une modification par une autre personne est **rétablie** par le flux et signalée par **N-92** « modification d'un
 champ protégé annulée » (champ concerné, rôle habilité, valeur rétablie). Les champs verrouillés d'une affectation active et
 le référent principal dérivé sont signalés par **N-91**.
@@ -208,10 +208,11 @@ automatiquement tant qu'elle n'est pas validée (H-10).
 
 ### Power BI
 
-Rapport « HNCS-RD » dans l'espace « HNCS-R&D Pilotage », actualisé **chaque jour à 06:00** (la date de dernière actualisation
+Rapport « HNCS-RD », publié comme application dans l'espace « HNCS-R&D Pilotage », actualisé **chaque jour à 06:00** (la date de dernière actualisation
 est affichée sur la vue exécutive) : une modification faite dans la journée apparaît le lendemain. Les données visibles dépendent
-de votre rôle (`Direction`, `PilotageRD`, `Administration`, `RelationEcoles`, `Referent`, § 9.6). Les alternants n'ont pas
-accès au rapport (H-19).
+de votre rôle (`Direction`, `PilotageRD`, `Administration`, `RelationEcoles`, `Referent`, § 9.6) ; les **pages** visibles
+dépendent de votre audience dans l'application (Direction : 1, 3, 4, 5, 6 ; Administration : 2, 3, 5 ; RelationEcoles : 3, 5 ;
+Referent : 3, 4, 7 ; PilotageRD : toutes, § 9.7). Les alternants n'ont pas accès au rapport (H-19).
 
 ### Disponibilité par lot
 

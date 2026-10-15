@@ -3,7 +3,7 @@
 > Public : **Direction Générale** (groupe SharePoint `HNCS-RD-Direction`) et **Direction R&D** (groupe
 > `HNCS-RD-DirectionRD`). Les deux rôles sont distincts : chaque section les traite séparément. La Direction R&D, souvent
 > membre aussi de l'équipe R&D, lit également le guide [Équipe R&D](equipe-rd.md). Règles communes : voir
-> l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence : `spec.md` 1.2.0.
+> l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence : `spec.md` 1.3.0.
 
 ## Les deux rôles en bref
 
@@ -45,15 +45,16 @@
 
 | Accès | Listes et bibliothèques |
 | --- | --- |
-| Modification | Communications R&D, Conventions et partenariats |
-| Lecture seule | Offres, Pôles R&D, Référents, Sujets R&D, Registre des modèles R&D, Domaines cibles, Mobilisations commerciales, Transitions de statuts, Synchronisation GitLab, « 03 — Modèles R&D », « 04 — Livrables R&D » |
+| Modification | Communications R&D, Conventions et partenariats, Sujets R&D |
+| Lecture seule | Offres, Pôles R&D, Référents, Registre des modèles R&D, Domaines cibles, Mobilisations commerciales, Transitions de statuts, Synchronisation GitLab, « 03 — Modèles R&D », « 04 — Livrables R&D » |
 | Aucun accès | Candidatures, « 01 — Recrutement » (CV), Entretiens, Écoles et établissements, Alternants, Affectations, Livrables, Comptes rendus de suivi, Actions d'intégration et checklists, Bilans d'alternance, Échanges avec les écoles, Ressources techniques, Paramètres, Historique des statuts, Journal des flux, « 02 — Administration », « 05 — Suivi des alternants », « 06 — Écoles et partenariats » |
 
 **Absence volontaire de données nominatives** (P-04, § 7.5) : la Direction Générale n'accède à aucune liste nominative dans
 SharePoint (candidatures, entretiens, alternants, livrables, établissements, bilans). Son accès aux indicateurs passe par
 Power BI, qui n'importe aucune donnée personnelle ou confidentielle et n'affiche aucun nom ; les synthèses qui lui sont
 transmises ne contiennent que des identifiants, des statuts et des agrégats. Vous voyez donc **des nombres** (candidatures
-reçues, alternants actifs…), jamais un CV, un avis d'analyse ni un commentaire d'entretien.
+reçues, alternants actifs…), jamais un CV, un avis d'analyse ni un commentaire d'entretien. La lecture de « 04 — Livrables R&D »
+est volontaire : ce sont des travaux, sans donnée personnelle, dont les colonnes de recherche affichent des identifiants (H-54).
 
 ### Direction R&D
 
@@ -109,7 +110,7 @@ Les commentaires d'entretien et les pièces administratives restent à l'adminis
      renseigné à votre nom s'il était vide, l'auteur reçoit **N-45** ;
    - **« Suspendue / refusée »** (`COM-T08`) : indiquez la raison dans « Commentaire » ; l'auteur reçoit N-45 ;
    - renvoyer « En rédaction » (`COM-T03`) pour des retouches : possible pour la Direction R&D et pour l'approbateur proposé.
-     Aucune notification n'est envoyée dans ce cas : prévenez l'auteur.
+     L'auteur reçoit **N-45**.
 
 La suite (programmation, publication avec « Date de publication » et « URL de publication ») est faite par l'auteur ou la R&D.
 
@@ -122,13 +123,14 @@ la relation écoles. **Ce signal n'est pas une décision** (H-39).
 
 1. Repérez les écoles concernées : Power BI page 5 ; pour la Direction R&D, liste « Écoles et établissements », vue
    « Partenariats à évaluer ».
-2. La fiche de convention correspondante est créée par l'administration, la relation écoles ou l'équipe R&D (`CONV-T01`),
+2. La fiche de convention correspondante est créée par l'administration, la relation écoles, l'équipe R&D ou la Direction R&D
+   (`CONV-T01`),
    avec le type « Convention de partenariat » ou « Sponsoring ».
 3. Sur cette convention, renseignez **« Décision de partenariat »** : À examiner, Partenariat retenu, Sponsoring retenu, Pas
    de partenariat, Décision reportée.
 4. Le système (PA-10) trace automatiquement **« Décideur »** (vous) et **« Date de décision »**, et envoie **N-39** à la
    relation écoles, à l'administration et à la Direction R&D. Ce champ est protégé : toute modification par une autre personne
-   est rétablie.
+   est rétablie et signalée (N-92).
 5. La décision doit précéder la signature : une convention de partenariat ou de sponsoring ne peut passer à « Signée /
    active » que si la décision vaut « Partenariat retenu » ou « Sponsoring retenu » (`G_DECISION_PARTENARIAT`). L'école ne
    devient « Partenaire actif » qu'à la **signature**, avec preuve, constatée par l'administration ou la relation écoles.
@@ -151,10 +153,6 @@ L'arbitrage du portefeuille est une décision humaine réservée à la Direction
    R&D quand un sujet passe « À arbitrer » ou « Bloqué ».
 2. Renseignez si besoin « Motif de décision », puis posez le statut. Le référent du sujet et l'équipe R&D reçoivent **N-47**
    avec la décision et le motif.
-
-> **Point en attente de confirmation (Direction Générale).** Les transitions d'arbitrage sont ouvertes au rôle Direction, mais
-> la matrice d'accès ne donne à la Direction Générale que la **lecture** sur « Sujets R&D ». Tant que ce point n'est pas
-> tranché, un arbitrage de la Direction Générale ne peut pas être saisi par elle-même dans la liste.
 
 ### 3.5 Exploiter les synthèses de gouvernance
 
@@ -221,7 +219,7 @@ bibliothèque « Documents » par défaut du site (spec § 7.2).
 | Validation d'une communication externe (`COM-T05`) | Oui | Oui | « Date de validation », « Approbateur proposé », historique |
 | Refus ou suspension d'une communication (`COM-T08`) | Oui | Oui | Historique, commentaire |
 | Décision de partenariat ou de sponsoring | Oui | Oui | « Décideur », « Date de décision » (PA-10), N-39 |
-| Arbitrage d'un sujet (`SUJ-T03`, `SUJ-T06`, `SUJ-T07`, `SUJ-T09`) | Oui (voir le point en attente, 3.4) | Oui | Statut, « Motif de décision », historique, N-47 |
+| Arbitrage d'un sujet (`SUJ-T03`, `SUJ-T06`, `SUJ-T07`, `SUJ-T09`) | Oui | Oui | Statut, « Motif de décision », historique, N-47 |
 | Réouverture d'une candidature (`CAND-T16`) | Non | Oui | Historique |
 | Reprise d'un alternant existant (`ALT-T01`) | Non | Oui | Historique |
 
@@ -229,8 +227,8 @@ Hypothèses de cadrage à confirmer (spec § 13) — ce qui est implémenté en 
 
 | Arbitre | Hypothèses |
 | --- | --- |
-| Direction Générale | H-05 (Karine et l'équipe administrative = rôle Administration), H-06 (décision finale saisie par l'administration avec « Décideur final »), H-11 (validation des communications par Direction R&D ou Direction), H-20 (objectifs indicatifs), H-25 (définition d'un partenariat actif), H-27 (aucune exception au parcours de recrutement), H-32 (acteurs support hors outil), H-33 (budget et licences hors outil), H-34 (trajectoire M0–M12 non modélisée), H-37 (décision de partenariat) |
-| Direction R&D | H-01 (numérotation des flux), H-02 et H-03 (statuts), H-07 (réouverture), H-08 (cadence quinzaine), H-09 (information du candidat), H-12 (reprise de l'existant), H-17 (contrôle a posteriori), H-19 (pas de Power BI pour les alternants), H-22 à H-24 (délais, checklists, domaines cibles), H-26 (GO/NO-GO), H-28 (entretiens invisibles pour la R&D), H-36 (critères par type de livrable), H-39 (statuts d'école dérivés), H-40 (confirmation d'intégration par l'administration), H-41 (calcul des indicateurs), H-42 (affectations concomitantes), H-43 (composition de la relation écoles), H-46 (propriétaires des flux), H-49 (création des livrables), H-51 (livrables ouverts lors d'un remplacement), H-52 (publics Power BI) |
+| Direction Générale | H-05 (Karine et l'équipe administrative = rôle Administration), H-06 (décision finale saisie par l'administration avec « Décideur final »), H-11 (validation des communications par Direction R&D ou Direction), H-20 (objectifs indicatifs), H-25 (définition d'un partenariat actif), H-27 (aucune exception au parcours de recrutement), H-32 (acteurs support hors outil), H-33 (budget et licences hors outil), H-34 (trajectoire M0–M12 non modélisée), H-37 (décision de partenariat), H-54 (lecture de « 04 — Livrables R&D » par la Direction) |
+| Direction R&D | H-01 (numérotation des flux), H-02 et H-03 (statuts), H-07 (réouverture), H-08 (cadence quinzaine), H-09 (information du candidat), H-12 (reprise de l'existant), H-17 (contrôle a posteriori), H-19 (pas de Power BI pour les alternants), H-22 à H-24 (délais, checklists, domaines cibles), H-26 (GO/NO-GO), H-28 (entretiens invisibles pour la R&D), H-36 (critères par type de livrable), H-39 (statuts d'école dérivés), H-40 (confirmation d'intégration par l'administration), H-41 (calcul des indicateurs), H-42 (affectations concomitantes), H-43 (composition de la relation écoles), H-46 (propriétaires des flux), H-49 (création des livrables), H-51 (livrables ouverts lors d'un remplacement), H-52 (publics Power BI), H-53 (composition du Comité R&D) |
 
 ## 5. Notifications que vous recevez
 
@@ -265,14 +263,16 @@ Si vous êtes aussi membre de l'équipe R&D, vous recevez en plus les notificati
 | Page | Direction Générale (rôle `Direction`) | Direction R&D (rôle `PilotageRD`) |
 | --- | --- | --- |
 | 1. Vue exécutive | Oui | Oui |
-| 2. Recrutement | Non prévue | Oui |
+| 2. Recrutement | Non (hors audience) | Oui |
 | 3. Effectifs et encadrement | Oui | Oui |
 | 4. Projets et livrables | Oui | Oui |
 | 5. Établissements et partenariats | Oui | Oui |
 | 6. Communications et valorisation | Oui | Oui |
-| 7. Comité R&D | Non prévue | Oui |
-| 8. Qualité des données | Non prévue | Oui |
+| 7. Comité R&D | Non (hors audience) | Oui |
+| 8. Qualité des données | Non (hors audience) | Oui |
 
+Les pages sont restreintes par les **audiences de l'application Power BI** (la sécurité au niveau des lignes et des objets
+protège les données, pas les pages, § 9.7). Sur la page 4, les liens vers les documents des livrables vous sont visibles (H-54).
 Aucun visuel n'affiche de nom de personne, quel que soit le rôle : les tableaux montrent des identifiants (`ALT-…`, `AFF-…`).
 Pour le rôle `Direction`, la colonne des noms d'alternants est en outre inaccessible (sécurité au niveau objet). Une personne
 ne relève que d'un seul rôle Power BI (§ 9.6) : un membre de la Direction R&D qui siège aussi à la Direction Générale doit être
@@ -282,7 +282,7 @@ rattaché à l'un ou l'autre.
 
 | Rituel | Fréquence | Synthèse automatique (PA-11) | Circuit |
 | --- | --- | --- | --- |
-| Comité R&D | Hebdomadaire, lundi 08:00 (`Gouvernance.ComiteJourHeure`) | N-42 : livrables en retard escaladés, échéances à 14 jours, comptes rendus « Non remis », blocages signalés, affectations « À risque » / « Bloquée », sujets « Bloqué » / « À arbitrer », conventions « À renouveler », écoles « Partenariat à évaluer », communications « En revue », candidatures en attente en nombre par statut, lien vers Power BI | Direction R&D et canal Teams « Comité R&D » |
+| Comité R&D (Direction R&D, équipe R&D, référents, H-53) | Hebdomadaire, lundi 08:00 (`Gouvernance.ComiteJourHeure`) | N-42 : livrables en retard escaladés, échéances à 14 jours, comptes rendus « Non remis », blocages signalés, affectations « À risque » / « Bloquée », sujets « Bloqué » / « À arbitrer », conventions « À renouveler », écoles « Partenariat à évaluer », communications « En revue », candidatures en attente en nombre par statut, lien vers Power BI | Direction R&D ; publiée dans le canal Teams « Comité R&D », dont les membres du comité font partie |
 | Point Direction | Mensuel, 1er lundi à 08:00 | N-43 : version agrégée, sans nom de personne, avec les points d'arbitrage | Envoyée à la Direction R&D, qui la relit et la transmet à la Direction Générale |
 | Revue de gouvernance | Trimestrielle, 1er lundi du trimestre | N-43 : version agrégée | Même circuit |
 

@@ -2,7 +2,7 @@
 
 > Public : experts référents des pôles (groupe SharePoint `HNCS-RD-Referents`). Règles communes (statuts refusés, champs
 > protégés, validations, notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence :
-> `spec.md` 1.2.0.
+> `spec.md` 1.3.0.
 
 ## 1. Votre rôle dans le processus
 
@@ -137,11 +137,13 @@ Les comptes rendus sont créés automatiquement au statut « Attendu » selon la
 2. Lisez « Réalisations de la période », « Prochaines étapes », « Avancement estimé (%) », « Risques », « Blocages »,
    « Décisions requises », « Soutien attendu du référent ».
 3. Décidez :
-   - **« Validé »** (`CR-T05`) : la date de validation est renseignée ;
+   - **« Validé »** (`CR-T05`) : la date de validation est renseignée et l'alternant reçoit **N-34** ;
    - **« À compléter »** (`CR-T06`) : ajoutez d'abord un **« Commentaire du référent »** (obligatoire, sinon N-90 ; champ en
      ajout seul) ; l'alternant reçoit **N-34** avec votre commentaire.
 
-Comme pour les livrables, seul le référent de l'affectation peut valider (`G_VALIDEUR_LEGITIME`). Un compte rendu non remis
+Comme pour les livrables, seul le référent de l'affectation peut valider (`G_VALIDEUR_LEGITIME`). Sur un compte rendu, vous ne
+modifiez que « Commentaire du référent » : l'affectation, le valideur, la période, l'échéance et les dates sont protégés (seules
+l'équipe R&D et la Direction R&D peuvent les changer, P-09). Un compte rendu non remis
 3 jours après son échéance (`CR.DelaiNonRemisJours`) passe en « Non remis » et vous recevez **N-31**. Si l'alternant coche
 « Blocage signalé », la Direction R&D reçoit N-33 : voyez la vue « Blocages signalés ».
 
@@ -158,9 +160,12 @@ Seuls l'équipe R&D et le référent de l'affectation peuvent poser ces statuts.
 
 - **Livrable** : liste Livrables > Nouveau (`LIV-T01`) : « Titre du livrable », « Affectation », « Type de livrable », « Modèle
   utilisé » (modèle en vigueur du registre), « Propriétaire (auteur) » = l'alternant, « Échéance », « Critères de
-  validation ». Le « Réviseur » est par défaut le référent de l'affectation ; c'est un champ protégé (seules l'équipe R&D et la
+  validation ». Le « Réviseur » est par défaut le référent de l'affectation ; c'est un champ protégé : seul vous-même ou un membre de la Direction R&D pouvez être désigné, et seules l'équipe R&D et la
   Direction R&D peuvent le changer).
-- **Échéance** : vous pouvez la déplacer ; « Échéance initiale » garde la valeur d'origine. S'il existe un jalon GitLab
+- **Projet GitLab** : demandez sa création à l'équipe R&D ; un de ses membres, propriétaire du groupe `hncs-rd`, lance le
+  script de création à votre demande (§ 10.3).
+- **Échéance** : c'est un champ protégé ; en tant que réviseur légitime, vous pouvez la déplacer (comme l'équipe R&D et la
+  Direction R&D), pas l'alternant ; « Échéance initiale » garde la valeur d'origine. S'il existe un jalon GitLab
   `LIV-…`, alignez-le **après** la modification SharePoint ; l'outillage ne modifie jamais un jalon, il signale l'écart.
 
 ### 3.8 Proposer et suivre un sujet
@@ -271,7 +276,8 @@ résultat) et chaque élément est versionné.
 ## 6. Vos vues Power BI
 
 Rôle Power BI **Referent** : les données sont **limitées aux affectations et aux alternants que vous encadrez** ; aucune donnée
-de recrutement (candidatures, entretiens, actions d'intégration) n'est visible. Pages prévues pour vous (spec § 9.7) :
+de recrutement (candidatures, entretiens, actions d'intégration) n'est visible. Pages de votre audience dans l'application
+(spec § 9.7) :
 
 | Page | Usage pour vous |
 | --- | --- |
@@ -285,7 +291,7 @@ Aucun visuel n'affiche de nom de personne. Actualisation quotidienne à 06:00.
 
 | Rituel | Ce qui vous concerne |
 | --- | --- |
-| Comité R&D hebdomadaire (lundi 08:00) | La synthèse PA-11 (N-42, envoyée à la Direction R&D et au canal Teams « Comité R&D ») reprend vos livrables en retard de plus de 7 jours, les comptes rendus non remis, les blocages, les affectations « À risque » / « Bloquée » et les sujets bloqués ou à arbitrer. Mettez vos revues et statuts à jour avant le lundi matin ; préparez-vous avec la page Power BI 7. La restitution d'un POC ou d'un plan (DoD 3) peut s'y tenir. |
+| Comité R&D hebdomadaire (lundi 08:00) | Vous en êtes membre avec la Direction R&D et l'équipe R&D (H-53). La synthèse PA-11 (N-42, envoyée à la Direction R&D et publiée dans le canal Teams « Comité R&D ») reprend vos livrables en retard de plus de 7 jours, les comptes rendus non remis, les blocages, les affectations « À risque » / « Bloquée » et les sujets bloqués ou à arbitrer. Mettez vos revues et statuts à jour avant le lundi matin ; préparez-vous avec la page Power BI 7. La restitution d'un POC ou d'un plan (DoD 3) peut s'y tenir. |
 | Point Direction mensuel, revue trimestrielle | Synthèses agrégées préparées par la Direction R&D pour la Direction Générale ; vos validations et bilans alimentent les indicateurs (livrables validés, capitalisation, partenariats). |
 
 ## 8. FAQ
@@ -302,8 +308,8 @@ Definition of Done). Complétez puis posez « Archivé / clôturé ».
 
 ### On m'a désigné réviseur d'un livrable d'une affectation qui n'est pas la mienne : puis-je le valider ?
 
-Non. Seul le référent de l'affectation (ou un membre de la Direction R&D désigné réviseur) peut valider (`G_VALIDEUR_LEGITIME`).
-Signalez-le à l'équipe R&D.
+Cela ne peut plus arriver : une désignation comme réviseur d'une personne qui n'est ni le référent de l'affectation ni un membre
+de la Direction R&D est refusée dès l'enregistrement (P-09, N-92), et la validation le serait aussi (`G_VALIDEUR_LEGITIME`).
 
 ### Fusionner la merge request GitLab valide-t-elle le livrable ?
 

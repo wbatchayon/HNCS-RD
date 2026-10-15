@@ -2,7 +2,7 @@
 
 > Public : équipe administrative habilitée, par exemple **Karine** (groupe SharePoint `HNCS-RD-Administration`). Règles communes
 > (statuts refusés, champs protégés, validations, notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides).
-> Référence : `spec.md` 1.2.0.
+> Référence : `spec.md` 1.3.0.
 
 ## 1. Votre rôle dans le processus
 
@@ -36,7 +36,7 @@ D'après la matrice d'accès (spec § 7.3) et les permissions posées par les fl
 - vous ne voyez une candidature et son CV **qu'à partir de sa transmission** (H-29) : les candidatures en cours d'analyse
   restent à la R&D ;
 - à l'inverse, vos **commentaires d'entretien** et grilles d'évaluation ne sont visibles que de l'administration : la R&D n'a
-  pas accès à la liste Entretiens (hormis la lecture des entretiens dont un de ses membres est participant) et reçoit seulement
+  pas accès à la liste Entretiens (hormis les participants désignés, qui lisent l'entretien concerné, évaluation comprise) et reçoit seulement
   le statut (N-11, sans commentaire, H-28) ;
 - la bibliothèque **« 02 — Administration »** (contrats, conventions, pièces administratives, grilles d'entretien) vous est
   réservée ; seul le sous-dossier `Alternants/ALT-…/Operationnel` est lisible par la R&D, pour ses besoins opérationnels ;
@@ -81,8 +81,9 @@ l'administration » (`CAND-T08`) et vous recevez **N-04**.
    entretien complémentaire. Sans résultat, SharePoint refuse l'enregistrement (« Le résultat est obligatoire lorsque
    l'entretien est réalisé »).
 3. Complétez « Prochaine action », « Commentaire (restreint) » et « Grille d'évaluation » (lien vers le document déposé dans
-   « 02 — Administration », « Type de document » = Grille d'évaluation d'entretien, dans un dossier nommé par l'identifiant de
-   la candidature).
+   « 02 — Administration », « Type de document » = Grille d'évaluation d'entretien, dans le dossier
+   `Candidatures/CAND-…/` créé dès la transmission). Les participants désignés liront aussi l'entretien et son évaluation
+   (H-28) : rédigez en conséquence.
 
 Ce que fait le système : il trace « Résultat saisi par » et « Date de saisie du résultat », passe la candidature à
 **« Entretien réalisé »** (`CAND-T09`) et envoie **N-11** à la R&D (statut seulement). Le résultat saisi n'est jamais modifié
@@ -116,8 +117,8 @@ Convenez avec la R&D de qui informe le candidat ; la personne qui l'informe coch
 Posez **« Formalités en cours »** (`CAND-T13`) sur une candidature « Retenue ». C'est l'autorisation de lancer les formalités
 (décision humaine).
 
-Ce que fait le système (PA-04) : il génère la checklist « Formalités d'intégration » à partir des modèles de checklists, crée
-le dossier `02 — Administration/Candidatures/CAND-…/` et vous envoie **N-15** (liste des actions, responsables, échéances).
+Ce que fait le système (PA-04) : il génère la checklist « Formalités d'intégration » à partir des modèles de checklists, vérifie
+le dossier `02 — Administration/Candidatures/CAND-…/` (créé dès la transmission) et vous envoie **N-15** (liste des actions, responsables, échéances).
 Chaque responsable obtient le droit de modifier son action.
 
 | Code | Action | Responsable | Échéance | Bloquante | Preuve attendue |
@@ -145,9 +146,9 @@ générées ensuite.
    « Description » d'une action ne contient **aucune donnée sensible** : les pièces restent dans la bibliothèque. Ne déposez
    jamais de pièce dans la bibliothèque « Documents » par défaut du site, lisible par tous les groupes (spec § 7.2).
 
-**Champs protégés** (`G_ACTION_FORMALITE`, P-09) : pour les formalités d'intégration, seuls l'administration et le responsable
-désigné de l'action peuvent la passer à « Terminée » ou « Non applicable », et seule l'administration (ou ce responsable) peut
-modifier la case « Bloquante pour l'étape ». Toute autre modification est rétablie et signalée (N-92).
+**Champs protégés** (`G_ACTION_FORMALITE`, P-09) : pour les formalités d'intégration, **seule l'administration** peut décocher
+« Bloquante pour l'étape » ou passer une action bloquante en « Non applicable » ; le passage à « Terminée » est possible par
+l'administration ou par le responsable désigné. Toute autre modification est rétablie et signalée (N-92).
 
 Rappels : **N-19** deux jours avant l'échéance (`Delai.RappelActionJours`) puis chaque jour en cas de retard (au-delà, l'action
 apparaît dans la synthèse du Comité R&D, § 7.7). Quand toutes les actions bloquantes sont terminées ou justifiées, **N-17**
@@ -184,7 +185,8 @@ la R&D, au référent pressenti et à vous. À la date de début, l'alternant pa
 - Statuts que vous pouvez poser : « Suspendu » (`ALT-T03`), « Terminé » (`ALT-T05`, avec « Date de fin réelle »
   obligatoire), « Clôturé » depuis « À intégrer » (`ALT-T07`, par exemple désistement avant le démarrage).
 - **Prolongation** : si un alternant en « Fin planifiée » est prolongé, reportez « Date de fin prévue » puis reposez
-  « Actif » (`ALT-T08`) ; la nouvelle date de fin doit être à plus de 30 jours (`G_DATE_FIN_REPORTEE`).
+  « Actif » (`ALT-T08`) ; la nouvelle date de fin doit être à plus de 30 jours (`G_DATE_FIN_REPORTEE`). Les échéances des
+  actions de clôture encore ouvertes sont recalculées (dont CLO-07) ; le bilan est conservé.
 - À la fin d'alternance, **N-37** vous est envoyé ; l'action **CLO-07 « Archiver le dossier administratif »** vous revient.
 
 ### 3.9 Écoles, conventions et preuve de signature
@@ -214,7 +216,7 @@ Ensuite, le système passe la convention en « À renouveler » 60 jours avant l
 partenariat ».
 
 > **Ne modifiez pas « Décision de partenariat ».** Ce champ protégé est réservé à la Direction R&D et à la Direction
-> Générale : toute modification par une autre personne est rétablie et signalée. Une fois la décision prise, vous recevez
+> Générale : toute modification par une autre personne est rétablie et signalée (N-92). Une fois la décision prise, vous recevez
 > **N-39**. De même, ne posez pas vous-même le statut « Partenaire actif » sur une école : il découle d'une convention signée.
 
 ### 3.10 Erreurs fréquentes
@@ -269,7 +271,7 @@ historisée dans **« Historique des statuts »** (lecture pour vous), en plus d
 
 ## 6. Vos vues Power BI
 
-Rôle Power BI **Administration** : pages 2, 3 et 5 (spec § 9.7). Les candidatures sont limitées à celles qui vous ont été
+Rôle Power BI **Administration** : pages 2, 3 et 5 (audience de l'application, spec § 9.7). Les candidatures sont limitées à celles qui vous ont été
 **transmises** ; les données de livrables, comptes rendus, mobilisations et GitLab sont masquées pour ce rôle.
 
 | Page | Usage pour vous |
@@ -303,8 +305,8 @@ Le contrôle `G_INTEGRATION` a trouvé un manque, détaillé dans N-90 : le plus
 
 ### Une action de la checklist ne s'applique pas à ce candidat : comment faire ?
 
-Posez « Non applicable » et justifiez dans « Commentaire » (obligatoire pour une action bloquante). Vous ne pouvez pas
-supprimer l'action.
+Posez « Non applicable » et justifiez dans « Commentaire » (obligatoire pour une action bloquante). Pour une action
+bloquante, vous seule (administration) pouvez le faire. Vous ne pouvez pas supprimer l'action.
 
 ### Le candidat se désiste avant l'entretien. Que dois-je saisir ?
 
@@ -313,7 +315,8 @@ Avant l'intégration : « Non retenue » (`CAND-T17`, avec « Décideur final »
 
 ### La R&D peut-elle lire mes commentaires d'entretien ?
 
-Non. La liste Entretiens vous est réservée ; N-11 ne transmet que le statut (H-28).
+Seuls les participants désignés d'un entretien le lisent, évaluation comprise (H-28). Les autres membres de la R&D n'ont pas
+accès à la liste Entretiens ; N-11 ne leur transmet que le statut.
 
 ### La décision finale a été prise par quelqu'un d'autre que moi : qui dois-je indiquer ?
 

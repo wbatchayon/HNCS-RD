@@ -2,7 +2,7 @@
 
 > Public : alternants et stagiaires actifs (groupe SharePoint `HNCS-RD-Alternants`). Règles communes (statuts refusés,
 > champs protégés, validations, notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides).
-> Référence : `spec.md` 1.2.0.
+> Référence : `spec.md` 1.3.0.
 
 ## 1. Votre rôle dans le processus
 
@@ -43,7 +43,9 @@ D'après la matrice d'accès (spec § 7.3) et les permissions posées pour vous 
 vos comptes rendus ; un alternant affecté au même sujet a en revanche accès au même dossier documentaire du sujet.
 
 Sur vos livrables, certains champs sont **protégés** (P-09) : « Affectation », « Propriétaire (auteur) », « Réviseur
-(référent) », cases de la Definition of Done, décision et dates de revue. Vous pouvez les lire mais pas les modifier : une
+(référent) », **« Échéance »**, cases de la Definition of Done, décision et dates de revue. Sur vos comptes rendus, vous ne
+modifiez que les champs de contenu (réalisations, étapes, avancement, risques, blocages…), pas l'affectation, la période,
+l'échéance ni les dates. Vous pouvez les lire mais pas les modifier : une
 modification est annulée et signalée par **N-92**. Vous ne pouvez pas non plus créer de livrable : ils sont créés par votre
 référent ou l'équipe R&D, ou proposés par le système (H-49).
 
@@ -142,8 +144,7 @@ veille.
 
 Si l'un des trois champs obligatoires est vide, le statut « Remis » est rétabli et vous recevez **N-90** (contrôle
 `G_CR_COMPLET`) : complétez et reposez « Remis ». Votre référent reçoit N-32. S'il pose « À compléter », vous recevez **N-34**
-avec son commentaire : complétez puis reposez « Remis ». La validation (« Validé ») ne déclenche pas de notification : le
-statut suffit.
+avec son commentaire : complétez puis reposez « Remis ». Quand il valide, vous recevez aussi **N-34** (« Validé »).
 
 Sans remise 3 jours après l'échéance, le compte rendu passe en « Non remis » et votre référent est prévenu (N-31). Vous pouvez
 encore le remplir et le remettre.
@@ -227,9 +228,9 @@ par votre référent et historisées avec son nom et la date.
 | N-27 | Livrable validé | Aucune action |
 | N-29 | Livrable suspendu ou abandonné | Prendre connaissance du motif |
 | N-30 | Compte rendu attendu demain | Le remplir et le remettre (3.6) |
-| N-34 | Compte rendu à compléter | Compléter selon le commentaire du référent |
+| N-34 | Compte rendu à compléter, ou validé | Compléter selon le commentaire du référent ; aucune action s'il est validé |
 | N-22 | Affectation terminée | Prendre note (changement de sujet ou fin) |
-| N-45 | Décision sur votre communication | Selon la décision |
+| N-45 | Décision sur votre communication (validée, refusée ou renvoyée « En rédaction ») | Selon la décision |
 | N-19 | Action de correction à échéance | Terminer la correction et resoumettre |
 | N-90 | Changement de statut refusé | Lire le motif, corriger |
 | N-92 | Modification d'un champ protégé annulée | Laisser le référent agir |
@@ -257,7 +258,7 @@ Non, ce n'est pas prévu pour les alternants (H-19).
 
 ### Comment savoir que mon compte rendu est validé ?
 
-Son statut passe à « Validé ». Aucune notification n'est envoyée dans ce cas.
+Son statut passe à « Validé » et vous recevez N-34.
 
 ### J'ai raté l'échéance d'un compte rendu : est-il trop tard ?
 
