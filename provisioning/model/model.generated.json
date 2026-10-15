@@ -1,6 +1,6 @@
 {
   "$comment": "FICHIER GÉNÉRÉ par tools/spec_extract.py à partir de spec.md — ne pas modifier à la main.",
-  "specVersion": "1.0.0",
+  "specVersion": "1.1.0",
   "site": {
     "url": "https://<tenant>.sharepoint.com/sites/HNCS-RD",
     "title": "HNCS-R&D",
@@ -40,6 +40,10 @@
       "Offre annulée",
       "Formalités non abouties",
       "Autre"
+    ],
+    "DECISION_PRESELECTION": [
+      "Présélectionnée",
+      "Écartée"
     ],
     "TYPE_ENTRETIEN": [
       "Premier entretien",
@@ -223,7 +227,9 @@
       "Affectation",
       "Alternant",
       "Communication",
-      "Convention"
+      "Convention",
+      "Sujet",
+      "Entretien"
     ],
     "ROLE": [
       "PROPRIETAIRE",
@@ -448,6 +454,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -473,6 +480,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -494,6 +502,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -515,6 +524,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -536,6 +546,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -557,6 +568,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -578,6 +590,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -599,6 +612,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -616,6 +630,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -637,6 +652,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -658,6 +674,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -709,6 +726,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -719,8 +737,8 @@
           "name": "Email",
           "label": "E-mail de contact",
           "type": "Text",
-          "required": true,
-          "description": "Clé du contrôle anti-doublon (comparée en minuscules)",
+          "required": false,
+          "description": "Clé du contrôle anti-doublon (comparée en minuscules). Facultatif à la création (courriel de plateforme), obligatoire pour sortir de « Reçue » (`G_IDENTITE`)",
           "enum": null,
           "lookup": null,
           "default": null,
@@ -734,6 +752,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -755,6 +774,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -776,6 +796,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -797,6 +818,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -818,6 +840,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -839,6 +862,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -860,6 +884,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -881,6 +906,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -902,6 +928,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -923,6 +950,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -944,6 +972,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -965,6 +994,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -986,6 +1016,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1007,6 +1038,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1028,6 +1060,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1049,6 +1082,51 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "DecisionPreselection",
+          "label": "Décision de présélection",
+          "type": "Choice",
+          "required": false,
+          "description": "Reflet de la décision humaine portée par le statut (reporting)",
+          "enum": "DECISION_PRESELECTION",
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": false,
+          "flux": true,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "ProchaineAction",
+          "label": "Prochaine action",
+          "type": "Text",
+          "required": false,
+          "description": "Prochaine action de l'analyse (REC-03)",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": false,
+          "flux": false,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1070,6 +1148,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1091,6 +1170,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1112,6 +1192,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1133,6 +1214,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1154,6 +1236,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1175,6 +1258,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1196,6 +1280,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1217,6 +1302,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1238,6 +1324,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1259,6 +1346,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1280,6 +1368,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1301,6 +1390,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1322,6 +1412,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1343,6 +1434,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1364,6 +1456,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1385,6 +1478,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1406,6 +1500,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1427,6 +1522,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1448,6 +1544,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1469,6 +1566,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1490,6 +1588,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1507,6 +1606,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -1528,6 +1628,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -1549,6 +1650,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -1575,6 +1677,7 @@
         "max": null,
         "decimals": null,
         "lot": null,
+        "appendOnly": false,
         "implicit": false
       }
     },
@@ -1610,6 +1713,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -1635,6 +1739,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1656,6 +1761,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1677,6 +1783,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1698,6 +1805,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1719,6 +1827,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1740,6 +1849,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1761,6 +1871,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1782,6 +1893,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1803,6 +1915,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1824,6 +1937,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1845,6 +1959,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1866,6 +1981,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1887,6 +2003,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1908,6 +2025,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -1925,6 +2043,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -1946,6 +2065,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -1967,6 +2087,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -2018,6 +2139,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -2043,6 +2165,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2064,6 +2187,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2085,6 +2209,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2106,6 +2231,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2127,6 +2253,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2148,6 +2275,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2169,6 +2297,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2190,6 +2319,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2211,6 +2341,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2232,6 +2363,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2253,6 +2385,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2270,6 +2403,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -2291,6 +2425,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -2312,6 +2447,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -2363,6 +2499,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -2388,6 +2525,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2409,6 +2547,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2430,6 +2569,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2451,6 +2591,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2472,6 +2613,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2493,6 +2635,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2514,6 +2657,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2535,6 +2679,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2556,6 +2701,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2577,6 +2723,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2598,6 +2745,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2619,6 +2767,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2640,6 +2789,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2661,6 +2811,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2682,6 +2833,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2699,6 +2851,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -2720,6 +2873,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -2741,6 +2895,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -2792,6 +2947,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -2817,6 +2973,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2838,6 +2995,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2859,6 +3017,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2880,6 +3039,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2901,6 +3061,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2922,6 +3083,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2943,6 +3105,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2964,6 +3127,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -2985,6 +3149,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -3032,6 +3197,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -3057,6 +3223,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3078,6 +3245,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3099,6 +3267,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3120,6 +3289,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3141,6 +3311,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3162,6 +3333,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3183,6 +3355,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3204,6 +3377,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3225,6 +3399,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3246,6 +3421,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3253,20 +3429,43 @@
           "label": "Référent principal",
           "type": "Lookup",
           "required": false,
-          "description": "Valeur courante ; l'historique des responsabilités est porté par `Affectations`",
+          "description": "Dérivé : référent pressenti à l'intégration, puis référent de l'affectation active la plus récente (PA-05). Toute modification manuelle est rétablie (P-09) ; l'historique des responsabilités est porté par `Affectations`",
           "enum": null,
           "lookup": "Referents",
           "default": null,
           "indexed": false,
           "unique": false,
           "hidden": false,
-          "flux": false,
+          "flux": true,
           "perso": false,
           "confidentiel": false,
           "min": null,
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "EmpreinteReferent",
+          "label": "Empreinte du référent principal",
+          "type": "Text",
+          "required": false,
+          "description": "ID du référent principal validé",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": true,
+          "flux": true,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3288,6 +3487,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3309,6 +3509,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3330,6 +3531,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3347,6 +3549,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -3368,6 +3571,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -3389,6 +3593,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -3415,6 +3620,7 @@
         "max": null,
         "decimals": null,
         "lot": null,
+        "appendOnly": false,
         "implicit": false
       }
     },
@@ -3450,6 +3656,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -3475,6 +3682,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3496,6 +3704,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3517,6 +3726,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3538,6 +3748,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3559,6 +3770,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3576,6 +3788,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -3597,6 +3810,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -3618,6 +3832,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -3669,6 +3884,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -3694,6 +3910,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3715,6 +3932,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3736,6 +3954,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3757,6 +3976,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3778,6 +3998,7 @@
           "max": 20.0,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3799,6 +4020,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3816,6 +4038,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -3837,6 +4060,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -3858,6 +4082,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -3909,6 +4134,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -3934,6 +4160,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3955,6 +4182,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3976,6 +4204,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -3997,6 +4226,51 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "Objectifs",
+          "label": "Objectifs",
+          "type": "Note",
+          "required": false,
+          "description": "",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": false,
+          "flux": false,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "LivrablesAttendus",
+          "label": "Livrables attendus",
+          "type": "Note",
+          "required": false,
+          "description": "",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": false,
+          "flux": false,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4018,6 +4292,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4039,6 +4314,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4060,6 +4336,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4081,6 +4358,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4102,6 +4380,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4123,6 +4402,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4144,6 +4424,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4165,6 +4446,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4186,6 +4468,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4207,6 +4490,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4228,6 +4512,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4249,6 +4534,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4270,6 +4556,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4291,6 +4578,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4308,6 +4596,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -4329,6 +4618,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -4350,6 +4640,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -4401,6 +4692,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -4426,6 +4718,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4447,6 +4740,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4468,6 +4762,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4489,6 +4784,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4510,6 +4806,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4531,6 +4828,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4552,6 +4850,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4573,6 +4872,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4594,6 +4894,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4615,6 +4916,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4636,6 +4938,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4657,6 +4960,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4678,6 +4982,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4695,6 +5000,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -4716,6 +5022,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -4737,6 +5044,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -4788,6 +5096,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -4813,6 +5122,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4834,6 +5144,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4855,6 +5166,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4876,6 +5188,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4897,6 +5210,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4918,6 +5232,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4939,6 +5254,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4960,6 +5276,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -4981,6 +5298,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5002,6 +5320,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5023,6 +5342,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5044,6 +5364,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5065,6 +5386,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5072,7 +5394,7 @@
           "label": "Commentaires de revue",
           "type": "Note",
           "required": false,
-          "description": "Obligatoire pour demander des corrections",
+          "description": "Obligatoire pour demander des corrections ; historique conservé",
           "enum": null,
           "lookup": null,
           "default": null,
@@ -5086,6 +5408,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": true,
           "implicit": false
         },
         {
@@ -5107,6 +5430,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5128,6 +5452,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5149,6 +5474,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5170,6 +5496,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5191,6 +5518,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5212,6 +5540,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5233,14 +5562,15 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
           "name": "DoD1Fonctionnel",
-          "label": "DoD 1 — Fonctionnel et démontrable",
+          "label": "DoD 1 — Fonctionnel et démontrable (POC) ou applicable (plan)",
           "type": "Boolean",
           "required": false,
-          "description": "",
+          "description": "Critère adapté au type de livrable (cadrage § 4.4, H-36)",
           "enum": null,
           "lookup": null,
           "default": "Non",
@@ -5254,6 +5584,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5275,6 +5606,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5296,6 +5628,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5317,6 +5650,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5338,6 +5672,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5359,6 +5694,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5380,6 +5716,51 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "ImpactsSuite",
+          "label": "Impacts et suite envisagée",
+          "type": "Note",
+          "required": false,
+          "description": "Décision de suspension ou d'abandon (cadrage § 4.3)",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": false,
+          "flux": false,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "LivrableOrigine",
+          "label": "Livrable d'origine",
+          "type": "Lookup",
+          "required": false,
+          "description": "Livrable repris d'une affectation remplacée (P-03)",
+          "enum": null,
+          "lookup": "Livrables",
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": false,
+          "flux": false,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5401,6 +5782,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5422,6 +5804,51 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "EmpreinteRevue",
+          "label": "Empreinte des champs protégés",
+          "type": "Text",
+          "required": false,
+          "description": "JSON des champs protégés validés : `Affectation`, `Proprietaire`, `Reviseur`, `DoD1..5`, `NbCorrections`, `DecisionRevue`, `Valideur`, `DateValidation`, `VersionValidee`, dates de dépôt et de revue (P-09)",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": true,
+          "flux": true,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "EmpreinteCommentaire",
+          "label": "Empreinte du commentaire de revue",
+          "type": "Text",
+          "required": false,
+          "description": "Valeur de `CommentaireRevue` lors de la décision précédente (`G_COMMENTAIRE_REVUE`)",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": true,
+          "flux": true,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5439,6 +5866,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -5460,6 +5888,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -5481,6 +5910,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -5532,6 +5962,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -5557,6 +5988,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5578,6 +6010,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5599,6 +6032,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5620,6 +6054,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5641,6 +6076,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5662,6 +6098,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5683,6 +6120,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5704,6 +6142,7 @@
           "max": 100.0,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5725,6 +6164,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5746,6 +6186,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5767,6 +6208,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5788,6 +6230,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5809,6 +6252,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5830,6 +6274,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5851,6 +6296,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5872,6 +6318,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5893,6 +6340,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5914,6 +6362,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5921,7 +6370,7 @@
           "label": "Commentaire du référent",
           "type": "Note",
           "required": false,
-          "description": "Obligatoire pour « À compléter »",
+          "description": "Obligatoire pour « À compléter » ; historique conservé",
           "enum": null,
           "lookup": null,
           "default": null,
@@ -5935,6 +6384,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": true,
           "implicit": false
         },
         {
@@ -5956,6 +6406,29 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "EmpreinteRevue",
+          "label": "Empreinte des champs protégés",
+          "type": "Text",
+          "required": false,
+          "description": "JSON : `Affectation`, `Valideur`, `DateValidation`, `DateRemise`, dernier `CommentaireReferent` (P-09)",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": true,
+          "flux": true,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -5973,6 +6446,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -5994,6 +6468,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -6015,6 +6490,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -6066,6 +6542,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -6091,6 +6568,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6112,6 +6590,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6133,6 +6612,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6154,6 +6634,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6175,6 +6656,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6196,6 +6678,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6217,6 +6700,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6238,6 +6722,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6259,6 +6744,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6280,6 +6766,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6301,6 +6788,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6318,6 +6806,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -6339,6 +6828,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -6360,6 +6850,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -6411,6 +6902,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -6436,6 +6928,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6457,6 +6950,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6478,6 +6972,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6499,6 +6994,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6520,6 +7016,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6541,6 +7038,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6562,6 +7060,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6583,6 +7082,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6604,6 +7104,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6625,6 +7126,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6646,6 +7148,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6667,6 +7170,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6688,6 +7192,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6709,6 +7214,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6730,6 +7236,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6751,6 +7258,29 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "EmpreinteAction",
+          "label": "Empreinte de l'action",
+          "type": "Text",
+          "required": false,
+          "description": "JSON `{Bloquante, Statut}` validé, pour `G_ACTION_FORMALITE` (P-09)",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": true,
+          "flux": true,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6768,6 +7298,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -6789,6 +7320,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -6810,6 +7342,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -6865,6 +7398,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6886,6 +7420,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6907,6 +7442,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6928,6 +7464,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6949,6 +7486,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6970,6 +7508,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -6991,6 +7530,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7012,6 +7552,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7033,6 +7574,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7054,6 +7596,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -7101,6 +7644,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -7126,6 +7670,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7147,6 +7692,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7168,6 +7714,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7189,6 +7736,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7210,6 +7758,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7231,6 +7780,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7252,6 +7802,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7273,6 +7824,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7294,6 +7846,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7315,6 +7868,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7336,6 +7890,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7357,6 +7912,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7374,6 +7930,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -7395,6 +7952,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -7416,6 +7974,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -7467,6 +8026,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -7492,6 +8052,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7513,6 +8074,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7534,6 +8096,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7555,6 +8118,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7576,6 +8140,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7597,6 +8162,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7618,14 +8184,15 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
           "name": "ValidationInterne",
-          "label": "Approbateur",
+          "label": "Approbateur proposé",
           "type": "User",
           "required": false,
-          "description": "`ITEM_VALIDEUR`",
+          "description": "`ITEM_VALIDEUR` : peut renvoyer en rédaction ; la validation reste réservée à DIRECTION_RD / DIRECTION (H-11)",
           "enum": null,
           "lookup": null,
           "default": null,
@@ -7639,6 +8206,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7660,6 +8228,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7681,6 +8250,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7702,6 +8272,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7723,6 +8294,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7744,6 +8316,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7761,6 +8334,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -7782,6 +8356,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -7803,6 +8378,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -7854,6 +8430,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -7879,6 +8456,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7900,6 +8478,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7921,6 +8500,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -7938,6 +8518,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -7959,6 +8540,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -7980,6 +8562,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -8031,6 +8614,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -8056,6 +8640,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8077,6 +8662,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8098,6 +8684,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8119,6 +8706,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8140,6 +8728,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8157,6 +8746,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "Statut",
           "label": "Statut",
           "type": "Choice",
@@ -8178,6 +8768,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "StatutPrecedent",
           "label": "Statut précédent (technique)",
           "type": "Text",
@@ -8199,6 +8790,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "DateStatut",
           "label": "Date du dernier changement de statut",
           "type": "DateTime",
@@ -8250,6 +8842,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "name": "IdHNCS",
           "label": "Identifiant HNCS",
           "type": "Text",
@@ -8275,6 +8868,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8296,6 +8890,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8317,6 +8912,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8338,6 +8934,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8359,6 +8956,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -8410,6 +9008,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8431,6 +9030,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8452,6 +9052,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -8474,6 +9075,7 @@
         "max": null,
         "decimals": null,
         "lot": null,
+        "appendOnly": false,
         "implicit": false
       }
     },
@@ -8513,6 +9115,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8534,6 +9137,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8555,6 +9159,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8576,6 +9181,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8597,6 +9203,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8618,6 +9225,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8639,6 +9247,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -8661,6 +9270,7 @@
         "max": null,
         "decimals": null,
         "lot": null,
+        "appendOnly": false,
         "implicit": false
       }
     },
@@ -8700,6 +9310,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8721,6 +9332,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8742,6 +9354,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8763,6 +9376,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8784,6 +9398,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8805,6 +9420,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8826,6 +9442,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8847,6 +9464,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8868,6 +9486,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8889,6 +9508,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8910,6 +9530,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8931,6 +9552,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -8952,6 +9574,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -8974,6 +9597,7 @@
         "max": null,
         "decimals": null,
         "lot": null,
+        "appendOnly": false,
         "implicit": false
       }
     },
@@ -9013,6 +9637,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9034,6 +9659,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9055,6 +9681,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9076,6 +9703,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9097,6 +9725,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9118,6 +9747,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9139,6 +9769,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9160,6 +9791,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9181,6 +9813,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9202,6 +9835,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -9253,6 +9887,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9274,6 +9909,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9295,6 +9931,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9316,6 +9953,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9337,6 +9975,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9358,6 +9997,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9379,6 +10019,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9400,6 +10041,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9421,6 +10063,7 @@
           "max": null,
           "decimals": 0,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9442,6 +10085,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9463,6 +10107,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9484,6 +10129,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9491,7 +10137,7 @@
           "label": "Date de synchronisation",
           "type": "DateTime",
           "required": true,
-          "description": "",
+          "description": "Date de la dernière **écriture** de la ligne (aucune écriture si rien ne change)",
           "enum": null,
           "lookup": null,
           "default": null,
@@ -9505,6 +10151,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -9556,6 +10203,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9577,6 +10225,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9598,6 +10247,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -9649,6 +10299,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9670,6 +10321,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9691,6 +10343,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9712,6 +10365,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9733,6 +10387,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -9784,6 +10439,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9805,6 +10461,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9826,6 +10483,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9847,6 +10505,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -9898,6 +10557,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9919,6 +10579,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9940,6 +10601,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9961,6 +10623,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -9982,6 +10645,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10003,6 +10667,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10024,6 +10689,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10045,6 +10711,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -10096,6 +10763,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10117,6 +10785,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10138,6 +10807,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10159,6 +10829,29 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
+          "implicit": false
+        },
+        {
+          "name": "ResponsableValidation",
+          "label": "Responsable de validation",
+          "type": "User",
+          "required": false,
+          "description": "",
+          "enum": null,
+          "lookup": null,
+          "default": null,
+          "indexed": false,
+          "unique": false,
+          "hidden": false,
+          "flux": false,
+          "perso": false,
+          "confidentiel": false,
+          "min": null,
+          "max": null,
+          "decimals": null,
+          "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10180,6 +10873,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10201,6 +10895,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -10252,6 +10947,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10273,6 +10969,7 @@
           "max": null,
           "decimals": null,
           "lot": 3,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10294,6 +10991,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         },
         {
@@ -10315,6 +11013,7 @@
           "max": null,
           "decimals": null,
           "lot": null,
+          "appendOnly": false,
           "implicit": false
         }
       ],
@@ -10502,23 +11201,23 @@
       "G_ADM": "CSS",
       "G_REF": "R",
       "G_ALT": "—",
-      "G_DIR": "R",
+      "G_DIR": "—",
       "G_ECO": "CSS"
     },
     "Conventions": {
       "G_PROP": "FC",
       "G_DRD": "CSS",
-      "G_RD": "R",
+      "G_RD": "CSS",
       "G_ADM": "CSS",
       "G_REF": "—",
       "G_ALT": "—",
-      "G_DIR": "R",
+      "G_DIR": "CSS",
       "G_ECO": "CSS"
     },
     "InteractionsEcoles": {
       "G_PROP": "FC",
       "G_DRD": "R",
-      "G_RD": "R",
+      "G_RD": "CSS",
       "G_ADM": "CSS",
       "G_REF": "—",
       "G_ALT": "—",
@@ -10530,10 +11229,10 @@
       "G_DRD": "CSS",
       "G_RD": "CSS",
       "G_ADM": "CSS",
-      "G_REF": "R",
+      "G_REF": "IL(R)",
       "G_ALT": "—",
       "G_DIR": "—",
-      "G_ECO": "R"
+      "G_ECO": "—"
     },
     "Poles": {
       "G_PROP": "FC",
@@ -10582,7 +11281,7 @@
       "G_ADM": "—",
       "G_REF": "CSS",
       "G_ALT": "IL(CSS)",
-      "G_DIR": "R",
+      "G_DIR": "—",
       "G_ECO": "—"
     },
     "ComptesRendus": {
@@ -10598,9 +11297,9 @@
     "RegistreModeles": {
       "G_PROP": "FC",
       "G_DRD": "CSS",
-      "G_RD": "CSS",
+      "G_RD": "R",
       "G_ADM": "R",
-      "G_REF": "CSS",
+      "G_REF": "R+IL(CSS)",
       "G_ALT": "R",
       "G_DIR": "R",
       "G_ECO": "R"
@@ -10610,16 +11309,16 @@
       "G_DRD": "CSS",
       "G_RD": "CSS",
       "G_ADM": "CSS",
-      "G_REF": "R",
+      "G_REF": "R+IL(CSS)",
       "G_ALT": "—",
       "G_DIR": "—",
-      "G_ECO": "R"
+      "G_ECO": "R+IL(CSS)"
     },
     "ModelesActions": {
       "G_PROP": "FC",
       "G_DRD": "CSS",
       "G_RD": "R",
-      "G_ADM": "R",
+      "G_ADM": "CSS",
       "G_REF": "R",
       "G_ALT": "—",
       "G_DIR": "—",
@@ -10629,11 +11328,11 @@
       "G_PROP": "FC",
       "G_DRD": "CSS",
       "G_RD": "CSS",
-      "G_ADM": "R",
-      "G_REF": "CSS",
+      "G_ADM": "—",
+      "G_REF": "IL(CSS)",
       "G_ALT": "—",
       "G_DIR": "—",
-      "G_ECO": "CSS"
+      "G_ECO": "R"
     },
     "CommunicationsRD": {
       "G_PROP": "FC",
@@ -10641,7 +11340,7 @@
       "G_RD": "CSS",
       "G_ADM": "R",
       "G_REF": "CSS",
-      "G_ALT": "R",
+      "G_ALT": "R+IL(CSS)",
       "G_DIR": "CSS",
       "G_ECO": "R"
     },
@@ -10738,7 +11437,7 @@
     "Administration": {
       "G_PROP": "FC",
       "G_DRD": "—",
-      "G_RD": "—",
+      "G_RD": "IL(R)",
       "G_ADM": "CSS",
       "G_REF": "—",
       "G_ALT": "—",
@@ -10748,9 +11447,9 @@
     "ModelesRD": {
       "G_PROP": "FC",
       "G_DRD": "CSS",
-      "G_RD": "CSS",
+      "G_RD": "R",
       "G_ADM": "R",
-      "G_REF": "CSS",
+      "G_REF": "R+IL(CSS)",
       "G_ALT": "R",
       "G_DIR": "R",
       "G_ECO": "R"
@@ -10918,6 +11617,21 @@
         "Suspendue / refusée"
       ],
       "flow": "PA-12"
+    },
+    {
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "targets": [
+        "Proposé",
+        "À arbitrer",
+        "Priorisé",
+        "En cours",
+        "Bloqué",
+        "Suspendu",
+        "Terminé",
+        "Abandonné"
+      ],
+      "flow": "PA-14"
     }
   ],
   "controls": [
@@ -10925,6 +11639,12 @@
       "code": "G_RESP_ANALYSE",
       "object": "Candidature",
       "rule": "`ResponsableAnalyse` renseigné",
+      "flow": "PA-02"
+    },
+    {
+      "code": "G_IDENTITE",
+      "object": "Candidature",
+      "rule": "`Email` renseigné et `Title` ne commence pas par « À qualifier » (identité du candidat qualifiée par la R&D)",
       "flow": "PA-02"
     },
     {
@@ -10958,6 +11678,12 @@
       "flow": "PA-03 / PA-02"
     },
     {
+      "code": "G_DECIDEUR",
+      "object": "Candidature",
+      "rule": "`DecideurFinal` renseigné (refus sans entretien réalisé)",
+      "flow": "PA-02"
+    },
+    {
       "code": "G_INTEGRATION",
       "object": "Candidature",
       "rule": "(a) `DateDecisionFinale` renseignée ; (b) `DateDemarrageConfirmee` et `DateFinPrevue` renseignées ; (c) `Etablissement` et `PolePressenti` renseignés ; (d) au moins une action `ActionsIntegration` de contexte « Formalités d'intégration » existe pour la candidature ; (e) **toutes** les actions bloquantes de ce contexte sont « Terminée » avec `Preuve` renseignée, ou « Non applicable » avec `Commentaire` renseigné",
@@ -10972,8 +11698,14 @@
     {
       "code": "G_COMMENTAIRE_REVUE",
       "object": "Livrable",
-      "rule": "`CommentaireRevue` non vide **et** différent de la valeur au moment de la décision précédente",
+      "rule": "`CommentaireRevue` non vide **et** différent de `EmpreinteCommentaire` (valeur lors de la décision précédente)",
       "flow": "PA-07"
+    },
+    {
+      "code": "G_VALIDEUR_LEGITIME",
+      "object": "Livrable ; CompteRendu",
+      "rule": "L'acteur (`ITEM_VALIDEUR`) est le compte du référent de l'affectation (`Affectation` → `Referent` → `Compte`) **ou** un membre de DIRECTION_RD désigné comme réviseur, **et** il est différent de `ITEM_AUTEUR`. Un alternant ne peut jamais valider son propre travail",
+      "flow": "PA-07 / PA-08"
     },
     {
       "code": "G_CAPITALISATION",
@@ -11018,6 +11750,18 @@
       "flow": "PA-05"
     },
     {
+      "code": "G_SOURCE_ALTERNANT",
+      "object": "Alternant",
+      "rule": "Création par `FLUX` : `CandidatureSource` liée au statut « Intégrée ». Création manuelle (DIRECTION_RD) : `CandidatureSource` vide **et** `Fonction.RepriseExistantActive` = Oui (reprise de l'existant, H-12)",
+      "flow": "PA-04"
+    },
+    {
+      "code": "G_DATE_FIN_REPORTEE",
+      "object": "Alternant",
+      "rule": "`DateFin` − aujourd'hui > `Fin.AnticipationJours` (prolongation saisie)",
+      "flow": "PA-04"
+    },
+    {
       "code": "G_DATE_DEBUT_ATTEINTE",
       "object": "Alternant",
       "rule": "`DateDebut` ≤ aujourd'hui (non exigé pour la reprise depuis « Suspendu »)",
@@ -11040,6 +11784,24 @@
       "object": "Communication",
       "rule": "`DateEffective` renseignée ; `UrlPublication` renseignée si `Externe` = Oui",
       "flow": "PA-12"
+    },
+    {
+      "code": "G_DECISION_PARTENARIAT",
+      "object": "Convention",
+      "rule": "Si `TypeConvention` ∈ {Convention de partenariat ; Sponsoring} : `DecisionPartenariat` ∈ {Partenariat retenu ; Sponsoring retenu} et `DecideurPartenariat` renseigné (décision humaine préalable)",
+      "flow": "PA-10"
+    },
+    {
+      "code": "G_MOTIF_DECISION",
+      "object": "Sujet",
+      "rule": "`MotifDecision` non vide",
+      "flow": "PA-14"
+    },
+    {
+      "code": "G_ACTION_FORMALITE",
+      "object": "ActionsIntegration",
+      "rule": "Contexte « Formalités d'intégration » : `Bloquante` et le passage à « Terminée » / « Non applicable » ne sont modifiables que par ADMIN ou par le `Responsable` désigné ; sinon la valeur de `EmpreinteAction` est rétablie (P-09)",
+      "flow": "PA-04"
     },
     {
       "code": "G_PREUVE_SIGNATURE",
@@ -11183,10 +11945,37 @@
     {
       "object": "Convention",
       "status": "Signée / active",
-      "decision": "Constat de signature avec preuve",
+      "decision": "Constat de signature avec preuve (et décision de partenariat préalable pour un partenariat ou un sponsoring)",
       "deciders": [
         "ADMIN",
         "ECOLES"
+      ]
+    },
+    {
+      "object": "Sujet",
+      "status": "Priorisé",
+      "decision": "Arbitrage du portefeuille (GO)",
+      "deciders": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ]
+    },
+    {
+      "object": "Sujet",
+      "status": "Suspendu",
+      "decision": "Report ou reformulation (NO-GO provisoire)",
+      "deciders": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ]
+    },
+    {
+      "object": "Sujet",
+      "status": "Abandonné",
+      "decision": "Abandon (NO-GO)",
+      "deciders": [
+        "DIRECTION_RD",
+        "DIRECTION"
       ]
     }
   ],
@@ -11228,6 +12017,13 @@
       "type": "Planifié (quotidien 07:30)",
       "lot": "2",
       "trigger": "Récurrence"
+    },
+    {
+      "id": "PA-00F",
+      "name": "Droits des propriétaires de modèles",
+      "type": "Automatisé",
+      "lot": "2",
+      "trigger": "SharePoint « créé ou modifié » (RegistreModeles)"
     },
     {
       "id": "PA-01a",
@@ -11375,6 +12171,13 @@
       "type": "Planifié (mensuel), **désactivé par défaut**",
       "lot": "5",
       "trigger": "Récurrence"
+    },
+    {
+      "id": "PA-14",
+      "name": "Arbitrage du portefeuille de sujets",
+      "type": "Automatisé",
+      "lot": "3",
+      "trigger": "SharePoint « créé ou modifié » (SujetsRD)"
     }
   ],
   "views": {
@@ -13266,6 +14069,18 @@
       "description": "Doubler les notifications nominatives par un message Teams"
     },
     {
+      "key": "Fonction.RepriseExistantActive",
+      "value": "Non",
+      "category": "Fonctionnalités",
+      "description": "Autorise DIRECTION_RD à créer un alternant sans candidature (reprise de l'existant, `G_SOURCE_ALTERNANT`, H-12)"
+    },
+    {
+      "key": "Recrutement.PartageTransmission",
+      "value": "Groupe",
+      "category": "Fonctionnalités",
+      "description": "Portée du partage à la transmission (PA-02) : Groupe (G_ADM) ou Destinataire (`DestinataireAdmin` seul) (H-45)"
+    },
+    {
       "key": "Conservation.CandidatureNonRetenueMois",
       "value": "",
       "category": "Conservation",
@@ -13765,7 +14580,7 @@
       "recipients": "Destinataires.Administration",
       "channel": "Mail+Teams",
       "subject": "Profil présélectionné {IdHNCS} transmis",
-      "content": "Lien sécurisé vers la candidature et le dossier CV (accès ouvert à l'administration par PA-02), avis de la R&D",
+      "content": "Lien sécurisé vers la candidature et le dossier CV (accès ouvert par PA-02) ; l'avis de la R&D est consultable dans l'élément, **jamais recopié** dans le message",
       "data": [
         "ID",
         "NOM"
@@ -13957,11 +14772,11 @@
     },
     {
       "code": "N-22",
-      "flow": "PA-05",
-      "recipients": "Alternant, référent",
+      "flow": "PA-05 ; PA-09",
+      "recipients": "Alternant, référent, G_RD",
       "channel": "Mail",
       "subject": "Affectation {IdHNCS} terminée",
-      "content": "Date et motif de fin",
+      "content": "Date et motif de fin ; liste des livrables encore ouverts, à poursuivre (nouveau livrable avec « Livrable d'origine »), suspendre ou clore — décision de la R&D",
       "data": [
         "ID"
       ]
@@ -14197,9 +15012,9 @@
     {
       "code": "N-43",
       "flow": "PA-11",
-      "recipients": "Destinataires.Direction, G_DRD",
+      "recipients": "G_DRD (relaie à Destinataires.Direction après relecture)",
       "channel": "Mail",
-      "subject": "Synthèse {Point Direction / Revue trimestrielle}",
+      "subject": "Synthèse {Point Direction / Revue trimestrielle} à relire et transmettre",
       "content": "Agrégats et points d'arbitrage, sans nom de personne",
       "data": [
         "ID"
@@ -14228,6 +15043,17 @@
       ]
     },
     {
+      "code": "N-47",
+      "flow": "PA-14",
+      "recipients": "G_DRD (À arbitrer, Bloqué) ; référent du sujet et G_RD (Priorisé, Suspendu, Abandonné)",
+      "channel": "Mail+Teams",
+      "subject": "Sujet {IdHNCS} {statut}",
+      "content": "Décision ou demande d'arbitrage, motif",
+      "data": [
+        "ID"
+      ]
+    },
+    {
       "code": "N-46",
       "flow": "PA-13",
       "recipients": "G_DRD, G_PROP",
@@ -14251,11 +15077,22 @@
     },
     {
       "code": "N-91",
-      "flow": "PA-05",
+      "flow": "PA-05 ; PA-04",
       "recipients": "Auteur de la modification",
       "channel": "Mail+Teams",
-      "subject": "Affectation {IdHNCS} : modification annulée",
-      "content": "Champs verrouillés, procédure « nouvelle affectation »",
+      "subject": "{IdHNCS} : modification annulée",
+      "content": "Champs verrouillés (affectation active, référent principal dérivé), procédure « nouvelle affectation »",
+      "data": [
+        "ID"
+      ]
+    },
+    {
+      "code": "N-92",
+      "flow": "PA-04 ; PA-07 ; PA-08 ; PA-10",
+      "recipients": "Auteur de la modification",
+      "channel": "Mail+Teams",
+      "subject": "{IdHNCS} : modification d'un champ protégé annulée",
+      "content": "Champ concerné, rôle habilité, valeur rétablie (P-09)",
       "data": [
         "ID"
       ]
@@ -14384,6 +15221,11 @@
           {
             "name": "TypeEtablissement",
             "source": "TypeEtablissement",
+            "transform": null
+          },
+          {
+            "name": "DateProchaineAction",
+            "source": "DateProchaineAction",
             "transform": null
           },
           {
@@ -14922,6 +15764,11 @@
             "transform": null
           },
           {
+            "name": "LienDocument",
+            "source": "LienDocument",
+            "transform": null
+          },
+          {
             "name": "ADocument",
             "source": "LienDocument",
             "transform": "bool"
@@ -15207,6 +16054,11 @@
             "transform": null
           },
           {
+            "name": "Title",
+            "source": "Title",
+            "transform": null
+          },
+          {
             "name": "LivrableSourceId",
             "source": "LivrableSourceId",
             "transform": null
@@ -15239,6 +16091,11 @@
           {
             "name": "AutorisationsTiers",
             "source": "AutorisationsTiers",
+            "transform": null
+          },
+          {
+            "name": "UrlPublication",
+            "source": "UrlPublication",
             "transform": null
           },
           {
@@ -15564,22 +16421,27 @@
       {
         "from": "CommunicationsRD[LivrableSourceId]",
         "to": "Livrables[Id]",
-        "active": true
+        "active": false
       },
       {
         "from": "CommunicationsRD[DateEffective]",
         "to": "Calendrier[Date]",
-        "active": false
+        "active": true
       },
       {
         "from": "Mobilisations[LivrableId]",
         "to": "Livrables[Id]",
+        "active": false
+      },
+      {
+        "from": "Mobilisations[DateMobilisation]",
+        "to": "Calendrier[Date]",
         "active": true
       },
       {
         "from": "ActionsIntegration[AlternantId]",
         "to": "Alternants[Id]",
-        "active": false
+        "active": true
       },
       {
         "from": "GitlabSync[SujetId]",
@@ -15598,6 +16460,7 @@
       "Candidatures présélectionnées",
       "Taux de présélection",
       "Entretiens réalisés",
+      "Candidatures avec entretien réalisé",
       "Entretiens à venir",
       "Candidatures retenues",
       "Candidatures intégrées",
@@ -15627,6 +16490,7 @@
       "Plans de stratégie formalisés",
       "Couverture des domaines cibles",
       "Sujets bloqués",
+      "Sujets actifs",
       "Mobilisations commerciales",
       "Comptes rendus attendus",
       "Comptes rendus manquants",
@@ -15644,9 +16508,10 @@
       "Actions en retard",
       "Transitions refusées",
       "Écarts d'échéance GitLab",
-      "Cible"
+      "Cible",
+      "Dernière actualisation"
     ],
-    "measuresDax": "// ---------- Recrutement ----------\nCandidatures reçues = COUNTROWS ( Candidatures )\nCandidatures actives = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstActive] = TRUE () )\nSeuil attente (j) =\n    VAR v = LOOKUPVALUE ( Parametres[Valeur], Parametres[Cle], \"Delai.SeuilAttenteCandidatureJours\" )\n    RETURN IFERROR ( VALUE ( v ), 10 )\nCandidatures en attente =\n    VAR Seuil = [Seuil attente (j)]\n    RETURN COUNTROWS ( FILTER ( Candidatures, Candidatures[EstActive] && DATEDIFF ( COALESCE ( Candidatures[DateStatut], Candidatures[DateReception] ), NOW (), DAY ) > Seuil ) )\nDélai moyen de présélection (j) = AVERAGE ( Candidatures[DelaiPreselectionJours] )\nDélai moyen de traitement (j) = AVERAGE ( Candidatures[DelaiTraitementJours] )\nCandidatures analysées = CALCULATE ( COUNTROWS ( Candidatures ), NOT ISBLANK ( Candidatures[DateDecisionPreselection] ) )\nCandidatures présélectionnées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstPreselectionnee] = TRUE () )\nTaux de présélection = DIVIDE ( [Candidatures présélectionnées], [Candidatures analysées] )\nEntretiens réalisés = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = \"Réalisé\" )\nEntretiens à venir = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = \"Planifié\", Entretiens[DateHeure] >= NOW () )\nCandidatures retenues = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] IN { \"Retenue\", \"Formalités en cours\", \"Intégrée\" } )\nCandidatures intégrées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] = \"Intégrée\" )\nTaux de transformation = DIVIDE ( [Candidatures intégrées], [Candidatures reçues] )\nDoublons signalés = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE () )\n\n// ---------- Effectifs et encadrement ----------\nAlternants actifs = CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { \"Actif\", \"Fin planifiée\" } )\nAlternants accueillis = CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { \"Actif\", \"Suspendu\", \"Fin planifiée\", \"Terminé\", \"Clôturé\" } )\nAlternants présents sur la période =\n    VAR DebutP = MIN ( Calendrier[Date] )\n    VAR FinP = MAX ( Calendrier[Date] )\n    RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> \"À intégrer\" && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )\nAffectations actives = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } )\nAffectations sans référent = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"À préparer\", \"Active\", \"À risque\", \"Bloquée\" }, ISBLANK ( Affectations[ReferentId] ) )\nAffectations incomplètes =\n    COUNTROWS (\n        FILTER (\n            Affectations,\n            Affectations[Statut] IN { \"À préparer\", \"Active\", \"À risque\", \"Bloquée\" }\n                && ( ISBLANK ( Affectations[ReferentId] ) || ISBLANK ( Affectations[DateFin] ) || COUNTROWS ( RELATEDTABLE ( Livrables ) ) = 0 )\n        )\n    )\nAlternants sans affectation active =\n    COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { \"Actif\", \"Fin planifiée\" } && CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } ) = 0 ) )\nTaux de charge référent = DIVIDE ( [Affectations actives], SUM ( Referents[CapaciteIndicative] ) )\n\n// ---------- Projets et livrables ----------\nLivrables = COUNTROWS ( Livrables )\nLivrables validés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } )\nLivrables soumis à revue = CALCULATE ( COUNTROWS ( Livrables ), NOT ISBLANK ( Livrables[DatePremierDepot] ) )\nTaux de validation = DIVIDE ( [Livrables validés], [Livrables soumis à revue] )\nLivrables en retard = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { \"À produire\", \"En cours\", \"Corrections demandées\" } && Livrables[Echeance] < TODAY () ) )\nLivrables arrivés à échéance = COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> \"Suspendu / abandonné\" ) )\nTaux de remise à l'heure =\n    DIVIDE (\n        COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> \"Suspendu / abandonné\" && NOT ISBLANK ( Livrables[DatePremierDepot] ) && Livrables[DatePremierDepotJour] <= Livrables[Echeance] ) ),\n        [Livrables arrivés à échéance]\n    )\nTaux de validation au premier passage =\n    DIVIDE (\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" }, Livrables[NbCorrections] = 0 ),\n        CALCULATE ( COUNTROWS ( Livrables ), NOT ISBLANK ( Livrables[DateRevue] ) )\n    )\nTaux de capitalisation =\n    DIVIDE (\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[CapitalisationComplete] = TRUE () ),\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\" )\n    )\nCorrections en cours = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Corrections demandées\" )\nÉchéances à 14 jours = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { \"À produire\", \"En cours\", \"Corrections demandées\" } && Livrables[Echeance] >= TODAY () && Livrables[Echeance] <= TODAY () + 14 ) )\nLivrables sans modèle = CALCULATE ( COUNTROWS ( Livrables ), ISBLANK ( Livrables[ModeleId] ), Livrables[Statut] <> \"Suspendu / abandonné\" )\nPOC réalisés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[TypeLivrable] = \"POC / démonstrateur\", Livrables[DoDComplete] = TRUE () )\nPlans de stratégie formalisés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[TypeLivrable] = \"Plan de stratégie\", Livrables[DoDComplete] = TRUE () )\nCouverture des domaines cibles =\n    VAR DomCibles = FILTER ( ALL ( DomainesCibles ), DomainesCibles[Cible] = TRUE () && DomainesCibles[Statut] = \"Actif\" )\n    VAR SujetsValides = SELECTCOLUMNS ( FILTER ( ALL ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } ), \"SujetId\", RELATED ( Affectations[SujetId] ) )\n    VAR Couverts = FILTER ( DomCibles, NOT ISEMPTY ( FILTER ( ALL ( SujetDomaine ), SujetDomaine[DomaineId] = DomainesCibles[Id] && SujetDomaine[SujetId] IN SujetsValides ) ) )\n    RETURN DIVIDE ( COUNTROWS ( Couverts ), COUNTROWS ( DomCibles ) )\nSujets bloqués = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { \"Bloqué\", \"À arbitrer\" } )\nMobilisations commerciales = COUNTROWS ( Mobilisations )\n\n// ---------- Comptes rendus ----------\nComptes rendus attendus = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[Echeance] <= TODAY () )\nComptes rendus manquants = COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Statut] = \"Non remis\" || ( ComptesRendus[Statut] IN { \"Attendu\", \"En rédaction\" } && ComptesRendus[Echeance] < TODAY () ) ) )\nTaux de remise des comptes rendus =\n    DIVIDE (\n        COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATEVALUE ( ComptesRendus[DateRemise] ) <= ComptesRendus[Echeance] ) ),\n        [Comptes rendus attendus]\n    )\nBlocages signalés = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[BlocageSignale] = TRUE () )\nAvancement moyen (dernier CR) =\n    AVERAGEX (\n        VALUES ( Affectations[Id] ),\n        VAR DernierePeriode = CALCULATE ( MAX ( ComptesRendus[PeriodeFin] ), ComptesRendus[Statut] IN { \"Remis\", \"Validé\", \"À compléter\" } )\n        RETURN CALCULATE ( MAX ( ComptesRendus[Avancement] ), ComptesRendus[PeriodeFin] = DernierePeriode )\n    )\n\n// ---------- Établissements et partenariats ----------\nPartenariats académiques actifs = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = \"Signée / active\", Conventions[TypeConvention] IN { \"Convention de partenariat\", \"Sponsoring\" } )\nConventions à renouveler = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = \"À renouveler\" )\nÉtablissements collaborants = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] IN { \"Établissement d'accueil\", \"Partenariat à évaluer\", \"Partenaire actif\" } )\nPartenariats à évaluer = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] = \"Partenariat à évaluer\" )\nBilans réalisés = CALCULATE ( COUNTROWS ( BilansAlternance ), BilansAlternance[Statut] = \"Réalisé\" )\n\n// ---------- Communications et valorisation ----------\nCommunications publiées = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = \"Publiée\" )\nCommunications en préparation = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] IN { \"Idée\", \"À préparer\", \"En rédaction\", \"En revue\", \"Validée\", \"Programmée\" } )\nLivrables valorisés = CALCULATE ( DISTINCTCOUNT ( CommunicationsRD[LivrableSourceId] ), CommunicationsRD[Statut] = \"Publiée\" )\n\n// ---------- Actions et qualité des données ----------\nActions en retard = COUNTROWS ( FILTER ( ActionsIntegration, ActionsIntegration[Statut] IN { \"À faire\", \"En cours\", \"Bloquée\" } && ActionsIntegration[Echeance] < TODAY () ) )\nTransitions refusées = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = \"Refusée — annulée\" )\nÉcarts d'échéance GitLab = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE () )\n\n// ---------- Objectifs indicatifs (cadrage § 2.4) ----------\nCible = SELECTEDVALUE ( Objectifs[Cible] )",
+    "measuresDax": "// ---------- Recrutement ----------\nCandidatures reçues = COUNTROWS ( Candidatures )\nCandidatures actives = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstActive] = TRUE () )\nSeuil attente (j) =\n    VAR v = LOOKUPVALUE ( Parametres[Valeur], Parametres[Cle], \"Delai.SeuilAttenteCandidatureJours\" )\n    RETURN IF ( ISBLANK ( v ), 10, IFERROR ( VALUE ( v ), 10 ) )\nCandidatures en attente =\n    VAR Seuil = [Seuil attente (j)]\n    RETURN COUNTROWS ( FILTER ( Candidatures, Candidatures[EstActive] && DATEDIFF ( COALESCE ( Candidatures[DateStatut], Candidatures[DateReception] ), NOW (), DAY ) > Seuil ) )\nDélai moyen de présélection (j) = AVERAGE ( Candidatures[DelaiPreselectionJours] )\nDélai moyen de traitement (j) = AVERAGE ( Candidatures[DelaiTraitementJours] )\nCandidatures analysées = CALCULATE ( COUNTROWS ( Candidatures ), NOT ISBLANK ( Candidatures[DateDecisionPreselection] ) )\nCandidatures présélectionnées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstPreselectionnee] = TRUE () )\nTaux de présélection = DIVIDE ( [Candidatures présélectionnées], [Candidatures analysées] )\nEntretiens réalisés = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = \"Réalisé\" )\nCandidatures avec entretien réalisé = CALCULATE ( DISTINCTCOUNT ( Entretiens[CandidatureId] ), Entretiens[Statut] = \"Réalisé\" )\nEntretiens à venir = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = \"Planifié\", Entretiens[DateHeure] >= NOW () )\nCandidatures retenues = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] IN { \"Retenue\", \"Formalités en cours\", \"Intégrée\" } )\nCandidatures intégrées = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] = \"Intégrée\" )\nTaux de transformation = DIVIDE ( [Candidatures intégrées], [Candidatures reçues] )\nDoublons signalés = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE () )\n\n// ---------- Effectifs et encadrement ----------\nAlternants actifs = CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { \"Actif\", \"Fin planifiée\" } )\nAlternants accueillis = COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { \"Actif\", \"Suspendu\", \"Fin planifiée\", \"Terminé\", \"Clôturé\" } && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) ) )\nAlternants présents sur la période =\n    VAR DebutP = MIN ( Calendrier[Date] )\n    VAR FinP = MAX ( Calendrier[Date] )\n    RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> \"À intégrer\" && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )\nAffectations actives = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } )\nAffectations sans référent = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"À préparer\", \"Active\", \"À risque\", \"Bloquée\" }, ISBLANK ( Affectations[ReferentId] ) )\nAffectations incomplètes =\n    COUNTROWS (\n        FILTER (\n            Affectations,\n            Affectations[Statut] IN { \"À préparer\", \"Active\", \"À risque\", \"Bloquée\" }\n                && ( ISBLANK ( Affectations[ReferentId] ) || ISBLANK ( Affectations[DateFin] ) || COUNTROWS ( RELATEDTABLE ( Livrables ) ) = 0 )\n        )\n    )\nAlternants sans affectation active =\n    COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { \"Actif\", \"Fin planifiée\" } && CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } ) = 0 ) )\nTaux de charge référent = DIVIDE ( CALCULATE ( DISTINCTCOUNT ( Affectations[AlternantId] ), Affectations[Statut] IN { \"Active\", \"À risque\", \"Bloquée\" } ), SUM ( Referents[CapaciteIndicative] ) )\n\n// ---------- Projets et livrables ----------\nLivrables = COUNTROWS ( Livrables )\nLivrables validés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } )\nLivrables soumis à revue = CALCULATE ( COUNTROWS ( Livrables ), NOT ISBLANK ( Livrables[DatePremierDepot] ) )\nTaux de validation = DIVIDE ( [Livrables validés], [Livrables soumis à revue] )\nLivrables en retard = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { \"À produire\", \"En cours\", \"Corrections demandées\" } && Livrables[Echeance] < TODAY () ) )\nLivrables arrivés à échéance = COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> \"Suspendu / abandonné\" ) )\nTaux de remise à l'heure =\n    DIVIDE (\n        COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> \"Suspendu / abandonné\" && NOT ISBLANK ( Livrables[DatePremierDepot] ) && Livrables[DatePremierDepotJour] <= Livrables[Echeance] ) ),\n        [Livrables arrivés à échéance]\n    )\nTaux de validation au premier passage =\n    DIVIDE (\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" }, Livrables[NbCorrections] = 0 ),\n        [Livrables soumis à revue]\n    )\nTaux de capitalisation =\n    DIVIDE (\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[CapitalisationComplete] = TRUE () ),\n        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } )\n    )\nCorrections en cours = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Corrections demandées\" )\nÉchéances à 14 jours = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { \"À produire\", \"En cours\", \"Corrections demandées\" } && Livrables[Echeance] >= TODAY () && Livrables[Echeance] <= TODAY () + 14 ) )\nLivrables sans modèle = CALCULATE ( COUNTROWS ( Livrables ), ISBLANK ( Livrables[ModeleId] ), Livrables[Statut] <> \"Suspendu / abandonné\" )\nPOC réalisés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[TypeLivrable] = \"POC / démonstrateur\", Livrables[DoDComplete] = TRUE () )\nPlans de stratégie formalisés = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = \"Archivé / clôturé\", Livrables[TypeLivrable] = \"Plan de stratégie\", Livrables[DoDComplete] = TRUE () )\nCouverture des domaines cibles =\n    VAR DomCibles = FILTER ( ALL ( DomainesCibles ), DomainesCibles[Cible] = TRUE () && DomainesCibles[Statut] = \"Actif\" )\n    VAR SujetsValides = SELECTCOLUMNS ( FILTER ( ALL ( Livrables ), Livrables[Statut] IN { \"Validé\", \"Archivé / clôturé\" } ), \"SujetId\", RELATED ( Affectations[SujetId] ) )\n    VAR Couverts = FILTER ( DomCibles, NOT ISEMPTY ( FILTER ( ALL ( SujetDomaine ), SujetDomaine[DomaineId] = DomainesCibles[Id] && SujetDomaine[SujetId] IN SujetsValides ) ) )\n    RETURN DIVIDE ( COUNTROWS ( Couverts ), COUNTROWS ( DomCibles ) )\nSujets bloqués = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { \"Bloqué\", \"À arbitrer\" } )\nSujets actifs = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { \"Priorisé\", \"En cours\", \"Bloqué\" } )\nMobilisations commerciales = COUNTROWS ( Mobilisations )\n\n// ---------- Comptes rendus ----------\nComptes rendus attendus = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[Echeance] <= TODAY () )\nComptes rendus manquants = COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Statut] = \"Non remis\" || ( ComptesRendus[Statut] IN { \"Attendu\", \"En rédaction\" } && ComptesRendus[Echeance] < TODAY () ) ) )\nTaux de remise des comptes rendus =\n    DIVIDE (\n        COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATE ( YEAR ( ComptesRendus[DateRemise] ), MONTH ( ComptesRendus[DateRemise] ), DAY ( ComptesRendus[DateRemise] ) ) <= ComptesRendus[Echeance] ) ),\n        [Comptes rendus attendus]\n    )\nBlocages signalés = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[BlocageSignale] = TRUE () )\nAvancement moyen (dernier CR) =\n    AVERAGEX (\n        VALUES ( Affectations[Id] ),\n        VAR DernierePeriode = CALCULATE ( MAX ( ComptesRendus[PeriodeFin] ), ComptesRendus[Statut] IN { \"Remis\", \"Validé\", \"À compléter\" } )\n        RETURN CALCULATE ( MAX ( ComptesRendus[Avancement] ), ComptesRendus[PeriodeFin] = DernierePeriode )\n    )\n\n// ---------- Établissements et partenariats ----------\nPartenariats académiques actifs = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = \"Signée / active\", Conventions[TypeConvention] IN { \"Convention de partenariat\", \"Sponsoring\" } )\nConventions à renouveler = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = \"À renouveler\" )\nÉtablissements collaborants = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] IN { \"Établissement d'accueil\", \"Partenariat à évaluer\", \"Partenaire actif\" } )\nPartenariats à évaluer = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] = \"Partenariat à évaluer\" )\nBilans réalisés = CALCULATE ( COUNTROWS ( BilansAlternance ), BilansAlternance[Statut] = \"Réalisé\" )\n\n// ---------- Communications et valorisation ----------\nCommunications publiées = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = \"Publiée\", CommunicationsRD[Externe] = TRUE () )\nCommunications en préparation = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] IN { \"Idée\", \"À préparer\", \"En rédaction\", \"En revue\", \"Validée\", \"Programmée\" } )\nLivrables valorisés = CALCULATE ( DISTINCTCOUNTNOBLANK ( CommunicationsRD[LivrableSourceId] ), CommunicationsRD[Statut] = \"Publiée\" )\n\n// ---------- Actions et qualité des données ----------\nActions en retard = COUNTROWS ( FILTER ( ActionsIntegration, ActionsIntegration[Statut] IN { \"À faire\", \"En cours\", \"Bloquée\" } && ActionsIntegration[Echeance] < TODAY () ) )\nTransitions refusées = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = \"Refusée — annulée\" )\nÉcarts d'échéance GitLab = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE () )\n\n// ---------- Objectifs indicatifs (cadrage § 2.4) ----------\n// Cible : à utiliser dans un visuel filtré sur Objectifs[Indicateur]\nCible = SELECTEDVALUE ( Objectifs[Cible] )\nDernière actualisation = MAX ( Mesures[DerniereActualisation] )",
     "roles": [
       {
         "role": "Direction",
@@ -15663,7 +16528,13 @@
       {
         "role": "Administration",
         "members": "Équipe administrative",
-        "filters": "`Livrables` : `FALSE ()` ; `ComptesRendus` : `FALSE ()` ; `Mobilisations` : `FALSE ()` ; `GitlabSync` : `FALSE ()`",
+        "filters": "`Candidatures` : `NOT ISBLANK ( Candidatures[DateTransmissionAdmin] )` ; `Livrables` : `FALSE ()` ; `ComptesRendus` : `FALSE ()` ; `Mobilisations` : `FALSE ()` ; `GitlabSync` : `FALSE ()`",
+        "ols": "aucune"
+      },
+      {
+        "role": "RelationEcoles",
+        "members": "Responsables de la relation école (G_ECO)",
+        "filters": "`Candidatures` : `FALSE ()` ; `Entretiens` : `FALSE ()` ; `ActionsIntegration` : `FALSE ()` ; `Livrables` : `FALSE ()` ; `ComptesRendus` : `FALSE ()` ; `Mobilisations` : `FALSE ()` ; `GitlabSync` : `FALSE ()`",
         "ols": "aucune"
       },
       {
@@ -15682,17 +16553,17 @@
     },
     {
       "lot": "1 — Socle SharePoint",
-      "content": "`provisioning/` (site, groupes, niveau CSS, listes et bibliothèques de lot 1, vues, validations, index, permissions, référentiels initiaux) ; `testdata/` ; `tests/e2e` (scénarios manuels et droits d'accès)",
+      "content": "`provisioning/` (site, groupes, niveau CSS, listes et bibliothèques de lot 1, vues, validations, index, permissions, référentiels initiaux) ; flux **PA-00C et PA-00D** (identifiants, pour rendre les colonnes de recherche utilisables) ; `testdata/` ; `tests/e2e` (scénarios manuels et droits d'accès) ; procédure manuelle provisoire de partage par élément (transmission à l'administration, dossiers de suivi) exécutée par G_PROP (`docs/exploitation.md`)",
       "exit": "Scénarios de bout en bout testés, y compris les droits d'accès"
     },
     {
       "lot": "2 — Automatisations prioritaires",
-      "content": "`flows/` : PA-00A–E, PA-01a/b, PA-02/02b, PA-03/03b, PA-04/04b, PA-05, PA-06, PA-07/07b",
+      "content": "`flows/` : PA-00A, PA-00B, PA-00E, PA-00F, PA-01a/b, PA-02/02b, PA-03/03b, PA-04/04b, PA-05, PA-06, PA-07/07b",
       "exit": "Tests réussis, journal d'erreurs opérationnel, responsable support désigné"
     },
     {
       "lot": "3 — Suivi opérationnel complet",
-      "content": "Listes de lot 3 ; PA-08, PA-09, PA-10, PA-11, PA-12 ; `gitlab/scripts`, `gitlab/templates`",
+      "content": "Listes de lot 3 ; PA-08, PA-09, PA-10, PA-11, PA-12, PA-14 ; `gitlab/scripts`, `gitlab/templates`",
       "exit": "Validation par la R&D, les référents et les acteurs support"
     },
     {
@@ -15826,6 +16697,94 @@
     {
       "id": "H-30",
       "subject": "Dépôts publics"
+    },
+    {
+      "id": "H-31",
+      "subject": "Permissions de la synchronisation GitLab"
+    },
+    {
+      "id": "H-32",
+      "subject": "Acteurs support (RH, Juridique, Finance)"
+    },
+    {
+      "id": "H-33",
+      "subject": "Budget, charge et licences"
+    },
+    {
+      "id": "H-34",
+      "subject": "Trajectoire M0–M12 et jalons J1–J3"
+    },
+    {
+      "id": "H-35",
+      "subject": "Version documentaire de référence"
+    },
+    {
+      "id": "H-36",
+      "subject": "Critères par type de livrable"
+    },
+    {
+      "id": "H-37",
+      "subject": "Décision de partenariat ou de sponsoring"
+    },
+    {
+      "id": "H-38",
+      "subject": "Valeurs contrôlées proposées hors sources"
+    },
+    {
+      "id": "H-39",
+      "subject": "Statuts d'établissement dérivés"
+    },
+    {
+      "id": "H-40",
+      "subject": "Confirmation d'intégration"
+    },
+    {
+      "id": "H-41",
+      "subject": "Choix de calcul des indicateurs"
+    },
+    {
+      "id": "H-42",
+      "subject": "Affectations concomitantes"
+    },
+    {
+      "id": "H-43",
+      "subject": "Composition du groupe Relation écoles"
+    },
+    {
+      "id": "H-44",
+      "subject": "Équipe Teams"
+    },
+    {
+      "id": "H-45",
+      "subject": "Portée du partage à la transmission"
+    },
+    {
+      "id": "H-46",
+      "subject": "Propriétaires des flux"
+    },
+    {
+      "id": "H-47",
+      "subject": "Identité Power BI"
+    },
+    {
+      "id": "H-48",
+      "subject": "Fuseau horaire du service Power BI"
+    },
+    {
+      "id": "H-49",
+      "subject": "Création des livrables"
+    },
+    {
+      "id": "H-50",
+      "subject": "Lot 1 sans automatisation"
+    },
+    {
+      "id": "H-51",
+      "subject": "Livrables ouverts lors d'un remplacement d'affectation"
+    },
+    {
+      "id": "H-52",
+      "subject": "Publics Power BI complémentaires"
     }
   ],
   "transitions": [
@@ -15838,7 +16797,6 @@
       "to": "Reçue",
       "actors": [
         "RD",
-        "ADMIN",
         "FLUX"
       ],
       "controls": [],
@@ -15856,7 +16814,8 @@
         "FLUX"
       ],
       "controls": [
-        "G_RESP_ANALYSE"
+        "G_RESP_ANALYSE",
+        "G_IDENTITE"
       ],
       "flow": "PA-02"
     },
@@ -15871,7 +16830,8 @@
         "RD"
       ],
       "controls": [
-        "G_RESP_ANALYSE"
+        "G_RESP_ANALYSE",
+        "G_IDENTITE"
       ],
       "flow": "PA-02"
     },
@@ -15886,7 +16846,8 @@
         "RD"
       ],
       "controls": [
-        "G_RESP_ANALYSE"
+        "G_RESP_ANALYSE",
+        "G_IDENTITE"
       ],
       "flow": "PA-02"
     },
@@ -15955,6 +16916,22 @@
       "object": "Candidature",
       "list": "Candidatures",
       "from": "Entretien réalisé",
+      "to": "Entretien planifié",
+      "actors": [
+        "ADMIN",
+        "FLUX"
+      ],
+      "controls": [
+        "G_ENTRETIEN_PLANIFIE"
+      ],
+      "flow": "PA-03"
+    },
+    {
+      "code": "CAND-T07-03",
+      "baseCode": "CAND-T07",
+      "object": "Candidature",
+      "list": "Candidatures",
+      "from": "En attente de décision",
       "to": "Entretien planifié",
       "actors": [
         "ADMIN",
@@ -16265,6 +17242,36 @@
       "flow": "PA-02"
     },
     {
+      "code": "CAND-T17-01",
+      "baseCode": "CAND-T17",
+      "object": "Candidature",
+      "list": "Candidatures",
+      "from": "Transmise à l'administration",
+      "to": "Non retenue",
+      "actors": [
+        "ADMIN"
+      ],
+      "controls": [
+        "G_DECIDEUR"
+      ],
+      "flow": "PA-02"
+    },
+    {
+      "code": "CAND-T17-02",
+      "baseCode": "CAND-T17",
+      "object": "Candidature",
+      "list": "Candidatures",
+      "from": "Entretien planifié",
+      "to": "Non retenue",
+      "actors": [
+        "ADMIN"
+      ],
+      "controls": [
+        "G_DECIDEUR"
+      ],
+      "flow": "PA-02"
+    },
+    {
       "code": "LIV-T01",
       "baseCode": "LIV-T01",
       "object": "Livrable",
@@ -16347,7 +17354,9 @@
       "actors": [
         "ITEM_VALIDEUR"
       ],
-      "controls": [],
+      "controls": [
+        "G_VALIDEUR_LEGITIME"
+      ],
       "flow": "PA-07"
     },
     {
@@ -16361,6 +17370,7 @@
         "ITEM_VALIDEUR"
       ],
       "controls": [
+        "G_VALIDEUR_LEGITIME",
         "G_COMMENTAIRE_REVUE"
       ],
       "flow": "PA-07"
@@ -16376,6 +17386,7 @@
         "ITEM_VALIDEUR"
       ],
       "controls": [
+        "G_VALIDEUR_LEGITIME",
         "G_COMMENTAIRE_REVUE"
       ],
       "flow": "PA-07"
@@ -16390,7 +17401,9 @@
       "actors": [
         "ITEM_VALIDEUR"
       ],
-      "controls": [],
+      "controls": [
+        "G_VALIDEUR_LEGITIME"
+      ],
       "flow": "PA-07"
     },
     {
@@ -16403,7 +17416,9 @@
       "actors": [
         "ITEM_VALIDEUR"
       ],
-      "controls": [],
+      "controls": [
+        "G_VALIDEUR_LEGITIME"
+      ],
       "flow": "PA-07"
     },
     {
@@ -16530,8 +17545,7 @@
       "to": "Attendu",
       "actors": [
         "FLUX",
-        "RD",
-        "REFERENT"
+        "RD"
       ],
       "controls": [],
       "flow": "PA-08"
@@ -16675,7 +17689,9 @@
       "actors": [
         "ITEM_VALIDEUR"
       ],
-      "controls": [],
+      "controls": [
+        "G_VALIDEUR_LEGITIME"
+      ],
       "flow": "PA-08"
     },
     {
@@ -16689,6 +17705,7 @@
         "ITEM_VALIDEUR"
       ],
       "controls": [
+        "G_VALIDEUR_LEGITIME",
         "G_COMMENTAIRE_REFERENT"
       ],
       "flow": "PA-08"
@@ -16866,7 +17883,9 @@
         "FLUX",
         "DIRECTION_RD"
       ],
-      "controls": [],
+      "controls": [
+        "G_SOURCE_ALTERNANT"
+      ],
       "flow": "PA-04"
     },
     {
@@ -17004,6 +18023,22 @@
       "flow": "PA-09"
     },
     {
+      "code": "ALT-T08",
+      "baseCode": "ALT-T08",
+      "object": "Alternant",
+      "list": "Alternants",
+      "from": "Fin planifiée",
+      "to": "Actif",
+      "actors": [
+        "RD",
+        "ADMIN"
+      ],
+      "controls": [
+        "G_DATE_FIN_REPORTEE"
+      ],
+      "flow": "PA-04"
+    },
+    {
       "code": "COM-T01-01",
       "baseCode": "COM-T01",
       "object": "Communication",
@@ -17013,7 +18048,6 @@
       "actors": [
         "RD",
         "REFERENT",
-        "ALTERNANT",
         "DIRECTION_RD"
       ],
       "controls": [],
@@ -17029,7 +18063,6 @@
       "actors": [
         "RD",
         "REFERENT",
-        "ALTERNANT",
         "DIRECTION_RD"
       ],
       "controls": [],
@@ -17797,7 +18830,8 @@
         "ECOLES"
       ],
       "controls": [
-        "G_PREUVE_SIGNATURE"
+        "G_PREUVE_SIGNATURE",
+        "G_DECISION_PARTENARIAT"
       ],
       "flow": "PA-10"
     },
@@ -17813,7 +18847,8 @@
         "ECOLES"
       ],
       "controls": [
-        "G_PREUVE_SIGNATURE"
+        "G_PREUVE_SIGNATURE",
+        "G_DECISION_PARTENARIAT"
       ],
       "flow": "PA-10"
     },
@@ -17829,7 +18864,8 @@
         "ECOLES"
       ],
       "controls": [
-        "G_PREUVE_SIGNATURE"
+        "G_PREUVE_SIGNATURE",
+        "G_DECISION_PARTENARIAT"
       ],
       "flow": "PA-10"
     },
@@ -17845,7 +18881,8 @@
         "ECOLES"
       ],
       "controls": [
-        "G_PREUVE_SIGNATURE"
+        "G_PREUVE_SIGNATURE",
+        "G_DECISION_PARTENARIAT"
       ],
       "flow": "PA-10"
     },
@@ -17861,7 +18898,8 @@
         "ECOLES"
       ],
       "controls": [
-        "G_PREUVE_SIGNATURE"
+        "G_PREUVE_SIGNATURE",
+        "G_DECISION_PARTENARIAT"
       ],
       "flow": "PA-10"
     },
@@ -17877,7 +18915,8 @@
         "ECOLES"
       ],
       "controls": [
-        "G_PREUVE_SIGNATURE"
+        "G_PREUVE_SIGNATURE",
+        "G_DECISION_PARTENARIAT"
       ],
       "flow": "PA-10"
     },
@@ -17893,7 +18932,8 @@
         "ECOLES"
       ],
       "controls": [
-        "G_PREUVE_SIGNATURE"
+        "G_PREUVE_SIGNATURE",
+        "G_DECISION_PARTENARIAT"
       ],
       "flow": "PA-10"
     },
@@ -17945,6 +18985,327 @@
         "G_DATE_FIN_DEPASSEE"
       ],
       "flow": "PA-10"
+    },
+    {
+      "code": "SUJ-T01",
+      "baseCode": "SUJ-T01",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "∅",
+      "to": "Proposé",
+      "actors": [
+        "RD",
+        "REFERENT",
+        "DIRECTION_RD"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T02",
+      "baseCode": "SUJ-T02",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Proposé",
+      "to": "À arbitrer",
+      "actors": [
+        "RD",
+        "REFERENT",
+        "DIRECTION_RD"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T03-01",
+      "baseCode": "SUJ-T03",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Proposé",
+      "to": "Priorisé",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T03-02",
+      "baseCode": "SUJ-T03",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "À arbitrer",
+      "to": "Priorisé",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T03-03",
+      "baseCode": "SUJ-T03",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Suspendu",
+      "to": "Priorisé",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T04-01",
+      "baseCode": "SUJ-T04",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Priorisé",
+      "to": "En cours",
+      "actors": [
+        "RD",
+        "REFERENT",
+        "DIRECTION_RD"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T04-02",
+      "baseCode": "SUJ-T04",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Bloqué",
+      "to": "En cours",
+      "actors": [
+        "RD",
+        "REFERENT",
+        "DIRECTION_RD"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T05",
+      "baseCode": "SUJ-T05",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "En cours",
+      "to": "Bloqué",
+      "actors": [
+        "RD",
+        "REFERENT",
+        "DIRECTION_RD"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T06-01",
+      "baseCode": "SUJ-T06",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Proposé",
+      "to": "Suspendu",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T06-02",
+      "baseCode": "SUJ-T06",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "À arbitrer",
+      "to": "Suspendu",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T06-03",
+      "baseCode": "SUJ-T06",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Priorisé",
+      "to": "Suspendu",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T06-04",
+      "baseCode": "SUJ-T06",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "En cours",
+      "to": "Suspendu",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T06-05",
+      "baseCode": "SUJ-T06",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Bloqué",
+      "to": "Suspendu",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T07-01",
+      "baseCode": "SUJ-T07",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Proposé",
+      "to": "Abandonné",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T07-02",
+      "baseCode": "SUJ-T07",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "À arbitrer",
+      "to": "Abandonné",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T07-03",
+      "baseCode": "SUJ-T07",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Priorisé",
+      "to": "Abandonné",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T07-04",
+      "baseCode": "SUJ-T07",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "En cours",
+      "to": "Abandonné",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T07-05",
+      "baseCode": "SUJ-T07",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Bloqué",
+      "to": "Abandonné",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T07-06",
+      "baseCode": "SUJ-T07",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Suspendu",
+      "to": "Abandonné",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [
+        "G_MOTIF_DECISION"
+      ],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T08",
+      "baseCode": "SUJ-T08",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "En cours",
+      "to": "Terminé",
+      "actors": [
+        "RD",
+        "DIRECTION_RD"
+      ],
+      "controls": [],
+      "flow": "PA-14"
+    },
+    {
+      "code": "SUJ-T09",
+      "baseCode": "SUJ-T09",
+      "object": "Sujet",
+      "list": "SujetsRD",
+      "from": "Suspendu",
+      "to": "À arbitrer",
+      "actors": [
+        "DIRECTION_RD",
+        "DIRECTION"
+      ],
+      "controls": [],
+      "flow": "PA-14"
     }
   ]
 }

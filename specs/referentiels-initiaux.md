@@ -31,6 +31,8 @@ Les valeurs `<…>` sont des marqueurs remplacés au déploiement à partir de `
 | Fonction.InformationCandidatAuto | Non | Fonctionnalités | Information automatique du candidat à la clôture (H-09) |
 | Fonction.CreationReunionTeams | Non | Fonctionnalités | Création de la réunion Teams par PA-03 |
 | Fonction.NotificationsTeams | Oui | Fonctionnalités | Doubler les notifications nominatives par un message Teams |
+| Fonction.RepriseExistantActive | Non | Fonctionnalités | Autorise DIRECTION_RD à créer un alternant sans candidature (reprise de l'existant, `G_SOURCE_ALTERNANT`, H-12) |
+| Recrutement.PartageTransmission | Groupe | Fonctionnalités | Portée du partage à la transmission (PA-02) : Groupe (G_ADM) ou Destinataire (`DestinataireAdmin` seul) (H-45) |
 | Conservation.CandidatureNonRetenueMois |  | Conservation | Vide tant que la durée n'est pas validée (H-10) ; PA-13 inactif si vide |
 | Conservation.ModePurge | Signalement | Conservation | Seule valeur implémentée |
 | Lien.RapportPowerBI | `<UrlRapportPowerBI>` | Liens | Lien inséré dans les synthèses |

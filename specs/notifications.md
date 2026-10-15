@@ -19,7 +19,7 @@
 | N-02 | PA-01 | Candidat | Mail | Accusé de réception de votre candidature | Message validé (désactivé par défaut) | NOM |
 | N-03 | PA-02 | Responsable d'analyse | Mail+Teams | Candidature {IdHNCS} à analyser | Lien, délai de relance | ID ; NOM |
 | N-04 | PA-02 | Destinataires.Administration | Mail | Candidature {IdHNCS} : aucun entretien planifié | Retour au statut « Transmise à l'administration » | ID ; NOM |
-| N-05 | PA-02 | Destinataires.Administration | Mail+Teams | Profil présélectionné {IdHNCS} transmis | Lien sécurisé vers la candidature et le dossier CV (accès ouvert à l'administration par PA-02), avis de la R&D | ID ; NOM |
+| N-05 | PA-02 | Destinataires.Administration | Mail+Teams | Profil présélectionné {IdHNCS} transmis | Lien sécurisé vers la candidature et le dossier CV (accès ouvert par PA-02) ; l'avis de la R&D est consultable dans l'élément, **jamais recopié** dans le message | ID ; NOM |
 | N-06 | PA-02 | G_RD (et Destinataires.Administration si après entretien) | Mail | Candidature {IdHNCS} {statut} | Statut, motif codifié, rappel d'informer le candidat | ID |
 | N-07 | PA-02 | Candidat | Mail | Suite donnée à votre candidature | Message validé (désactivé par défaut) | NOM |
 | N-08 | PA-02 | Responsable d'analyse | Mail | Informer le candidat {IdHNCS} | Tâche : informer le candidat puis cocher « Candidat informé » | ID ; NOM |
@@ -36,7 +36,7 @@
 | N-19 | PA-04b | Responsable de l'action | Mail+Teams | Action {IdHNCS} à échéance le {date} | Description, preuve attendue | ID |
 | N-20 | PA-05 | Alternant, référent | Mail+Teams | Affectation {IdHNCS} active | Sujet, objectifs, liens GitLab, modèles, dossier de suivi, livrables proposés | ID ; NOM |
 | N-21 | PA-05 | G_DRD | Mail | Affectation {IdHNCS} {statut} | Statut, lien | ID |
-| N-22 | PA-05 | Alternant, référent | Mail | Affectation {IdHNCS} terminée | Date et motif de fin | ID |
+| N-22 | PA-05 ; PA-09 | Alternant, référent, G_RD | Mail | Affectation {IdHNCS} terminée | Date et motif de fin ; liste des livrables encore ouverts, à poursuivre (nouveau livrable avec « Livrable d'origine »), suspendre ou clore — décision de la R&D | ID |
 | N-23 | PA-06 | Propriétaire du livrable | Mail+Teams | Rappel : livrable {IdHNCS} attendu le {date} | Échéance, lien | ID |
 | N-24 | PA-06 | Propriétaire, réviseur | Mail+Teams | Livrable {IdHNCS} en retard | Jours de retard, lien | ID |
 | N-25 | PA-07 | Réviseur | Mail+Teams | Livrable {IdHNCS} soumis à revue | Lien vers l'élément et le document | ID ; NOM |
@@ -57,11 +57,13 @@
 | N-40 | PA-10b | Responsable de la convention, G_ECO | Mail | Convention {IdHNCS} {statut} | Date de fin, renouvellement | ID |
 | N-41 | PA-10b | Responsable HNCS de l'établissement | Mail+Teams | Prochaine action école : {IdHNCS} | Action et échéance | ID |
 | N-42 | PA-11 | G_DRD, canal Teams du comité | Mail+Teams | Synthèse Comité R&D du {date} | Synthèse opérationnelle (§ 8.4 PA-11) | ID |
-| N-43 | PA-11 | Destinataires.Direction, G_DRD | Mail | Synthèse {Point Direction / Revue trimestrielle} | Agrégats et points d'arbitrage, sans nom de personne | ID |
+| N-43 | PA-11 | G_DRD (relaie à Destinataires.Direction après relecture) | Mail | Synthèse {Point Direction / Revue trimestrielle} à relire et transmettre | Agrégats et points d'arbitrage, sans nom de personne | ID |
 | N-44 | PA-12 | Approbateur, sinon G_DRD | Mail+Teams | Communication {IdHNCS} à valider | Canal, date prévue, autorisations, lien | ID |
 | N-45 | PA-12 | Auteur | Mail+Teams | Communication {IdHNCS} {statut} | Décision et commentaire | ID |
+| N-47 | PA-14 | G_DRD (À arbitrer, Bloqué) ; référent du sujet et G_RD (Priorisé, Suspendu, Abandonné) | Mail+Teams | Sujet {IdHNCS} {statut} | Décision ou demande d'arbitrage, motif | ID |
 | N-46 | PA-13 | G_DRD, G_PROP | Mail | Candidatures arrivées en fin de conservation | Liste d'identifiants, procédure de traitement manuel | ID |
 | N-90 | PA-00B | Auteur de la modification | Mail+Teams | Changement de statut refusé ({IdHNCS}) | Statut demandé, motif du refus, statut rétabli, marche à suivre | ID |
-| N-91 | PA-05 | Auteur de la modification | Mail+Teams | Affectation {IdHNCS} : modification annulée | Champs verrouillés, procédure « nouvelle affectation » | ID |
+| N-91 | PA-05 ; PA-04 | Auteur de la modification | Mail+Teams | {IdHNCS} : modification annulée | Champs verrouillés (affectation active, référent principal dérivé), procédure « nouvelle affectation » | ID |
+| N-92 | PA-04 ; PA-07 ; PA-08 ; PA-10 | Auteur de la modification | Mail+Teams | {IdHNCS} : modification d'un champ protégé annulée | Champ concerné, rôle habilité, valeur rétablie (P-09) | ID |
 | N-98 | PA-00E | Destinataires.Support, G_PROP | Mail | Erreurs de flux à reprendre ({n}) | Liste des erreurs non reprises avec liens d'exécution | ID |
 | N-99 | PA-00C | Destinataires.Support | Mail | Erreur du flux {code} | Message, objet, lien d'exécution, procédure de reprise | ID |

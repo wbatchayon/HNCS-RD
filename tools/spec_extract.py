@@ -161,10 +161,11 @@ def parse_column(row: dict) -> dict:
         "max": float(p["max"]) if "max" in p else None,
         "decimals": int(p["decimals"]) if "decimals" in p else None,
         "lot": int(p["lot"]) if "lot" in p else None,
+        "appendOnly": bool(p.get("appendonly")),
         "implicit": False,
     }
     unknown = set(p) - {"enum", "lookup", "default", "indexed", "unique", "hidden", "flux", "perso",
-                        "confidentiel", "min", "max", "decimals", "lot"}
+                        "confidentiel", "min", "max", "decimals", "lot", "appendonly"}
     if unknown:
         raise SpecError(f"Paramètres inconnus {unknown} sur la colonne {col['name']}")
     return col
@@ -225,7 +226,7 @@ def parse_lists(lines):
         for c in implicit:
             base = {"description": "", "enum": None, "lookup": None, "default": None, "indexed": False,
                     "unique": False, "hidden": False, "flux": False, "perso": False, "confidentiel": False,
-                    "min": None, "max": None, "decimals": None, "lot": None}
+                    "min": None, "max": None, "decimals": None, "lot": None, "appendOnly": False}
             base.update(c)
             base["implicit"] = True
             cols.insert(0, base) if c["name"] == "IdHNCS" else cols.append(base)
@@ -390,6 +391,8 @@ def validate(model) -> list[str]:
                         errs.append(f"{o['name']}.{c['name']} : lookup vers {tgt['name']} (lot {tgt['lot']}) depuis le lot {lot}")
                     if not tgt["prefix"]:
                         errs.append(f"{o['name']}.{c['name']} : la cible {tgt['name']} n'a pas d'IdHNCS à afficher")
+            if c.get("appendOnly") and c["type"] != "Note":
+                errs.append(f"{o['name']}.{c['name']} : appendonly réservé aux colonnes Note")
             if c["type"] == "Boolean" and c["default"] not in (None, "Oui", "Non"):
                 errs.append(f"{o['name']}.{c['name']} : défaut booléen invalide")
 
@@ -448,8 +451,9 @@ def validate(model) -> list[str]:
         for g, lvl in perms.items():
             if g not in groups:
                 errs.append(f"Matrice : groupe inconnu {g}")
-            base = re.sub(r"^IL\((\w+)\)$", r"\1", lvl)
-            if base not in PERMISSION_LEVELS:
+            m_lvl = re.fullmatch(r"(?:(FC|CSS|R)\+)?IL\((\w+)\)|(FC|CSS|R|—)", lvl)
+            bases = [b for b in (m_lvl.groups() if m_lvl else ()) if b]
+            if not bases or any(b not in PERMISSION_LEVELS for b in bases):
                 errs.append(f"Matrice {name}/{g} : niveau inconnu {lvl}")
     for name in objs:
         if name not in model["matrix"]:
