@@ -1,0 +1,133 @@
+# CI du dépôt HNCS-RD (spec § 12 : contrôles hors ligne, sans tenant ni GitLab).
+# Aucun secret n'est utilisé ni nécessaire : le dépôt est public (spec § 13, H-30).
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Contrôles Python (3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Modèle généré à jour (tools/spec_extract.py --check)
+        run: python tools/spec_extract.py --check
+
+      - name: Tests hors ligne (tests/offline)
+        run: |
+          if [ -d tests/offline ]; then
+            python -m unittest discover -s tests/offline -v
+          else
+            echo "tests/offline absent : étape ignorée."
+          fi
+
+      - name: Tests de la synchronisation GitLab (gitlab/sync/tests)
+        run: python -m unittest discover -s gitlab/sync/tests -v
+
+      - name: Contrôle des flux (flows/tools/check_flows.py)
+        run: |
+          if [ -f flows/tools/check_flows.py ]; then
+            python flows/tools/check_flows.py
+          else
+            echo "flows/tools/check_flows.py absent : étape ignorée."
+          fi
+
+      - name: Solution Power Platform à jour (flows/build/build_solution.py --check)
+        run: |
+          if [ -f flows/build/build_solution.py ]; then
+            python flows/build/build_solution.py --check
+          else
+            echo "flows/build/build_solution.py absent : étape ignorée."
+          fi
+
+      - name: Contrôle du projet Power BI (powerbi/tools/check_pbip.py)
+        run: |
+          if [ -f powerbi/tools/check_pbip.py ]; then
+            python powerbi/tools/check_pbip.py
+          else
+            echo "powerbi/tools/check_pbip.py absent : étape ignorée."
+          fi
+
+  powershell:
+    name: Analyse PowerShell (5.1 et 7)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Analyse syntaxique — Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fichiers = @(Get-ChildItem -Path . -Recurse -File -Include *.ps1, *.psm1 | Where-Object { $_.FullName -notmatch '[\\/]\.git[\\/]' })
+          $enErreur = 0
+          foreach ($f in $fichiers) {
+            $jetons = $null; $erreurs = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$jetons, [ref]$erreurs)
+            if ($erreurs.Count -gt 0) {
+              $enErreur++
+              foreach ($e in $erreurs) { Write-Host ("::error file={0},line={1}::{2}" -f $f.FullName, $e.Extent.StartLineNumber, $e.Message) }
+            }
+            # Windows PowerShell 5.1 lit un fichier sans BOM en ANSI : accents et « — » y deviennent des caractères parasites.
+            $octets = [System.IO.File]::ReadAllBytes($f.FullName)
+            $bom = $octets.Length -ge 3 -and $octets[0] -eq 0xEF -and $octets[1] -eq 0xBB -and $octets[2] -eq 0xBF
+            if (-not $bom -and @($octets | Where-Object { $_ -gt 0x7F }).Count -gt 0) {
+              Write-Host ("::warning file={0}::Caractères non ASCII sans BOM UTF-8 : enregistrer en UTF-8 avec BOM pour Windows PowerShell 5.1." -f $f.FullName)
+            }
+          }
+          Write-Host ("{0} fichier(s) analysé(s) avec PowerShell {1}, {2} en erreur." -f $fichiers.Count, $PSVersionTable.PSVersion, $enErreur)
+          if ($enErreur -gt 0) { exit 1 }
+
+      - name: Analyse syntaxique — PowerShell 7
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fichiers = @(Get-ChildItem -Path . -Recurse -File -Include *.ps1, *.psm1 | Where-Object { $_.FullName -notmatch '[\\/]\.git[\\/]' })
+          $enErreur = 0
+          foreach ($f in $fichiers) {
+            $jetons = $null; $erreurs = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$jetons, [ref]$erreurs)
+            if ($erreurs.Count -gt 0) {
+              $enErreur++
+              foreach ($e in $erreurs) { Write-Host ("::error file={0},line={1}::{2}" -f $f.FullName, $e.Extent.StartLineNumber, $e.Message) }
+            }
+          }
+          Write-Host ("{0} fichier(s) analysé(s) avec PowerShell {1}, {2} en erreur." -f $fichiers.Count, $PSVersionTable.PSVersion, $enErreur)
+          if ($enErreur -gt 0) { exit 1 }
+
+      - name: Tests Pester du provisioning (provisioning/tests/*.Tests.ps1)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tests = @()
+          if (Test-Path -LiteralPath 'provisioning/tests') {
+            $tests = @(Get-ChildItem -LiteralPath 'provisioning/tests' -Filter '*.Tests.ps1' -File)
+          }
+          if ($tests.Count -eq 0) {
+            Write-Host 'Aucun provisioning/tests/*.Tests.ps1 : étape ignorée.'
+            exit 0
+          }
+          $pester = Get-Module -ListAvailable Pester | Where-Object { $_.Version -ge [version]'5.5.0' } | Select-Object -First 1
+          if ($null -eq $pester) {
+            Install-Module Pester -MinimumVersion 5.5.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          }
+          Import-Module Pester -MinimumVersion 5.5.0
+          Invoke-Pester -Path ($tests | ForEach-Object { $_.FullName }) -CI
