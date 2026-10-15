@@ -1,0 +1,39 @@
+table Objectifs
+	lineageTag: a5a5d4b8-3705-5d27-8698-30c9fe385f07
+
+	column Indicateur
+		dataType: string
+		isNameInferred
+		lineageTag: 29a853e9-e7cc-5070-a0ea-9c1770be0974
+		summarizeBy: none
+		sourceColumn: [Indicateur]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cible
+		dataType: double
+		isNameInferred
+		formatString: #,##0.##
+		lineageTag: 49383fcb-2218-539d-839b-4928fe471179
+		summarizeBy: none
+		sourceColumn: [Cible]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Objectifs = calculated
+		mode: import
+		source =
+				DATATABLE (
+					"Indicateur", STRING,
+					"Cible", DOUBLE,
+					{
+						{ "POC réalisés", 5 },
+						{ "Plans de stratégie formalisés", 4 },
+						{ "Mobilisations commerciales", 8 },
+						{ "Communications publiées", 30 },
+						{ "Partenariats académiques actifs", 3 },
+						{ "Alternants accueillis", 3 },
+						{ "Couverture des domaines cibles", 1 }
+					}
+				)
+

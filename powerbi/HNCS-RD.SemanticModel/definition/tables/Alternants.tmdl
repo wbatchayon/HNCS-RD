@@ -1,0 +1,123 @@
+table Alternants
+	lineageTag: d00853e4-851f-5204-8cb1-c0f7188a60b6
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: ff32a74e-f194-5e98-b739-bc7c37d04fb9
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 247db1c3-395a-52fd-88f8-e96467af8f9a
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column NomAffichage
+		dataType: string
+		lineageTag: 18eeef73-c2a8-5a8a-b768-a6e9119427f4
+		summarizeBy: none
+		sourceColumn: NomAffichage
+
+		annotation SummarizationSetBy = Automatic
+
+	column CandidatureSourceId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 5ab1d3dc-4818-56ef-b9a9-8f0634d971ed
+		summarizeBy: none
+		sourceColumn: CandidatureSourceId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateDebut
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: b49a0e16-177f-56be-9efa-ef385584a0fc
+		summarizeBy: none
+		sourceColumn: DateDebut
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateFin
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 0600a20a-968f-52e6-acc2-2a76a71c2ac4
+		summarizeBy: none
+		sourceColumn: DateFin
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateFinReelle
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: f5be60c4-3d7b-5cf4-9af4-af58f9f68330
+		summarizeBy: none
+		sourceColumn: DateFinReelle
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column EtablissementId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e0edd816-5d58-5295-b241-e0ac1f69ce31
+		summarizeBy: none
+		sourceColumn: EtablissementId
+
+		annotation SummarizationSetBy = Automatic
+
+	column PoleId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0436f689-3959-5b65-bd04-74bfccebadc5
+		summarizeBy: none
+		sourceColumn: PoleId
+
+		annotation SummarizationSetBy = Automatic
+
+	column ReferentPrincipalId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b0eaaafa-aef3-5c41-abec-eac93ac47618
+		summarizeBy: none
+		sourceColumn: ReferentPrincipalId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 247ec3de-76ff-5e86-acce-ad6d3a8d80a9
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Alternants = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Alternants", {"Id", "IdHNCS", "Title", "CandidatureSourceId", "DateDebut", "DateFin", "DateFinReelle", "EtablissementId", "PoleId", "ReferentPrincipalId", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"CandidatureSourceId", "int"}, {"DateDebut", "date"}, {"DateFin", "date"}, {"DateFinReelle", "date"}, {"EtablissementId", "int"}, {"PoleId", "int"}, {"ReferentPrincipalId", "int"}, {"Statut", "text"}}),
+					Renommee = Table.RenameColumns(Typee, {{"Title", "NomAffichage"}}),
+					Resultat = Table.SelectColumns(Renommee, {"Id", "IdHNCS", "NomAffichage", "CandidatureSourceId", "DateDebut", "DateFin", "DateFinReelle", "EtablissementId", "PoleId", "ReferentPrincipalId", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

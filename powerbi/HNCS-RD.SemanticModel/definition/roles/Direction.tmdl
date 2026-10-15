@@ -1,0 +1,9 @@
+role Direction
+	modelPermission: read
+
+	tablePermission Alternants
+		columnPermission NomAffichage
+			metadataPermission: none
+
+	annotation HNCS_Membres = Direction Générale (affectation dans le service Power BI, H-16)
+

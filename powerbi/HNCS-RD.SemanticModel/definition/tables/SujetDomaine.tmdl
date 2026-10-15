@@ -1,0 +1,40 @@
+table SujetDomaine
+	lineageTag: 8fd9fd86-b35c-556e-9dd2-867ab410aa91
+
+	column SujetId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: dde26f54-e8fc-5f54-b99f-69f2e4e6c76d
+		summarizeBy: none
+		sourceColumn: SujetId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DomaineId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2ec3b69e-d31b-5fbe-b0c5-c6097a8f04c7
+		summarizeBy: none
+		sourceColumn: DomaineId
+
+		annotation SummarizationSetBy = Automatic
+
+	partition SujetDomaine = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Sujets R&D", {"Id", "DomainesId"}, {}, false),
+					// DomainesId : tableau JSON d'identifiants (format nometadata) ou enregistrement [results] (format verbose).
+					Listes = Table.TransformColumns(Source, {{"DomainesId", (v) => if v = null then {} else if Value.Is(v, type record) then Record.FieldOrDefault(v, "results", {}) else v, type list}}),
+					Developpee = Table.ExpandListColumn(Listes, "DomainesId"),
+					NonVides = Table.SelectRows(Developpee, each [DomainesId] <> null),
+					Renommee = Table.RenameColumns(NonVides, {{"Id", "SujetId"}, {"DomainesId", "DomaineId"}}),
+					Typee = Table.TransformColumnTypes(Renommee, {{"SujetId", Int64.Type}, {"DomaineId", Int64.Type}}),
+					Resultat = Table.Distinct(Table.SelectColumns(Typee, {"SujetId", "DomaineId"}))
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

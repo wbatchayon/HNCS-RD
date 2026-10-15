@@ -1,0 +1,111 @@
+table Affectations
+	lineageTag: b875f524-5e5a-5ccd-8efd-0ae71dbc54ed
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 9100b956-4e48-5ba4-89e6-720c4b96837d
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: aa43252c-ffc3-52af-95f1-5c1d8c0aa392
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column AlternantId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 8e343042-8f3a-5095-ac28-d2e55332d823
+		summarizeBy: none
+		sourceColumn: AlternantId
+
+		annotation SummarizationSetBy = Automatic
+
+	column SujetId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 27487fe0-c93d-5e9f-b792-a73c937bb0a7
+		summarizeBy: none
+		sourceColumn: SujetId
+
+		annotation SummarizationSetBy = Automatic
+
+	column ReferentId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 507576c4-55fa-5253-b9dc-8dc32de976f3
+		summarizeBy: none
+		sourceColumn: ReferentId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateDebut
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 0a2017b4-bad7-55f6-bb3b-1cdb6995c44b
+		summarizeBy: none
+		sourceColumn: DateDebut
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateFin
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 2f8b540e-0d33-5dc6-98fa-b3b9e12b0fbf
+		summarizeBy: none
+		sourceColumn: DateFin
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column CadenceCR
+		dataType: string
+		lineageTag: a5986d8a-2b6d-523f-a3f5-ff59e4be92ca
+		summarizeBy: none
+		sourceColumn: CadenceCR
+
+		annotation SummarizationSetBy = Automatic
+
+	column AffectationRemplaceeId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 67d108da-b004-5ab8-b9e8-b0bc0120bef4
+		summarizeBy: none
+		sourceColumn: AffectationRemplaceeId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 9771f432-bbd3-5be4-bbe8-3999a806c7c2
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Affectations = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Affectations", {"Id", "IdHNCS", "AlternantId", "SujetId", "ReferentId", "DateDebut", "DateFin", "CadenceCR", "AffectationRemplaceeId", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"AlternantId", "int"}, {"SujetId", "int"}, {"ReferentId", "int"}, {"DateDebut", "date"}, {"DateFin", "date"}, {"CadenceCR", "text"}, {"AffectationRemplaceeId", "int"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "AlternantId", "SujetId", "ReferentId", "DateDebut", "DateFin", "CadenceCR", "AffectationRemplaceeId", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

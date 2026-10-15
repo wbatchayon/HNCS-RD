@@ -1,0 +1,84 @@
+table Entretiens
+	lineageTag: 9e2b3ba4-fb5f-5712-8de4-ece2e92417a6
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 549995ee-40e1-5e48-93ec-1fdca0ddaa07
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 4348dafc-c22f-5b35-bcfb-11a066fce840
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column CandidatureId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: cd19b52e-0458-52b8-be53-924de700875e
+		summarizeBy: none
+		sourceColumn: CandidatureId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateHeure
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 7e25eeae-4a89-56d2-9153-7385e82e5990
+		summarizeBy: none
+		sourceColumn: DateHeure
+
+		annotation SummarizationSetBy = Automatic
+
+	column TypeEntretien
+		dataType: string
+		lineageTag: 38de3c71-e50f-507c-88ae-d0e792804efe
+		summarizeBy: none
+		sourceColumn: TypeEntretien
+
+		annotation SummarizationSetBy = Automatic
+
+	column Modalite
+		dataType: string
+		lineageTag: 627b5054-9ada-54cf-9f3a-3d5659b67b16
+		summarizeBy: none
+		sourceColumn: Modalite
+
+		annotation SummarizationSetBy = Automatic
+
+	column Resultat
+		dataType: string
+		lineageTag: 40ea18f9-a019-53f9-b0ea-29285f48d191
+		summarizeBy: none
+		sourceColumn: Resultat
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 66719a20-82cd-55b5-be5c-be11b0fcfa56
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Entretiens = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Entretiens", {"Id", "IdHNCS", "CandidatureId", "DateHeure", "TypeEntretien", "Modalite", "Resultat", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"CandidatureId", "int"}, {"DateHeure", "datetime"}, {"TypeEntretien", "text"}, {"Modalite", "text"}, {"Resultat", "text"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "CandidatureId", "DateHeure", "TypeEntretien", "Modalite", "Resultat", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

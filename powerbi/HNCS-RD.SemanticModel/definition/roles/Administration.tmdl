@@ -1,0 +1,13 @@
+role Administration
+	modelPermission: read
+
+	tablePermission Livrables = FALSE ()
+
+	tablePermission ComptesRendus = FALSE ()
+
+	tablePermission Mobilisations = FALSE ()
+
+	tablePermission GitlabSync = FALSE ()
+
+	annotation HNCS_Membres = Équipe administrative (affectation dans le service Power BI, H-16)
+

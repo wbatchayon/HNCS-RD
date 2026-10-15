@@ -1,0 +1,120 @@
+table Calendrier
+	dataCategory: Time
+	lineageTag: db34aaed-6ee2-5cf6-8fff-4dd3455ad79d
+
+	column Date
+		dataType: dateTime
+		isNameInferred
+		isKey
+		formatString: dd/MM/yyyy
+		lineageTag: 5849bfef-377d-5603-994f-6c4e870a9855
+		summarizeBy: none
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Annee
+		dataType: int64
+		isNameInferred
+		formatString: 0
+		lineageTag: 8be4e141-b9fd-56ca-bda8-04007e8985e7
+		summarizeBy: none
+		sourceColumn: [Annee]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Mois
+		dataType: string
+		isNameInferred
+		lineageTag: a6e85ed4-08c5-54e9-b041-929a6bc4551c
+		summarizeBy: none
+		sourceColumn: [Mois]
+		sortByColumn: NumMois
+
+		annotation SummarizationSetBy = Automatic
+
+	column NumMois
+		dataType: int64
+		isNameInferred
+		formatString: 0
+		lineageTag: 0a1d9170-a0a5-5f76-b24c-67360b67107a
+		summarizeBy: none
+		sourceColumn: [NumMois]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Trimestre
+		dataType: string
+		isNameInferred
+		lineageTag: 0deceb8f-444c-5736-b5dc-1240ec4d47a6
+		summarizeBy: none
+		sourceColumn: [Trimestre]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Semaine
+		dataType: string
+		isNameInferred
+		lineageTag: c1e00771-240b-522c-8af6-15148015590d
+		summarizeBy: none
+		sourceColumn: [Semaine]
+
+		annotation SummarizationSetBy = Automatic
+
+	column AnneeMois
+		dataType: string
+		isNameInferred
+		lineageTag: 27ca3149-b74c-582d-8695-8d413aa9594a
+		summarizeBy: none
+		sourceColumn: [AnneeMois]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Calendrier = calculated
+		mode: import
+		source =
+				VAR DebutDonnees =
+					MINX (
+						FILTER (
+							{
+								MIN ( Candidatures[DateReception] ),
+								MIN ( Livrables[Echeance] ),
+								MIN ( ComptesRendus[Echeance] ),
+								MIN ( Alternants[DateDebut] )
+							},
+							NOT ISBLANK ( [Value] )
+						),
+						[Value]
+					)
+				VAR FinDonnees =
+					MAXX (
+						FILTER (
+							{
+								MAX ( Candidatures[DateReception] ),
+								MAX ( Livrables[Echeance] ),
+								MAX ( ComptesRendus[Echeance] ),
+								MAX ( Alternants[DateFin] ),
+								MAX ( Alternants[DateFinReelle] )
+							},
+							NOT ISBLANK ( [Value] )
+						),
+						[Value]
+					)
+				// Bornes : années complètes couvrant les données, au moins 2025-2028, plafonnées à 2020-2035 (saisies aberrantes).
+				VAR AnneeDebut = IF ( ISBLANK ( DebutDonnees ), 2025, MAX ( MIN ( YEAR ( DebutDonnees ), 2025 ), 2020 ) )
+				VAR AnneeFin = IF ( ISBLANK ( FinDonnees ), 2028, MIN ( MAX ( YEAR ( FinDonnees ), 2028 ), 2035 ) )
+				RETURN
+					ADDCOLUMNS (
+						CALENDAR ( DATE ( AnneeDebut, 1, 1 ), DATE ( AnneeFin, 12, 31 ) ),
+						"Annee", YEAR ( [Date] ),
+						"Mois", FORMAT ( [Date], "mmmm" ),
+						"NumMois", MONTH ( [Date] ),
+						"Trimestre", "T" & QUARTER ( [Date] ),
+						"Semaine",
+							VAR AnneeIso = YEAR ( [Date] - WEEKDAY ( [Date], 2 ) + 4 )
+							RETURN AnneeIso & "-S" & FORMAT ( WEEKNUM ( [Date], 21 ), "00" ),
+						"AnneeMois", FORMAT ( [Date], "yyyy-mm" )
+					)
+

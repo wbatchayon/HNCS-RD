@@ -1,0 +1,65 @@
+table Etablissements
+	lineageTag: b3289fc3-9324-5dc7-badb-a0317fbdfc3b
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: a151610e-ef5e-5b64-b356-7bf24aec34b0
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 72822a0b-640b-5007-8498-eddabaea0504
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 45877563-855b-5bb0-bccb-3e7e9a1b50bc
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ville
+		dataType: string
+		lineageTag: b1ee06ef-bab0-5e90-927c-ab96c1906a43
+		summarizeBy: none
+		sourceColumn: Ville
+
+		annotation SummarizationSetBy = Automatic
+
+	column TypeEtablissement
+		dataType: string
+		lineageTag: b11cc722-c2a3-51de-9f72-60b0b03cc9ad
+		summarizeBy: none
+		sourceColumn: TypeEtablissement
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 1f76aade-5623-503d-afe6-b3cf2455a286
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Etablissements = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Écoles et établissements", {"Id", "IdHNCS", "Title", "Ville", "TypeEtablissement", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"Ville", "text"}, {"TypeEtablissement", "text"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "Ville", "TypeEtablissement", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

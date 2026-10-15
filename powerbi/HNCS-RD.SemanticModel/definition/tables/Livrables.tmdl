@@ -1,0 +1,267 @@
+table Livrables
+	lineageTag: d8ee5464-a7fe-5ef2-b2a3-2b5dfaabd420
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 8dabffa8-2876-511c-9d62-d30452f6ae6b
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 293f9a47-503d-56ac-be42-6934c1fe4890
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 381bda72-ed44-5d0c-a9e0-bcee33922590
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column AffectationId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 09b52322-ecc7-5757-a4d6-8a8afe755584
+		summarizeBy: none
+		sourceColumn: AffectationId
+
+		annotation SummarizationSetBy = Automatic
+
+	column SujetId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7c674dc5-416b-52a2-8060-2733aedf5773
+		summarizeBy: none
+		sourceColumn: SujetId
+
+		annotation SummarizationSetBy = Automatic
+
+	column TypeLivrable
+		dataType: string
+		lineageTag: 96c8a53f-5b96-52f5-aa78-8ab95918f06d
+		summarizeBy: none
+		sourceColumn: TypeLivrable
+
+		annotation SummarizationSetBy = Automatic
+
+	column ModeleId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c8c4b7d0-bf5e-5345-9f4c-6a0658e03519
+		summarizeBy: none
+		sourceColumn: ModeleId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Echeance
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 13d8a1d8-b859-5590-a59c-e7c20baa3c3e
+		summarizeBy: none
+		sourceColumn: Echeance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column EcheanceInitiale
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: f48fe732-bf8a-5feb-a88b-8067ee636232
+		summarizeBy: none
+		sourceColumn: EcheanceInitiale
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DatePremierDepot
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 52328c75-88a2-57d4-ab07-3de4cd102fc8
+		summarizeBy: none
+		sourceColumn: DatePremierDepot
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateDepot
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 16971c0b-0266-52f6-8149-6f47439edfd3
+		summarizeBy: none
+		sourceColumn: DateDepot
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateRevue
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: fa605803-6e31-5e09-9233-2d30cd41dc89
+		summarizeBy: none
+		sourceColumn: DateRevue
+
+		annotation SummarizationSetBy = Automatic
+
+	column DecisionRevue
+		dataType: string
+		lineageTag: 0e27c429-8948-5f9b-b80f-9686c90b0084
+		summarizeBy: none
+		sourceColumn: DecisionRevue
+
+		annotation SummarizationSetBy = Automatic
+
+	column NbCorrections
+		dataType: int64
+		formatString: 0
+		lineageTag: fd1369f0-db7b-5097-b5b4-980595bcb962
+		summarizeBy: none
+		sourceColumn: NbCorrections
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateValidation
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: f7f25abf-223e-51ad-86d6-c3e4d8f26c8d
+		summarizeBy: none
+		sourceColumn: DateValidation
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateArchivage
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 5773e5a0-b9f6-5f46-8032-928518566ed3
+		summarizeBy: none
+		sourceColumn: DateArchivage
+
+		annotation SummarizationSetBy = Automatic
+
+	column ADocument
+		dataType: boolean
+		lineageTag: 6800bb1d-5a40-5282-a69e-c2eee8197906
+		summarizeBy: none
+		sourceColumn: ADocument
+
+		annotation SummarizationSetBy = Automatic
+
+	column AGitlab
+		dataType: boolean
+		lineageTag: b6be1f77-d375-52a2-94e8-f8a30d846abf
+		summarizeBy: none
+		sourceColumn: AGitlab
+
+		annotation SummarizationSetBy = Automatic
+
+	column DoD1Fonctionnel
+		dataType: boolean
+		lineageTag: 3ac674bd-b55d-54b9-9cc8-18b23727cc70
+		summarizeBy: none
+		sourceColumn: DoD1Fonctionnel
+
+		annotation SummarizationSetBy = Automatic
+
+	column DoD2FicheMethodo
+		dataType: boolean
+		lineageTag: ae8d4951-7709-5285-81ef-fe49e8c6bbcc
+		summarizeBy: none
+		sourceColumn: DoD2FicheMethodo
+
+		annotation SummarizationSetBy = Automatic
+
+	column DoD3Restitution
+		dataType: boolean
+		lineageTag: 142ae3d9-60c7-5048-9d5a-73121ec47b77
+		summarizeBy: none
+		sourceColumn: DoD3Restitution
+
+		annotation SummarizationSetBy = Automatic
+
+	column DoD4SupportCom
+		dataType: boolean
+		lineageTag: 8df616bb-fcbb-5df2-9dac-5f7be9c308a9
+		summarizeBy: none
+		sourceColumn: DoD4SupportCom
+
+		annotation SummarizationSetBy = Automatic
+
+	column DoD5Enseignements
+		dataType: boolean
+		lineageTag: ad54fd55-8558-5d9b-bda0-e45ccd007596
+		summarizeBy: none
+		sourceColumn: DoD5Enseignements
+
+		annotation SummarizationSetBy = Automatic
+
+	column EnRetard
+		dataType: boolean
+		lineageTag: ab9dee5b-7fd7-5e36-8e45-b885d6966636
+		summarizeBy: none
+		sourceColumn: EnRetard
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 35084b03-204e-5bec-8e9e-5d3d2d94c10e
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	column EstPOCouPlan = Livrables[TypeLivrable] IN { "POC / démonstrateur", "Plan de stratégie" }
+		dataType: boolean
+		lineageTag: 45959b8f-a413-5a5f-b1b3-e172e058b084
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column DoDComplete = Livrables[DoD1Fonctionnel] && Livrables[DoD2FicheMethodo] && Livrables[DoD3Restitution] && Livrables[DoD4SupportCom] && Livrables[DoD5Enseignements]
+		dataType: boolean
+		lineageTag: 5a291689-63e2-5cc1-91e0-2a65e42ebbd6
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column CapitalisationComplete = Livrables[ADocument] && ( NOT Livrables[EstPOCouPlan] || Livrables[DoDComplete] )
+		dataType: boolean
+		lineageTag: 62d546b6-afc1-5fdf-8763-48162bb5620c
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column DatePremierDepotJour = DATEVALUE ( Livrables[DatePremierDepot] )
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: eac9b15c-7f89-5a12-892b-a2a577849b3c
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition Livrables = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Livrables", {"Id", "IdHNCS", "Title", "AffectationId", "SujetId", "TypeLivrable", "ModeleId", "Echeance", "EcheanceInitiale", "DatePremierDepot", "DateDepot", "DateRevue", "DecisionRevue", "NbCorrections", "DateValidation", "DateArchivage", "LienDocument", "LienGitlab", "DoD1Fonctionnel", "DoD2FicheMethodo", "DoD3Restitution", "DoD4SupportCom", "DoD5Enseignements", "EnRetard", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"AffectationId", "int"}, {"SujetId", "int"}, {"TypeLivrable", "text"}, {"ModeleId", "int"}, {"Echeance", "date"}, {"EcheanceInitiale", "date"}, {"DatePremierDepot", "datetime"}, {"DateDepot", "datetime"}, {"DateRevue", "datetime"}, {"DecisionRevue", "text"}, {"NbCorrections", "int"}, {"DateValidation", "datetime"}, {"DateArchivage", "datetime"}, {"LienDocument", "lien"}, {"LienGitlab", "lien"}, {"DoD1Fonctionnel", "bool"}, {"DoD2FicheMethodo", "bool"}, {"DoD3Restitution", "bool"}, {"DoD4SupportCom", "bool"}, {"DoD5Enseignements", "bool"}, {"EnRetard", "bool"}, {"Statut", "text"}}),
+					Renommee = Table.RenameColumns(Typee, {{"LienDocument", "ADocument"}, {"LienGitlab", "AGitlab"}}),
+					Resultat = Table.SelectColumns(Renommee, {"Id", "IdHNCS", "Title", "AffectationId", "SujetId", "TypeLivrable", "ModeleId", "Echeance", "EcheanceInitiale", "DatePremierDepot", "DateDepot", "DateRevue", "DecisionRevue", "NbCorrections", "DateValidation", "DateArchivage", "ADocument", "AGitlab", "DoD1Fonctionnel", "DoD2FicheMethodo", "DoD3Restitution", "DoD4SupportCom", "DoD5Enseignements", "EnRetard", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+  "name": "5f07bcd413d9cac1cece",
+  "displayName": "Communications et valorisation",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280
+}

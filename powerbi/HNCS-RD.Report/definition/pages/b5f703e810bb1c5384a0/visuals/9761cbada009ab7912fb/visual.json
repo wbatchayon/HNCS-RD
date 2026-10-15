@@ -1,0 +1,137 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "9761cbada009ab7912fb",
+  "position": {
+    "x": 640,
+    "y": 460,
+    "z": 17000,
+    "height": 250,
+    "width": 624,
+    "tabOrder": 17000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SujetsRD"
+                    }
+                  },
+                  "Property": "IdHNCS"
+                }
+              },
+              "queryRef": "SujetsRD.IdHNCS"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "GitlabSync"
+                    }
+                  },
+                  "Property": "Milestone"
+                }
+              },
+              "queryRef": "GitlabSync.Milestone"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "GitlabSync"
+                    }
+                  },
+                  "Property": "MilestoneEcheance"
+                }
+              },
+              "queryRef": "GitlabSync.MilestoneEcheance"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "GitlabSync"
+                    }
+                  },
+                  "Property": "MilestoneEtat"
+                }
+              },
+              "queryRef": "GitlabSync.MilestoneEtat"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "GitlabSync"
+                    }
+                  },
+                  "Property": "IssuesOuvertes"
+                }
+              },
+              "queryRef": "GitlabSync.IssuesOuvertes"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "GitlabSync"
+                    }
+                  },
+                  "Property": "MRsOuvertes"
+                }
+              },
+              "queryRef": "GitlabSync.MRsOuvertes"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Mesures"
+                    }
+                  },
+                  "Property": "Écarts d'échéance GitLab"
+                }
+              },
+              "queryRef": "Mesures.Écarts d'échéance GitLab"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Jalons GitLab en écart d''échéance'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

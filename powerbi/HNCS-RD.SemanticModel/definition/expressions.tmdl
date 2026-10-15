@@ -1,0 +1,112 @@
+expression SiteUrl = "https://VOTRE-TENANT.sharepoint.com/sites/HNCS-RD" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: e2b0ce7a-a246-5b7b-8c78-b9cc235126f7
+
+	annotation PBI_ResultType = Text
+
+expression fnLireListeSharePoint =
+		(titreListe as text, champs as list, optional expansions as nullable list, optional facultative as nullable logical) as table =>
+		let
+			// Lecture paginée de l'API REST SharePoint : seules les colonnes de `champs` sont demandées ($select).
+			chemin = "_api/web/lists/getbytitle('" & Text.Replace(titreListe, "'", "''") & "')/items",
+			requeteBase = [#"$select" = Text.Combine(champs, ","), #"$top" = "5000"]
+				& (if expansions = null or List.IsEmpty(expansions) then [] else [#"$expand" = Text.Combine(expansions, ",")]),
+			statutsGeres = if facultative = true then {404} else {},
+			lirePage = (jeton as nullable text) as record =>
+				let
+					requete = if jeton = null then requeteBase else requeteBase & [#"$skiptoken" = jeton],
+					reponse = Web.Contents(
+						SiteUrl,
+						[
+							RelativePath = chemin,
+							Query = requete,
+							Headers = [Accept = "application/json;odata=nometadata"],
+							ManualStatusHandling = statutsGeres
+						]
+					),
+					statut = Value.Metadata(reponse)[Response.Status],
+					json = if statut = 404 then [value = {}] else Json.Document(reponse, 65001),
+					suivant = Record.FieldOrDefault(json, "odata.nextLink", null),
+					parametres = if suivant = null then [] else Uri.Parts(suivant)[Query],
+					jetonSuivant = Record.FieldOrDefault(parametres, "$skiptoken", Record.FieldOrDefault(parametres, "%24skiptoken", null))
+				in
+					[Lignes = json[value], Jeton = jetonSuivant],
+			pages = List.Generate(
+				() => lirePage(null),
+				(page) => page <> null,
+				(page) => if page[Jeton] = null then null else lirePage(page[Jeton]),
+				(page) => page[Lignes]
+			),
+			lignes = List.Combine(pages),
+			colonnes = List.Distinct(List.Transform(champs, (c) => Text.BeforeDelimiter(c, "/"))),
+			table = Table.FromRows(
+				List.Transform(lignes, (ligne) => List.Transform(colonnes, (c) => Record.FieldOrDefault(ligne, c, null))),
+				colonnes
+			)
+		in
+			table
+	lineageTag: c988db42-056e-56ab-92b9-d7cce7bea557
+
+	annotation PBI_ResultType = Function
+
+expression fnHeureParis =
+		(valeur as any) as nullable datetime =>
+		let
+			// SharePoint renvoie les dates en UTC (y compris les colonnes « date seule », à minuit heure de Paris).
+			// Conversion explicite en heure de Paris (UTC+1, UTC+2 du dernier dimanche de mars au dernier dimanche d'octobre),
+			// indépendante du fuseau de la machine qui actualise (le service Power BI est en UTC).
+			horodatage =
+				if valeur = null then null
+				else if Value.Is(valeur, type text) then DateTimeZone.FromText(valeur, "en-US")
+				else DateTimeZone.From(valeur),
+			utc = if horodatage = null then null else DateTimeZone.RemoveZone(DateTimeZone.SwitchZone(horodatage, 0, 0)),
+			dernierDimanche = (annee as number, mois as number) as datetime =>
+				let
+					fin = Date.EndOfMonth(#date(annee, mois, 1)),
+					dimanche = Date.AddDays(fin, -Date.DayOfWeek(fin, Day.Sunday))
+				in
+					DateTime.From(dimanche) + #duration(0, 1, 0, 0),
+			decalage =
+				if utc = null then 0
+				else if utc >= dernierDimanche(Date.Year(utc), 3) and utc < dernierDimanche(Date.Year(utc), 10) then 2
+				else 1,
+			resultat = if utc = null then null else utc + #duration(0, decalage, 0, 0)
+		in
+			resultat
+	lineageTag: 03abdff9-6873-5a7a-a883-891141cf8fb3
+
+	annotation PBI_ResultType = Function
+
+expression fnTyperColonnes =
+		(source as table, schema as list) as table =>
+		let
+			// schema : liste de paires {colonne, genre} ; genre ∈ int, num, text, bool, date, datetime, user, lien.
+			convertir = (genre as text) as function =>
+				if genre = "int" then ((v) => if v = null then null else Int64.From(v))
+				else if genre = "num" then ((v) => if v = null then null else Number.From(v))
+				else if genre = "bool" then ((v) => if v = null then false else Logical.From(v))
+				else if genre = "datetime" then ((v) => fnHeureParis(v))
+				else if genre = "date" then ((v) => if v = null then null else DateTime.Date(fnHeureParis(v)))
+				else if genre = "user" then ((v) =>
+					let
+						courriel = if v = null then null else if Value.Is(v, type record) then Record.FieldOrDefault(v, "EMail", null) else Text.From(v)
+					in
+						if courriel = null or courriel = "" then null else Text.Lower(courriel))
+				else if genre = "lien" then ((v) =>
+					let
+						url = if v = null then null else if Value.Is(v, type record) then Record.FieldOrDefault(v, "Url", null) else Text.From(v)
+					in
+						url <> null and url <> "")
+				else ((v) => if v = null then null else Text.From(v)),
+			typeM = (genre as text) as type =>
+				if genre = "int" then Int64.Type
+				else if genre = "num" then type number
+				else if genre = "bool" or genre = "lien" then type logical
+				else if genre = "datetime" then type datetime
+				else if genre = "date" then type date
+				else type text,
+			resultat = Table.TransformColumns(source, List.Transform(schema, (s) => {s{0}, convertir(s{1}), typeM(s{1})}))
+		in
+			resultat
+	lineageTag: 4fdbadb6-31a5-5847-9d96-421ad4ac9ba9
+
+	annotation PBI_ResultType = Function

@@ -1,0 +1,19 @@
+{
+  "name": "HNCS-RD",
+  "dataColors": [
+    "#2E7D32",
+    "#F57C00",
+    "#C62828",
+    "#757575",
+    "#1565C0",
+    "#6A1B9A",
+    "#00838F",
+    "#AD1457"
+  ],
+  "good": "#2E7D32",
+  "neutral": "#F57C00",
+  "bad": "#C62828",
+  "foreground": "#252423",
+  "background": "#FFFFFF",
+  "tableAccent": "#1565C0"
+}

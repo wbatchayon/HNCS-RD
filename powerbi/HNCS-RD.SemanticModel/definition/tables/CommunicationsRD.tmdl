@@ -1,0 +1,107 @@
+table CommunicationsRD
+	lineageTag: 0fb3cca9-0ff4-5ac4-92d8-d44cc1a557cb
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 032cf924-086a-557a-9f13-002b41e2f5bf
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: fc179f0c-4dbd-5e29-b7bb-1d443b12613b
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column LivrableSourceId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 5faca408-70a0-5f5f-8b7f-797e89dc49d5
+		summarizeBy: none
+		sourceColumn: LivrableSourceId
+
+		annotation SummarizationSetBy = Automatic
+
+	column SujetId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: bb056dd1-3934-5506-9973-7d692838f0a9
+		summarizeBy: none
+		sourceColumn: SujetId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Canal
+		dataType: string
+		lineageTag: 98073f70-1f1c-5cbc-9481-729a56254b34
+		summarizeBy: none
+		sourceColumn: Canal
+
+		annotation SummarizationSetBy = Automatic
+
+	column Externe
+		dataType: boolean
+		lineageTag: 1c3c2d49-32e5-50f2-b5a5-99ac2b50cbb4
+		summarizeBy: none
+		sourceColumn: Externe
+
+		annotation SummarizationSetBy = Automatic
+
+	column DatePrevue
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 602901a3-be83-5fb6-aa63-a6e03f9f6fdb
+		summarizeBy: none
+		sourceColumn: DatePrevue
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateEffective
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 7f150376-2fe8-5e91-97a2-17e14416ed85
+		summarizeBy: none
+		sourceColumn: DateEffective
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column AutorisationsTiers
+		dataType: string
+		lineageTag: e0801266-bd74-503e-884f-51b2738e8551
+		summarizeBy: none
+		sourceColumn: AutorisationsTiers
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 649071a8-bbe3-5617-9eb3-daf8854a18a3
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition CommunicationsRD = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Communications R&D", {"Id", "IdHNCS", "LivrableSourceId", "SujetId", "Canal", "Externe", "DatePrevue", "DateEffective", "AutorisationsTiers", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"LivrableSourceId", "int"}, {"SujetId", "int"}, {"Canal", "text"}, {"Externe", "bool"}, {"DatePrevue", "date"}, {"DateEffective", "date"}, {"AutorisationsTiers", "text"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "LivrableSourceId", "SujetId", "Canal", "Externe", "DatePrevue", "DateEffective", "AutorisationsTiers", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

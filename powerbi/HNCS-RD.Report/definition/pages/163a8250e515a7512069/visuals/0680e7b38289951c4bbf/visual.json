@@ -1,0 +1,112 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "0680e7b38289951c4bbf",
+  "position": {
+    "x": 16,
+    "y": 460,
+    "z": 11000,
+    "height": 250,
+    "width": 1248,
+    "tabOrder": 11000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Conventions"
+                    }
+                  },
+                  "Property": "IdHNCS"
+                }
+              },
+              "queryRef": "Conventions.IdHNCS"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Etablissements"
+                    }
+                  },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "Etablissements.Title",
+              "displayName": "Établissement"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Conventions"
+                    }
+                  },
+                  "Property": "TypeConvention"
+                }
+              },
+              "queryRef": "Conventions.TypeConvention"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Conventions"
+                    }
+                  },
+                  "Property": "DateFin"
+                }
+              },
+              "queryRef": "Conventions.DateFin"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Conventions"
+                    }
+                  },
+                  "Property": "Statut"
+                }
+              },
+              "queryRef": "Conventions.Statut"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Conventions'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

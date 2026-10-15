@@ -1,0 +1,74 @@
+table Offres
+	lineageTag: c281739a-af4a-5be2-89bb-5d0aa5cabe1d
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 26207813-23a4-53b4-8858-99271bf82a54
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 4e692098-cc87-567a-b4c5-e412504df9bd
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 5eb6e0c7-b3e8-5169-8067-3b3c2fa7fa6e
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column TypeOffre
+		dataType: string
+		lineageTag: 4b9ea794-3143-539c-b664-1f5c80adbf9a
+		summarizeBy: none
+		sourceColumn: TypeOffre
+
+		annotation SummarizationSetBy = Automatic
+
+	column PoleId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 464494d8-d531-5ce3-b879-3733db8e0b38
+		summarizeBy: none
+		sourceColumn: PoleId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 0f8ae5ff-3fe8-52f4-88c2-ab8917e18510
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	column PoleNom = LOOKUPVALUE ( Poles[Title], Poles[Id], Offres[PoleId] )
+		dataType: string
+		lineageTag: 2fc51a7a-2b19-5bb2-aa6c-fb214b080da1
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Offres = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Offres", {"Id", "IdHNCS", "Title", "TypeOffre", "PoleId", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"TypeOffre", "text"}, {"PoleId", "int"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "TypeOffre", "PoleId", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

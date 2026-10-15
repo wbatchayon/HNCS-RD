@@ -1,0 +1,75 @@
+table Referents
+	lineageTag: e4a5f4fa-8792-5e7d-8cb3-5ecea1179d25
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 51a2b4d1-410f-5a26-998e-c2db9720c5a9
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 94084596-51e0-5226-b8f6-d62bab40d366
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 6cf84968-ff1f-554e-90c4-d7d247eab65a
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column CompteEmail
+		dataType: string
+		lineageTag: ca9a7f67-01c3-5610-8616-e14a1a49ddb8
+		summarizeBy: none
+		sourceColumn: CompteEmail
+
+		annotation SummarizationSetBy = Automatic
+
+	column CapaciteIndicative
+		dataType: int64
+		formatString: 0
+		lineageTag: dc02a442-1e73-5281-93d3-c5af16c1929f
+		summarizeBy: none
+		sourceColumn: CapaciteIndicative
+
+		annotation SummarizationSetBy = Automatic
+
+	column Disponibilite
+		dataType: string
+		lineageTag: c37a77b9-225c-5601-92e5-a1eba727f7bb
+		summarizeBy: none
+		sourceColumn: Disponibilite
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: ff6443e1-3047-53e6-b266-ba710f17eb44
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Referents = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Référents", {"Id", "IdHNCS", "Title", "Compte/EMail", "CapaciteIndicative", "Disponibilite", "Statut"}, {"Compte"}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"Compte", "user"}, {"CapaciteIndicative", "int"}, {"Disponibilite", "text"}, {"Statut", "text"}}),
+					Renommee = Table.RenameColumns(Typee, {{"Compte", "CompteEmail"}}),
+					Resultat = Table.SelectColumns(Renommee, {"Id", "IdHNCS", "Title", "CompteEmail", "CapaciteIndicative", "Disponibilite", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

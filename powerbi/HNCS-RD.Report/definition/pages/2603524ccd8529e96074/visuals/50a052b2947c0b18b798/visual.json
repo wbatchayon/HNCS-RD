@@ -1,0 +1,129 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "50a052b2947c0b18b798",
+  "position": {
+    "x": 424,
+    "y": 470,
+    "z": 17000,
+    "height": 240,
+    "width": 840,
+    "tabOrder": 17000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Entretiens"
+                    }
+                  },
+                  "Property": "IdHNCS"
+                }
+              },
+              "queryRef": "Entretiens.IdHNCS"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Entretiens"
+                    }
+                  },
+                  "Property": "DateHeure"
+                }
+              },
+              "queryRef": "Entretiens.DateHeure"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Entretiens"
+                    }
+                  },
+                  "Property": "TypeEntretien"
+                }
+              },
+              "queryRef": "Entretiens.TypeEntretien"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Entretiens"
+                    }
+                  },
+                  "Property": "Modalite"
+                }
+              },
+              "queryRef": "Entretiens.Modalite"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Mesures"
+                    }
+                  },
+                  "Property": "Entretiens à venir"
+                }
+              },
+              "queryRef": "Mesures.Entretiens à venir"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Entretiens"
+                  }
+                },
+                "Property": "DateHeure"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Entretiens à venir'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

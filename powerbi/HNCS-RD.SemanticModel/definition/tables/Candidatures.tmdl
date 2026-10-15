@@ -1,0 +1,223 @@
+table Candidatures
+	lineageTag: 1002e97c-a246-5f8d-bdbc-3f1f864f56c2
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: fd2eecfb-afd2-59df-be78-62b38d0b28c0
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: d6af4c88-bcb9-5e3b-8088-56c3452691a3
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Canal
+		dataType: string
+		lineageTag: 32f99499-82e8-5896-b3ac-2d6423d41210
+		summarizeBy: none
+		sourceColumn: Canal
+
+		annotation SummarizationSetBy = Automatic
+
+	column ModeReception
+		dataType: string
+		lineageTag: 3b6ab6b3-65bf-592a-b368-2dbd265c6995
+		summarizeBy: none
+		sourceColumn: ModeReception
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateReception
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 5b3766c7-1dae-5eb1-ad5f-fb25ed2513c1
+		summarizeBy: none
+		sourceColumn: DateReception
+
+		annotation SummarizationSetBy = Automatic
+
+	column OffreId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4c5d8fa2-2381-50e5-89cf-44f801c9dd9e
+		summarizeBy: none
+		sourceColumn: OffreId
+
+		annotation SummarizationSetBy = Automatic
+
+	column TypeContratVise
+		dataType: string
+		lineageTag: a9044d78-3fb8-5bbb-9915-3f5c7afb76ad
+		summarizeBy: none
+		sourceColumn: TypeContratVise
+
+		annotation SummarizationSetBy = Automatic
+
+	column EtablissementId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: ff8fecc1-65f8-5fcc-a9b5-665b52782a41
+		summarizeBy: none
+		sourceColumn: EtablissementId
+
+		annotation SummarizationSetBy = Automatic
+
+	column PolePressentiId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 46389af6-efa6-56f0-9504-fc6a030aa026
+		summarizeBy: none
+		sourceColumn: PolePressentiId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateDecisionPreselection
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 9d7b8a3b-9b58-567d-a50b-1ff923a91810
+		summarizeBy: none
+		sourceColumn: DateDecisionPreselection
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateTransmissionAdmin
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 0c31a8be-3879-5826-a020-9f135768379d
+		summarizeBy: none
+		sourceColumn: DateTransmissionAdmin
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateDecisionFinale
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: b50bfedc-682e-5735-afc6-a40279354f2a
+		summarizeBy: none
+		sourceColumn: DateDecisionFinale
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateIntegration
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 6502b0f6-4255-5a96-9994-a0edebc1a876
+		summarizeBy: none
+		sourceColumn: DateIntegration
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateCloture
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 90801d4d-9f99-597e-a7e2-2924b20ef1fa
+		summarizeBy: none
+		sourceColumn: DateCloture
+
+		annotation SummarizationSetBy = Automatic
+
+	column MotifCode
+		dataType: string
+		lineageTag: b36b7853-8cd1-50a6-8a5e-4bc7d536c584
+		summarizeBy: none
+		sourceColumn: MotifCode
+
+		annotation SummarizationSetBy = Automatic
+
+	column DoublonPotentiel
+		dataType: boolean
+		lineageTag: 5cb4299f-e37d-5d53-b835-7ec72258d6ce
+		summarizeBy: none
+		sourceColumn: DoublonPotentiel
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: e34c7569-ade2-59fa-a455-7b0ee97e54cc
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateStatut
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: c896ae76-e557-5755-8d35-7093efbb8bf2
+		summarizeBy: none
+		sourceColumn: DateStatut
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateReceptionJour = DATEVALUE ( Candidatures[DateReception] )
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 3aceacc7-1297-5483-a4f0-e5064b55eef7
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column EstPreselectionnee = NOT ISBLANK ( Candidatures[DateTransmissionAdmin] )
+		dataType: boolean
+		lineageTag: 23f693e1-169a-52ed-b9c0-cda5c5dc670d
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column EstActive = NOT ( Candidatures[Statut] IN { "Intégrée", "Non retenue", "Clôturée" } )
+		dataType: boolean
+		lineageTag: 9fd1db76-ebe9-5b09-af69-58ba66531939
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column DelaiPreselectionJours = IF ( NOT ISBLANK ( Candidatures[DateDecisionPreselection] ), DATEDIFF ( Candidatures[DateReception], Candidatures[DateDecisionPreselection], DAY ) )
+		dataType: int64
+		formatString: 0
+		lineageTag: 708e2720-7271-572b-a44c-eb3da9616ad9
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column DelaiTraitementJours =
+			VAR Fin = COALESCE ( Candidatures[DateIntegration], Candidatures[DateCloture] )
+			RETURN IF ( NOT ISBLANK ( Fin ), DATEDIFF ( Candidatures[DateReception], Fin, DAY ) )
+		dataType: int64
+		formatString: 0
+		lineageTag: 1feb005c-fd8f-58e6-ad65-1e427a8a8ba1
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column PoleNom = LOOKUPVALUE ( Poles[Title], Poles[Id], Candidatures[PolePressentiId] )
+		dataType: string
+		lineageTag: ecf73cfa-e167-5dbf-a8eb-7fa66e97fdaf
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Candidatures = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Candidatures", {"Id", "IdHNCS", "Canal", "ModeReception", "DateReception", "OffreId", "TypeContratVise", "EtablissementId", "PolePressentiId", "DateDecisionPreselection", "DateTransmissionAdmin", "DateDecisionFinale", "DateIntegration", "DateCloture", "MotifCode", "DoublonPotentiel", "Statut", "DateStatut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Canal", "text"}, {"ModeReception", "text"}, {"DateReception", "datetime"}, {"OffreId", "int"}, {"TypeContratVise", "text"}, {"EtablissementId", "int"}, {"PolePressentiId", "int"}, {"DateDecisionPreselection", "datetime"}, {"DateTransmissionAdmin", "datetime"}, {"DateDecisionFinale", "datetime"}, {"DateIntegration", "datetime"}, {"DateCloture", "datetime"}, {"MotifCode", "text"}, {"DoublonPotentiel", "bool"}, {"Statut", "text"}, {"DateStatut", "datetime"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Canal", "ModeReception", "DateReception", "OffreId", "TypeContratVise", "EtablissementId", "PolePressentiId", "DateDecisionPreselection", "DateTransmissionAdmin", "DateDecisionFinale", "DateIntegration", "DateCloture", "MotifCode", "DoublonPotentiel", "Statut", "DateStatut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

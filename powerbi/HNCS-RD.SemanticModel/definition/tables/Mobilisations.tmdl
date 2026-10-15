@@ -1,0 +1,62 @@
+table Mobilisations
+	lineageTag: aac1372c-328d-5833-9128-2c20979042db
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: c935b624-b51e-545c-899d-9ae511532d30
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 7927051d-f4b2-5d1f-b400-f80a5e227cff
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column LivrableId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: fa0e4707-b206-56fe-a8d9-7fa925a63a62
+		summarizeBy: none
+		sourceColumn: LivrableId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateMobilisation
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 631d5c52-bd18-598b-809c-79dbd2df63e1
+		summarizeBy: none
+		sourceColumn: DateMobilisation
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column TypeMobilisation
+		dataType: string
+		lineageTag: fd31afe7-a22d-5dcf-a3ae-4ba3fab037f5
+		summarizeBy: none
+		sourceColumn: TypeMobilisation
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Mobilisations = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Mobilisations commerciales", {"Id", "IdHNCS", "LivrableId", "DateMobilisation", "TypeMobilisation"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"LivrableId", "int"}, {"DateMobilisation", "date"}, {"TypeMobilisation", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "LivrableId", "DateMobilisation", "TypeMobilisation"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+
