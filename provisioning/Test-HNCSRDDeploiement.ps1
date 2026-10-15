@@ -116,6 +116,12 @@ try {
             if ([string]$m.PrincipalType -ne 'User') { Add-Ecart 'Groupes' $g.name "Membre $($m.Title)" 'compte utilisateur direct (H-14)' $m.PrincipalType 'Avertissement' }
         }
     }
+    Set-HNCSRDEtape -Nom 'GroupesParDefaut'
+    # § 7.2 (v1.2.0) : les groupes créés par défaut avec le site restent vides et sans attribution.
+    foreach ($gd in @(Get-HNCSRDGroupesParDefaut -Model $modele)) {
+        $nbMembres = @(Get-PnPGroupMember -Group $gd.Title).Count
+        Test-Egal 'Groupes' $gd.Title 'Membres (groupe par défaut)' 0 $nbMembres
+    }
     Set-HNCSRDEtape -Nom 'PermissionsSite'
     Test-Attributions -Securable (Get-PnPWeb) -AttenduesCodes (Get-HNCSRDAttributionsSite -Model $modele) -Objet 'Site' -Modele $modele
 
@@ -140,6 +146,19 @@ try {
         Test-Attributions -Securable $liste -AttenduesCodes (Get-HNCSRDAttributionsAttendues -ObjectName $o.name -Model $modele) -Objet $o.name -Modele $modele
 
         $champs = Get-HNCSRDChamps -List $liste
+        if ($o.prefix -and $champs.ContainsKey('IdHNCS')) {
+            # § 2.2 (v1.2.0) : IdHNCS sans contrainte d'unicité SharePoint ; aucun doublon non vide toléré.
+            $vus = @{}
+            foreach ($it in @(Get-PnPListItem -List $liste -PageSize 2000 -Fields 'ID', 'IdHNCS')) {
+                $idm = [string]$it['IdHNCS']
+                if (-not $idm) { continue }
+                if ($vus.ContainsKey($idm)) { $vus[$idm] += [int]$it.Id } else { $vus[$idm] = @([int]$it.Id) }
+            }
+            $script:Controles++
+            foreach ($k in $vus.Keys) {
+                if (@($vus[$k]).Count -gt 1) { Add-Ecart 'Donnees' $o.name "IdHNCS $k" 'unique' ('doublon (ID ' + (@($vus[$k]) -join ', ') + ')') }
+            }
+        }
         if ($o.titleLabel) {
             $t = $champs['Title']
             Test-Egal 'Colonnes' $o.name 'Title / libellé' $o.titleLabel $t.Title

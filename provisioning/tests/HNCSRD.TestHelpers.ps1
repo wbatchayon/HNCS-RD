@@ -32,12 +32,21 @@ function Invoke-HNCSRDCamlTests {
             $xmlTexte = '<View><Query>' + $c.Query + '</Query><ViewFields>' + $champs + '</ViewFields><RowLimit Paged="TRUE">' + $c.RowLimit + '</RowLimit></View>'
             $doc = New-Object System.Xml.XmlDocument
             try { $doc.LoadXml($xmlTexte) } catch { & $echec "$id : XML mal formé : $($_.Exception.Message)"; continue }
-            if ($c.ViewFields.Count -ne @($v.columns).Count) { & $echec "$id : nombre de colonnes" }
-            for ($i = 0; $i -lt @($v.columns).Count; $i++) {
-                $att = [string]@($v.columns)[$i]
+            # Rendu v1.2.0 : bibliothèque -> DocIcon, LinkFilename en tête ; liste -> Title rendu LinkTitle,
+            # LinkTitle ajouté en tête si la vue ne cite pas Title.
+            $attendus = @()
+            if ($objet.kind -eq 'library') { $attendus += 'DocIcon', 'LinkFilename' }
+            elseif (@($v.columns) -notcontains 'Title') { $attendus += 'LinkTitle' }
+            foreach ($col in @($v.columns)) {
+                $att = [string]$col
                 if ($att -eq 'Title' -and $objet.kind -eq 'list') { $att = 'LinkTitle' }
-                if ($c.ViewFields[$i] -ne $att) { & $echec "$id : colonne $i = $($c.ViewFields[$i]) (attendu $att)" }
+                if ($attendus -notcontains $att) { $attendus += $att }
             }
+            if (($c.ViewFields -join ',') -cne ($attendus -join ',')) { & $echec "$id : colonnes $($c.ViewFields -join ',') (attendu $($attendus -join ','))" }
+            if ($objet.kind -eq 'list' -and $c.ViewFields -notcontains 'LinkTitle') { & $echec "$id : aucune colonne cliquable" }
+            if ($objet.kind -eq 'library' -and ($c.ViewFields[0] -ne 'DocIcon' -or $c.ViewFields[1] -ne 'LinkFilename')) { & $echec "$id : DocIcon / LinkFilename absents en tête" }
+            $gbn = $doc.SelectSingleNode('/View/Query/GroupBy')
+            if ($gbn -and $gbn.GetAttribute('Collapse') -ne 'FALSE') { & $echec "$id : regroupement non déplié" }
             if ($c.RowLimit -ne 30) { & $echec "$id : RowLimit $($c.RowLimit)" }
             if ($doc.SelectNodes('//Not').Count -gt 0) { & $echec "$id : <Not> interdit en CAML SharePoint" }
             foreach ($and in @($doc.SelectNodes('//And'))) {
@@ -91,7 +100,7 @@ function Invoke-HNCSRDCamlTests {
         @{ L = 'Candidatures'; V = 'Mes analyses'; W = '<Where><And><Eq><FieldRef Name="ResponsableAnalyse" /><Value Type="Integer"><UserID Type="Integer" /></Value></Eq><In><FieldRef Name="Statut" /><Values><Value Type="Choice">Reçue</Value><Value Type="Choice">À analyser</Value><Value Type="Choice">En cours d''analyse</Value></Values></In></And></Where>' },
         @{ L = 'Candidatures'; V = 'Candidatures en cours'; W = '<Where><And><Neq><FieldRef Name="Statut" /><Value Type="Choice">Intégrée</Value></Neq><And><Neq><FieldRef Name="Statut" /><Value Type="Choice">Non retenue</Value></Neq><Neq><FieldRef Name="Statut" /><Value Type="Choice">Clôturée</Value></Neq></And></And></Where>' },
         @{ L = 'Candidatures'; V = 'À attribuer'; W = '<Where><And><Eq><FieldRef Name="Statut" /><Value Type="Choice">Reçue</Value></Eq><IsNull><FieldRef Name="ResponsableAnalyse" /></IsNull></And></Where>' },
-        @{ L = 'Candidatures'; V = 'Doublons potentiels'; W = '<Where><And><Eq><FieldRef Name="DoublonPotentiel" /><Value Type="Boolean">1</Value></Eq><And><Neq><FieldRef Name="Statut" /><Value Type="Choice">Non retenue</Value></Neq><Neq><FieldRef Name="Statut" /><Value Type="Choice">Clôturée</Value></Neq></And></And></Where>' },
+        @{ L = 'Candidatures'; V = 'Doublons potentiels'; W = '<Where><And><Eq><FieldRef Name="DoublonPotentiel" /><Value Type="Boolean">1</Value></Eq><And><Eq><FieldRef Name="DoublonVerifie" /><Value Type="Boolean">0</Value></Eq><And><Neq><FieldRef Name="Statut" /><Value Type="Choice">Non retenue</Value></Neq><Neq><FieldRef Name="Statut" /><Value Type="Choice">Clôturée</Value></Neq></And></And></And></Where>' },
         @{ L = 'ComptesRendus'; V = 'Comptes rendus ouverts'; W = '<Where><Neq><FieldRef Name="Statut" /><Value Type="Choice">Validé</Value></Neq></Where>' },
         @{ L = 'HistoriqueStatuts'; V = 'Historique récent'; W = '<Where><Geq><FieldRef Name="DateChangement" /><Value Type="DateTime"><Today OffsetDays="-30" /></Value></Geq></Where>' },
         @{ L = 'Alternants'; V = 'Fins à venir'; W = '<Where><And><In><FieldRef Name="Statut" /><Values><Value Type="Choice">Actif</Value><Value Type="Choice">Fin planifiée</Value></Values></In><Leq><FieldRef Name="DateFin" /><Value Type="DateTime"><Today OffsetDays="45" /></Value></Leq></And></Where>' },
@@ -111,7 +120,10 @@ function Invoke-HNCSRDCamlTests {
     if ($c.Query -cne ('<OrderBy><FieldRef Name="DateDebutPeriode" Ascending="TRUE" /></OrderBy>' + '<Where><In><FieldRef Name="Statut" /><Values><Value Type="Choice">Brouillon</Value><Value Type="Choice">Publiée</Value></Values></In></Where>')) { & $echec "Offres / Offres ouvertes : requête $($c.Query)" }
     $o = Get-HNCSRDObject -Name 'LivrablesRD' -Model $modele
     $c = ConvertTo-HNCSRDCaml -View @($modele.views.LivrablesRD)[0] -ColumnTypes (Get-HNCSRDColumnTypes -Object $o) -ListKind library
-    if ($c.ViewFields[0] -ne 'Title') { & $echec 'Bibliothèque : Title ne doit pas devenir LinkTitle' }
+    if (($c.ViewFields -join ',') -cne 'DocIcon,LinkFilename,Title,Livrable,Sujet,TypeDocument,StatutDocument,ResponsableValidation,DateDocument') { & $echec "Bibliothèque LivrablesRD : colonnes $($c.ViewFields -join ',')" }
+    $o = Get-HNCSRDObject -Name 'Affectations' -Model $modele
+    $c = ConvertTo-HNCSRDCaml -View @($modele.views.Affectations)[0] -ColumnTypes (Get-HNCSRDColumnTypes -Object $o)
+    if ($c.ViewFields[0] -ne 'LinkTitle' -or $c.ViewFields[1] -ne 'IdHNCS') { & $echec "Affectations : LinkTitle attendu en première position ($($c.ViewFields -join ','))" }
 
     # Cas d'erreur
     $types = @{ Title = 'Text'; Statut = 'Choice' }
@@ -254,6 +266,14 @@ function Invoke-HNCSRDPureTests {
     }
     $ao = @($modele.objects | ForEach-Object { $o = $_; $o.columns | Where-Object { $_.PSObject.Properties.Name -contains 'appendOnly' -and $_.appendOnly } | ForEach-Object { "$($o.name).$($_.name)" } })
     if ($ao.Count -eq 0) { & $echec 'Aucune colonne appendOnly dans le modèle (attendu au moins Livrables.CommentaireRevue)' }
+    # v1.2.0 : IdHNCS indexé sans unicité ; Titre des bibliothèques non modifié
+    foreach ($o in $modele.objects) {
+        foreach ($c in @($o.columns | Where-Object { $_.name -eq 'IdHNCS' })) {
+            $xe = ([xml](ConvertTo-HNCSRDFieldXml -Column $c -Model $modele)).DocumentElement
+            if ($xe.GetAttribute('Indexed') -ne 'TRUE' -or $xe.HasAttribute('EnforceUniqueValues')) { & $echec "$($o.name).IdHNCS : indexé sans unicité attendu" }
+        }
+        if ($o.kind -eq 'library' -and ($o.titleLabel -or $o.titleRequired)) { & $echec "$($o.name) : le Titre des bibliothèques ne doit pas être redéfini" }
+    }
     $s = Get-HNCSRDAttributionsSite -Model $modele
     if ($s.Count -ne @($modele.groups).Count -or @($s.Values | Where-Object { $_ -eq 'FC' }).Count -ne 1) { & $echec 'Site : G_PROP FC, autres R' }
 
@@ -298,6 +318,9 @@ function Invoke-HNCSRDPureTests {
                 if (-not $types.ContainsKey($n)) { & $echec "Seed $($sp.Name) : colonne $n absente"; continue }
                 $val = [string]$ligne.$n
                 if (-not $val) { continue }
+                $rm = Resolve-HNCSRDMarqueurs -Valeur $val -Config $cfg
+                if ($rm.NonResolus.Count -gt 0 -or -not $rm.Valeur) { & $echec "Seed $($sp.Name) : $n = $val non résolu par tenant.sample.json" }
+                $val = [string]$rm.Valeur
                 $cs = @($o.columns | Where-Object { $_.name -eq $n })
                 if ($cs.Count -eq 0) { continue }
                 $c = $cs[0]

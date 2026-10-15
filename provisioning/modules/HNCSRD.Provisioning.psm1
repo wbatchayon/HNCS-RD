@@ -47,9 +47,8 @@ $script:ChampAffichageLookup = 'IdHNCS'
 # Correspondance nom Windows du fuseau (modèle) -> identifiant SharePoint.
 $script:FuseauxSharePoint = @{ 'Romance Standard Time' = 3 }
 
-# Compléments de seeds définis en prose dans specs/referentiels-initiaux.md
-# (« Le Proprietaire des modèles est la personne <EmailDirectionRD> au déploiement »).
-$script:ComplementsSeeds = @{ 'RegistreModeles' = @{ 'Proprietaire' = '<EmailDirectionRD>' } }
+# Colonnes ajoutées en tête des vues de bibliothèque (specs/sharepoint-vues.md, « Rendu », v1.2.0).
+$script:ColonnesTeteBibliotheque = @('DocIcon', 'LinkFilename')
 
 # Équipe Teams optionnelle (brief de provisionnement ; ce n'est pas le référentiel).
 $script:CanauxTeams = @('Comité R&D', 'Alternants')
@@ -738,8 +737,10 @@ function ConvertTo-HNCSRDCaml {
         SharePoint ne connaît pas <Not>), isnull (IsNull), isnotnull (IsNotNull). Valeurs spéciales :
         [Moi] -> <UserID/>, [Aujourd'hui±n] -> <Today OffsetDays="n"/>, booléens Oui/Non -> 1/0.
         Les conditions sont reliées par des <And> binaires correctement imbriqués.
-        Dans les listes, la colonne Title des champs affichés est rendue par LinkTitle (titre cliquable
-        ouvrant l'élément) ; le tri, le filtre et le regroupement utilisent Title.
+        Rendu (specs/sharepoint-vues.md, v1.2.0) : dans une liste, Title est affiché sous la forme
+        LinkTitle (titre cliquable) et une vue qui ne cite pas Title reçoit LinkTitle en première position ;
+        dans une bibliothèque, DocIcon et LinkFilename sont ajoutés en tête. Le tri, le filtre et le
+        regroupement utilisent les noms du modèle. Regroupements dépliés (Collapse = FALSE).
     .PARAMETER View
         Objet vue du modèle : { name ; default ; columns ; filter ; sort ; groupBy }.
     .PARAMETER ColumnTypes
@@ -766,9 +767,13 @@ function ConvertTo-HNCSRDCaml {
         if (-not $ColumnTypes.ContainsKey($champ)) { throw "Vue « $($View.name) » : colonne inconnue ou non déployée « $champ » ($contexte)." }
     }
     $champs = New-Object System.Collections.Generic.List[string]
+    if ($ListKind -eq 'library') { foreach ($t in $script:ColonnesTeteBibliotheque) { $champs.Add($t) } }
+    elseif (@($View.columns) -notcontains 'Title') { $champs.Add('LinkTitle') }
     foreach ($c in @($View.columns)) {
         & $verifier $c 'colonnes'
-        if ($c -eq 'Title' -and $ListKind -eq 'list') { $champs.Add('LinkTitle') } else { $champs.Add([string]$c) }
+        $nomAffiche = [string]$c
+        if ($c -eq 'Title' -and $ListKind -eq 'list') { $nomAffiche = 'LinkTitle' }
+        if (-not $champs.Contains($nomAffiche)) { $champs.Add($nomAffiche) }
     }
     $conditions = New-Object System.Collections.Generic.List[string]
     foreach ($f in @($View.filter)) {
@@ -1737,6 +1742,52 @@ function Set-HNCSRDSitePermissions {
     param([Parameter(Mandatory)]$Model)
     $web = Get-PnPWeb -ErrorAction Stop
     Sync-HNCSRDAttributions -Securable $web -Attendues (Get-HNCSRDAttributionsSite -Model $Model) -Cible 'Site (permissions)' -Model $Model
+    Clear-HNCSRDGroupesParDefaut -Model $Model
+}
+
+function Get-HNCSRDGroupesParDefaut {
+    <#
+    .SYNOPSIS
+        Groupes SharePoint créés par défaut avec le site (propriétaires, membres et visiteurs associés),
+        hors groupes du modèle.
+    #>
+    [CmdletBinding()]
+    param($Model)
+    if (-not $Model) { $Model = Get-HNCSRDModel }
+    $noms = @($Model.groups | ForEach-Object { [string]$_.name })
+    $r = New-Object System.Collections.Generic.List[object]
+    foreach ($bascule in @('AssociatedOwnerGroup', 'AssociatedMemberGroup', 'AssociatedVisitorGroup')) {
+        $p = @{ ErrorAction = 'SilentlyContinue' }
+        $p[$bascule] = $true
+        $g = $null
+        try { $g = Get-PnPGroup @p } catch { $g = $null }
+        if (-not $g) { continue }
+        if ($noms -contains [string]$g.Title) { continue }
+        if (@($r | Where-Object { $_.Id -eq $g.Id }).Count -gt 0) { continue }
+        $r.Add($g)
+    }
+    return $r.ToArray()
+}
+
+function Clear-HNCSRDGroupesParDefaut {
+    <#
+    .SYNOPSIS
+        Vide les groupes SharePoint par défaut du site (spec § 7.2, v1.2.0 : « restent vides et sans
+        attribution ») ; ils ne sont jamais supprimés. Leurs attributions au site sont retirées par
+        Sync-HNCSRDAttributions (Set-HNCSRDSitePermissions).
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param($Model)
+    foreach ($g in @(Get-HNCSRDGroupesParDefaut -Model $Model)) {
+        $cible = "Groupe par défaut $($g.Title)"
+        $membres = @(Get-PnPGroupMember -Group $g.Title)
+        if ($membres.Count -eq 0) { Add-HNCSRDResultat -Statut Inchange -Cible $cible -Message 'Vide'; continue }
+        foreach ($m in $membres) {
+            if (Test-HNCSRDSimulation) { Add-HNCSRDResultat -Statut Simule -Cible $cible -Message "Retrait de $($m.LoginName)"; continue }
+            Remove-PnPGroupMember -Group $g.Title -LoginName $m.LoginName -ErrorAction Stop
+            Add-HNCSRDResultat -Statut Retire -Cible $cible -Message "Membre retiré : $($m.LoginName) (groupe par défaut laissé vide)"
+        }
+    }
 }
 
 function Get-HNCSRDItemsParCle {
@@ -1825,8 +1876,10 @@ function ConvertTo-HNCSRDValeurChamp {
 function Ensure-HNCSRDParameters {
     <#
     .SYNOPSIS
-        Injecte les paramètres du modèle dans la liste Parametres (clé = Title) sans jamais écraser un
-        élément existant. Les marqueurs <BoiteRD>, <EmailAdministration>… sont remplacés depuis la config.
+        Injecte les paramètres du modèle dans la liste Parametres (clé = Title). Une valeur non vide n'est
+        jamais écrasée ; une valeur vide est complétée lorsque la configuration la fournit
+        (specs/referentiels-initiaux.md, v1.2.0). Les marqueurs <BoiteRD>, <EmailAdministration>… sont
+        remplacés depuis Config.Parametres.
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([Parameter(Mandatory)]$Model, [Parameter(Mandatory)]$Config)
@@ -1842,8 +1895,15 @@ function Ensure-HNCSRDParameters {
         $r = Resolve-HNCSRDMarqueurs -Valeur ([string]$p.value) -Config $Config
         if ($existants.ContainsKey($cle)) {
             $valeurActuelle = [string]$existants[$cle]['Valeur']
-            $msg = 'Existant conservé (jamais écrasé)'
-            if ($valeurActuelle -match '<[A-Za-z]+>') { $msg += " ; contient encore un marqueur non résolu : corriger à la main" }
+            if ($valeurActuelle -eq '' -and $r.Valeur -and $r.NonResolus.Count -eq 0) {
+                if (Test-HNCSRDSimulation) { Add-HNCSRDResultat -Statut Simule -Cible $cle -Message "Valeur vide complétée : « $($r.Valeur) »"; continue }
+                Set-PnPListItem -List $liste -Identity $existants[$cle].Id -Values @{ Valeur = [string]$r.Valeur } -ErrorAction Stop | Out-Null
+                Add-HNCSRDResultat -Statut MisAJour -Cible $cle -Message "Valeur vide complétée depuis la configuration : « $($r.Valeur) »"
+                continue
+            }
+            $msg = 'Valeur existante conservée (jamais écrasée)'
+            if ($valeurActuelle -eq '') { $msg = 'Valeur vide (aucune valeur fournie par la configuration)' }
+            elseif ($valeurActuelle -match '<[A-Za-z]+>') { $msg += ' ; contient encore un marqueur non résolu : corriger à la main' }
             Add-HNCSRDResultat -Statut Inchange -Cible $cle -Message $msg
             continue
         }
@@ -1864,8 +1924,10 @@ function Ensure-HNCSRDSeeds {
         Injecte les référentiels initiaux (seeds du modèle : Poles, DomainesCibles, ModelesActions,
         RegistreModeles) sans jamais écraser un élément existant (clé IdHNCS, sinon Code, sinon Title).
     .DESCRIPTION
-        Les lookups sont résolus par IdHNCS (ex. POL-P2 -> ID du pôle) ; RegistreModeles.Proprietaire =
-        EmailDirectionRD de la configuration (specs/referentiels-initiaux.md).
+        Les marqueurs <…> sont résolus depuis Config.Parametres (ex. RegistreModeles.Proprietaire =
+        <EmailDirectionRD>) ; les lookups sont résolus par IdHNCS (ex. POL-P2 -> ID du pôle). Les éléments
+        créés avec un Statut reçoivent StatutPrecedent = Statut et DateStatut = date du déploiement
+        (spec § 11, v1.2.0).
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([Parameter(Mandatory)]$Model, [Parameter(Mandatory)]$Config, [int]$Lot = 5)
@@ -1885,6 +1947,7 @@ function Ensure-HNCSRDSeeds {
         }
         $types = Get-HNCSRDColumnTypes -Object $objet -Lot $Lot
         $existants = Get-HNCSRDItemsParCle -List $liste -Champ $champCle
+        $dateDeploiement = Get-Date
         foreach ($ligne in $lignes) {
             $cle = [string]$ligne.$champCle
             $cible = "$nomListe / $cle"
@@ -1894,20 +1957,18 @@ function Ensure-HNCSRDSeeds {
                 foreach ($nomChamp in $champsLigne) {
                     $brut = [string]$ligne.$nomChamp
                     if ($brut -eq '') { continue }
+                    $rm = Resolve-HNCSRDMarqueurs -Valeur $brut -Config $Config
+                    if ($rm.NonResolus.Count -gt 0) { throw ("Marqueur(s) absent(s) de la configuration pour {0} : {1}" -f $nomChamp, ($rm.NonResolus -join ', ')) }
+                    $brut = [string]$rm.Valeur
+                    if ($brut -eq '') { throw "Valeur vide dans la configuration pour $nomChamp" }
                     if (-not $types.ContainsKey($nomChamp)) { throw "Colonne $nomChamp absente de $nomListe" }
                     $col = $null
                     if ($nomChamp -ne 'Title') { $col = @($objet.columns | Where-Object { $_.name -eq $nomChamp })[0] }
                     if ((Test-HNCSRDSimulation) -and (Test-HNCSRDLookupType -Type $types[$nomChamp])) { $valeurs[$nomChamp] = $brut; continue }
                     $valeurs[$nomChamp] = ConvertTo-HNCSRDValeurChamp -Type $types[$nomChamp] -Column $col -Valeur $brut -Model $Model
                 }
-                if ($script:ComplementsSeeds.ContainsKey($nomListe)) {
-                    foreach ($k in $script:ComplementsSeeds[$nomListe].Keys) {
-                        if ($valeurs.ContainsKey($k)) { continue }
-                        $r = Resolve-HNCSRDMarqueurs -Valeur ([string]$script:ComplementsSeeds[$nomListe][$k]) -Config $Config
-                        if ($r.NonResolus.Count -gt 0 -or -not $r.Valeur) { throw "Valeur de $k non résolue depuis la configuration ($($script:ComplementsSeeds[$nomListe][$k]))" }
-                        $valeurs[$k] = $r.Valeur
-                    }
-                }
+                if ($valeurs.ContainsKey('Statut') -and $types.ContainsKey('StatutPrecedent')) { $valeurs['StatutPrecedent'] = [string]$valeurs['Statut'] }
+                if ($valeurs.ContainsKey('Statut') -and $types.ContainsKey('DateStatut')) { $valeurs['DateStatut'] = $dateDeploiement }
                 if (Test-HNCSRDSimulation) { Add-HNCSRDResultat -Statut Simule -Cible $cible -Message 'Création'; continue }
                 Add-PnPListItem -List $liste -Values $valeurs -ErrorAction Stop | Out-Null
                 Add-HNCSRDResultat -Statut Cree -Cible $cible
@@ -2102,6 +2163,6 @@ Export-ModuleMember -Function @(
     'Get-HNCSRDTransitionValeurs', 'Compare-HNCSRDTransitionItem',
     'Ensure-HNCSRDSite', 'Ensure-HNCSRDPermissionLevels', 'Ensure-HNCSRDGroups', 'Set-HNCSRDVersioning', 'Ensure-HNCSRDList',
     'Ensure-HNCSRDTitleColumn', 'Ensure-HNCSRDColumn', 'Set-HNCSRDListValidation', 'Ensure-HNCSRDView', 'Sync-HNCSRDAttributions',
-    'Set-HNCSRDListPermissions', 'Set-HNCSRDSitePermissions', 'Ensure-HNCSRDParameters', 'Ensure-HNCSRDSeeds', 'Sync-HNCSRDTransitions',
+    'Set-HNCSRDListPermissions', 'Set-HNCSRDSitePermissions', 'Get-HNCSRDGroupesParDefaut', 'Clear-HNCSRDGroupesParDefaut', 'Ensure-HNCSRDParameters', 'Ensure-HNCSRDSeeds', 'Sync-HNCSRDTransitions',
     'Ensure-HNCSRDNavigation', 'Ensure-HNCSRDTeam'
 )
