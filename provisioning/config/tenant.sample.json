@@ -1,0 +1,20 @@
+{
+  "TenantName": "contoso",
+  "TenantAdminUrl": "https://contoso-admin.sharepoint.com",
+  "SiteUrl": "https://contoso.sharepoint.com/sites/HNCS-RD",
+  "SiteOwner": "admin@contoso.onmicrosoft.com",
+  "PnPClientId": "00000000-0000-0000-0000-000000000000",
+  "CertificatePath": "",
+  "CertificateThumbprint": "",
+  "ServiceAccountEmail": "svc-hncs-rd@contoso.onmicrosoft.com",
+  "Parametres": {
+    "BoiteRD": "rd@contoso.onmicrosoft.com",
+    "EmailAdministration": "administration@contoso.onmicrosoft.com",
+    "EmailDirectionRD": "direction.rd@contoso.onmicrosoft.com",
+    "EmailDirection": "direction@contoso.onmicrosoft.com",
+    "EmailSupport": "support.m365@contoso.onmicrosoft.com",
+    "UrlRapportPowerBI": "",
+    "UrlCanalTeamsComite": ""
+  },
+  "Teams": { "Creer": false, "NomEquipe": "HNCS R&D" }
+}
