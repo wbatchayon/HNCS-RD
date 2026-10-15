@@ -36,10 +36,11 @@
                       "Entity": "Alternants"
                     }
                   },
-                  "Property": "NomAffichage"
+                  "Property": "IdHNCS"
                 }
               },
-              "queryRef": "Alternants.NomAffichage"
+              "queryRef": "Alternants.IdHNCS",
+              "displayName": "Alternant"
             },
             {
               "field": {

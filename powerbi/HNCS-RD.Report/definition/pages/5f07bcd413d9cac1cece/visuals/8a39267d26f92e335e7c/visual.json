@@ -36,6 +36,20 @@
                       "Entity": "CommunicationsRD"
                     }
                   },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "CommunicationsRD.Title",
+              "displayName": "Titre"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "CommunicationsRD"
+                    }
+                  },
                   "Property": "Canal"
                 }
               },
@@ -52,21 +66,35 @@
                   "Property": "DateEffective"
                 }
               },
-              "queryRef": "CommunicationsRD.DateEffective"
+              "queryRef": "CommunicationsRD.DateEffective",
+              "displayName": "Date"
             },
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Livrables"
+                      "Entity": "CommunicationsRD"
                     }
                   },
-                  "Property": "Title"
+                  "Property": "Externe"
                 }
               },
-              "queryRef": "Livrables.Title",
-              "displayName": "Livrable source"
+              "queryRef": "CommunicationsRD.Externe"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "CommunicationsRD"
+                    }
+                  },
+                  "Property": "UrlPublication"
+                }
+              },
+              "queryRef": "CommunicationsRD.UrlPublication",
+              "displayName": "Lien public"
             }
           ]
         }

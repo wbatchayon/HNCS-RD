@@ -82,7 +82,9 @@ table Calendrier
 								MIN ( Candidatures[DateReception] ),
 								MIN ( Livrables[Echeance] ),
 								MIN ( ComptesRendus[Echeance] ),
-								MIN ( Alternants[DateDebut] )
+								MIN ( Alternants[DateDebut] ),
+								MIN ( CommunicationsRD[DateEffective] ),
+								MIN ( Mobilisations[DateMobilisation] )
 							},
 							NOT ISBLANK ( [Value] )
 						),
@@ -96,7 +98,9 @@ table Calendrier
 								MAX ( Livrables[Echeance] ),
 								MAX ( ComptesRendus[Echeance] ),
 								MAX ( Alternants[DateFin] ),
-								MAX ( Alternants[DateFinReelle] )
+								MAX ( Alternants[DateFinReelle] ),
+								MAX ( CommunicationsRD[DateEffective] ),
+								MAX ( Mobilisations[DateMobilisation] )
 							},
 							NOT ISBLANK ( [Value] )
 						),

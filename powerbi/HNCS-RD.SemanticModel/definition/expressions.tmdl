@@ -4,10 +4,14 @@ expression SiteUrl = "https://VOTRE-TENANT.sharepoint.com/sites/HNCS-RD" meta [I
 	annotation PBI_ResultType = Text
 
 expression fnLireListeSharePoint =
-		(titreListe as text, champs as list, optional expansions as nullable list, optional facultative as nullable logical) as table =>
+		(nomInterne as text, champs as list, optional expansions as nullable list, optional facultative as nullable logical, optional bibliotheque as nullable logical) as table =>
 		let
 			// Lecture paginée de l'API REST SharePoint : seules les colonnes de `champs` sont demandées ($select).
-			chemin = "_api/web/lists/getbytitle('" & Text.Replace(titreListe, "'", "''") & "')/items",
+			// La liste est désignée par son nom interne (URL), stable, et non par son titre affiché (spec § 9.1) :
+			// listes GetList('<chemin du site>/Lists/<NomInterne>'), bibliothèques GetList('<chemin du site>/<NomInterne>').
+			cheminSite = Text.TrimEnd(Uri.Parts(SiteUrl)[Path], "/"),
+			urlServeur = cheminSite & (if bibliotheque = true then "/" else "/Lists/") & nomInterne,
+			chemin = "_api/web/GetList('" & Text.Replace(urlServeur, "'", "''") & "')/items",
 			requeteBase = [#"$select" = Text.Combine(champs, ","), #"$top" = "5000"]
 				& (if expansions = null or List.IsEmpty(expansions) then [] else [#"$expand" = Text.Combine(expansions, ",")]),
 			statutsGeres = if facultative = true then {404} else {},
@@ -79,7 +83,7 @@ expression fnHeureParis =
 expression fnTyperColonnes =
 		(source as table, schema as list) as table =>
 		let
-			// schema : liste de paires {colonne, genre} ; genre ∈ int, num, text, bool, date, datetime, user, lien.
+			// schema : liste de paires {colonne, genre} ; genre ∈ int, num, text, bool, date, datetime, user, lien (URL → booléen), url (URL → texte).
 			convertir = (genre as text) as function =>
 				if genre = "int" then ((v) => if v = null then null else Int64.From(v))
 				else if genre = "num" then ((v) => if v = null then null else Number.From(v))
@@ -96,6 +100,11 @@ expression fnTyperColonnes =
 						url = if v = null then null else if Value.Is(v, type record) then Record.FieldOrDefault(v, "Url", null) else Text.From(v)
 					in
 						url <> null and url <> "")
+				else if genre = "url" then ((v) =>
+					let
+						url = if v = null then null else if Value.Is(v, type record) then Record.FieldOrDefault(v, "Url", null) else Text.From(v)
+					in
+						if url = null or url = "" then null else url)
 				else ((v) => if v = null then null else Text.From(v)),
 			typeM = (genre as text) as type =>
 				if genre = "int" then Int64.Type

@@ -21,7 +21,7 @@ table Parametres
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Paramètres", {"Title", "Valeur"}, {}, false),
+					Source = fnLireListeSharePoint("Parametres", {"Title", "Valeur"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Title", "text"}, {"Valeur", "text"}}),
 					Renommee = Table.RenameColumns(Typee, {{"Title", "Cle"}}),
 					Resultat = Table.SelectColumns(Renommee, {"Cle", "Valeur"})

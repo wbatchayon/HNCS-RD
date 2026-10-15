@@ -113,7 +113,7 @@ table SujetsRD
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Sujets R&D", {"Id", "IdHNCS", "Title", "TypeSujet", "PoleId", "Priorite", "ReferentId", "DateDebutPrevue", "DateFinPrevue", "GitlabProjetId", "Statut"}, {}, false),
+					Source = fnLireListeSharePoint("SujetsRD", {"Id", "IdHNCS", "Title", "TypeSujet", "PoleId", "Priorite", "ReferentId", "DateDebutPrevue", "DateFinPrevue", "GitlabProjetId", "Statut"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"TypeSujet", "text"}, {"PoleId", "int"}, {"Priorite", "text"}, {"ReferentId", "int"}, {"DateDebutPrevue", "date"}, {"DateFinPrevue", "date"}, {"GitlabProjetId", "int"}, {"Statut", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "TypeSujet", "PoleId", "Priorite", "ReferentId", "DateDebutPrevue", "DateFinPrevue", "GitlabProjetId", "Statut"})
 				in

@@ -57,7 +57,7 @@ table DomainesCibles
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Domaines cibles", {"Id", "IdHNCS", "Title", "PoleId", "Cible", "Statut"}, {}, false),
+					Source = fnLireListeSharePoint("DomainesCibles", {"Id", "IdHNCS", "Title", "PoleId", "Cible", "Statut"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"PoleId", "int"}, {"Cible", "bool"}, {"Statut", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "PoleId", "Cible", "Statut"})
 				in

@@ -52,7 +52,7 @@ table Mobilisations
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Mobilisations commerciales", {"Id", "IdHNCS", "LivrableId", "DateMobilisation", "TypeMobilisation"}, {}, false),
+					Source = fnLireListeSharePoint("Mobilisations", {"Id", "IdHNCS", "LivrableId", "DateMobilisation", "TypeMobilisation"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"LivrableId", "int"}, {"DateMobilisation", "date"}, {"TypeMobilisation", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "LivrableId", "DateMobilisation", "TypeMobilisation"})
 				in

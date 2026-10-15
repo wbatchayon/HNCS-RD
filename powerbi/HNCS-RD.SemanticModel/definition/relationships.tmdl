@@ -81,20 +81,24 @@ relationship c15d77c0-6c59-5c87-885c-4e956e088174
 	toColumn: Alternants.Id
 
 relationship b44af90a-8d0d-5619-87ae-6321f34d40c6
+	isActive: false
 	fromColumn: CommunicationsRD.LivrableSourceId
 	toColumn: Livrables.Id
 
 relationship 2a0b301f-f84c-54e1-87a0-58bc33ef003b
-	isActive: false
 	fromColumn: CommunicationsRD.DateEffective
 	toColumn: Calendrier.Date
 
 relationship edd5f6bc-ec8d-5840-a57d-8034b37ff2e4
+	isActive: false
 	fromColumn: Mobilisations.LivrableId
 	toColumn: Livrables.Id
 
+relationship f0e25b78-c397-5ce1-815b-1ba4649f68da
+	fromColumn: Mobilisations.DateMobilisation
+	toColumn: Calendrier.Date
+
 relationship b6802789-4482-5095-8651-241d849235f1
-	isActive: false
 	fromColumn: ActionsIntegration.AlternantId
 	toColumn: Alternants.Id
 

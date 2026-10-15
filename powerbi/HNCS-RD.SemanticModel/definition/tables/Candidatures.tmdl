@@ -160,7 +160,7 @@ table Candidatures
 
 		annotation SummarizationSetBy = Automatic
 
-	column DateReceptionJour = DATEVALUE ( Candidatures[DateReception] )
+	column DateReceptionJour = DATE ( YEAR ( Candidatures[DateReception] ), MONTH ( Candidatures[DateReception] ), DAY ( Candidatures[DateReception] ) )
 		dataType: dateTime
 		formatString: dd/MM/yyyy
 		lineageTag: 3aceacc7-1297-5483-a4f0-e5064b55eef7

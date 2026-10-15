@@ -1,6 +1,8 @@
 role Administration
 	modelPermission: read
 
+	tablePermission Candidatures = NOT ISBLANK ( Candidatures[DateTransmissionAdmin] )
+
 	tablePermission Livrables = FALSE ()
 
 	tablePermission ComptesRendus = FALSE ()

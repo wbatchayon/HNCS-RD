@@ -25,7 +25,7 @@ table SujetDomaine
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Sujets R&D", {"Id", "DomainesId"}, {}, false),
+					Source = fnLireListeSharePoint("SujetsRD", {"Id", "DomainesId"}, {}, false),
 					// DomainesId : tableau JSON d'identifiants (format nometadata) ou enregistrement [results] (format verbose).
 					Listes = Table.TransformColumns(Source, {{"DomainesId", (v) => if v = null then {} else if Value.Is(v, type record) then Record.FieldOrDefault(v, "results", {}) else v, type list}}),
 					Developpee = Table.ExpandListColumn(Listes, "DomainesId"),

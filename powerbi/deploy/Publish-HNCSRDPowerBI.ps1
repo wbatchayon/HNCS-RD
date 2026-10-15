@@ -17,8 +17,8 @@
       2. Actualisation planifiée quotidienne 06:00 (Romance Standard Time) si -ConfigurerPlanification
          n'a pas pu l'appliquer (elle exige des identifiants valides).
       3. Sécurité : affecter les groupes Entra / personnes aux rôles Direction, PilotageRD,
-         Administration et Referent (Modèle > Sécurité). Ne jamais mettre une même personne dans
-         Direction (OLS) et dans un rôle à filtre RLS (Administration, Referent).
+         Administration, RelationEcoles et Referent (Modèle > Sécurité). Ne jamais mettre une même personne dans
+         Direction (OLS) et dans un rôle à filtre RLS (Administration, RelationEcoles, Referent).
       4. Accès à l'espace de travail : membres en « Lecteur » pour les publics du rapport ;
          aucun alternant (H-19).
 
@@ -396,6 +396,6 @@ Write-Host ''
 Write-Host 'Publication terminée. Étapes manuelles restantes (README.md § Publication) :'
 Write-Host '  1. Identifiants OAuth2 de la source SharePoint (compte de service, confidentialité Organisationnel).'
 Write-Host '  2. Actualisation planifiée quotidienne 06:00 si elle n''a pas été appliquée ci-dessus.'
-Write-Host '  3. Affectation des membres aux rôles RLS / OLS (Direction, PilotageRD, Administration, Referent) — H-16.'
+Write-Host '  3. Affectation des membres aux rôles RLS / OLS (Direction, PilotageRD, Administration, RelationEcoles, Referent) — une personne dans un seul rôle — H-16.'
 Write-Host "  4. Accès à l'espace « $WorkspaceName » en lecture pour les publics du rapport (aucun alternant, H-19)."
 Write-Host "Modèle : $modelId — Rapport : $reportId"

@@ -62,10 +62,10 @@
                       "Entity": "Mesures"
                     }
                   },
-                  "Property": "Entretiens réalisés"
+                  "Property": "Candidatures avec entretien réalisé"
                 }
               },
-              "queryRef": "Mesures.Entretiens réalisés"
+              "queryRef": "Mesures.Candidatures avec entretien réalisé"
             },
             {
               "field": {

@@ -26,7 +26,8 @@
                   "Property": "IdHNCS"
                 }
               },
-              "queryRef": "Affectations.IdHNCS"
+              "queryRef": "Affectations.IdHNCS",
+              "displayName": "Affectation"
             },
             {
               "field": {
@@ -36,10 +37,11 @@
                       "Entity": "Alternants"
                     }
                   },
-                  "Property": "NomAffichage"
+                  "Property": "IdHNCS"
                 }
               },
-              "queryRef": "Alternants.NomAffichage"
+              "queryRef": "Alternants.IdHNCS",
+              "displayName": "Alternant"
             },
             {
               "field": {

@@ -86,7 +86,7 @@ table ActionsIntegration
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Actions d'intégration et checklists", {"Id", "IdHNCS", "Contexte", "Categorie", "CandidatureId", "AlternantId", "Echeance", "Bloquante", "Statut"}, {}, false),
+					Source = fnLireListeSharePoint("ActionsIntegration", {"Id", "IdHNCS", "Contexte", "Categorie", "CandidatureId", "AlternantId", "Echeance", "Bloquante", "Statut"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Contexte", "text"}, {"Categorie", "text"}, {"CandidatureId", "int"}, {"AlternantId", "int"}, {"Echeance", "date"}, {"Bloquante", "bool"}, {"Statut", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Contexte", "Categorie", "CandidatureId", "AlternantId", "Echeance", "Bloquante", "Statut"})
 				in

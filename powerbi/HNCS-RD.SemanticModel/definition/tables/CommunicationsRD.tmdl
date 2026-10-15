@@ -19,6 +19,14 @@ table CommunicationsRD
 
 		annotation SummarizationSetBy = Automatic
 
+	column Title
+		dataType: string
+		lineageTag: 32782017-0789-584f-aa28-7f4cd3e661b6
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
 	column LivrableSourceId
 		dataType: int64
 		isHidden
@@ -85,6 +93,15 @@ table CommunicationsRD
 
 		annotation SummarizationSetBy = Automatic
 
+	column UrlPublication
+		dataType: string
+		dataCategory: WebUrl
+		lineageTag: 46a7495d-1e41-5557-a491-18c775bcf43a
+		summarizeBy: none
+		sourceColumn: UrlPublication
+
+		annotation SummarizationSetBy = Automatic
+
 	column Statut
 		dataType: string
 		lineageTag: 649071a8-bbe3-5617-9eb3-daf8854a18a3
@@ -97,9 +114,9 @@ table CommunicationsRD
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Communications R&D", {"Id", "IdHNCS", "LivrableSourceId", "SujetId", "Canal", "Externe", "DatePrevue", "DateEffective", "AutorisationsTiers", "Statut"}, {}, false),
-					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"LivrableSourceId", "int"}, {"SujetId", "int"}, {"Canal", "text"}, {"Externe", "bool"}, {"DatePrevue", "date"}, {"DateEffective", "date"}, {"AutorisationsTiers", "text"}, {"Statut", "text"}}),
-					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "LivrableSourceId", "SujetId", "Canal", "Externe", "DatePrevue", "DateEffective", "AutorisationsTiers", "Statut"})
+					Source = fnLireListeSharePoint("CommunicationsRD", {"Id", "IdHNCS", "Title", "LivrableSourceId", "SujetId", "Canal", "Externe", "DatePrevue", "DateEffective", "AutorisationsTiers", "UrlPublication", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"LivrableSourceId", "int"}, {"SujetId", "int"}, {"Canal", "text"}, {"Externe", "bool"}, {"DatePrevue", "date"}, {"DateEffective", "date"}, {"AutorisationsTiers", "text"}, {"UrlPublication", "url"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "LivrableSourceId", "SujetId", "Canal", "Externe", "DatePrevue", "DateEffective", "AutorisationsTiers", "UrlPublication", "Statut"})
 				in
 					Resultat
 

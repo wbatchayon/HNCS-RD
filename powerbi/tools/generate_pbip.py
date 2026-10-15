@@ -62,22 +62,18 @@ FOLDERS = {
     "Objectifs indicatifs (cadrage § 2.4)": "Objectifs",
 }
 
-# Corrections minimales de la spec (signalées dans README.md § Divergences, à reporter dans spec.md).
-MEASURE_OVERRIDES = {
-    # DISTINCTCOUNT compte la valeur vide : une communication publiée sans livrable source
-    # ajouterait 1 « livrable valorisé ». DISTINCTCOUNTNOBLANK l'exclut.
-    "Livrables valorisés":
-        'CALCULATE ( DISTINCTCOUNTNOBLANK ( CommunicationsRD[LivrableSourceId] ), CommunicationsRD[Statut] = "Publiée" )',
-}
+# Corrections de la spec (signalées dans README.md § Divergences). Spec v1.1.0 : aucune
+# (D-01 DISTINCTCOUNTNOBLANK et D-05 [Dernière actualisation] ont été intégrées à § 9.5).
+MEASURE_OVERRIDES: dict[str, str] = {}
 
-# Mesures techniques hors spec (nécessaires aux visuels de specs/powerbi-rapport.md).
-EXTRA_MEASURES = [
-    ("Dernière actualisation", "MAX ( Mesures[DerniereActualisation] )",
-     "dd/MM/yyyy HH:mm", "Technique (hors spec)"),
-    ("Communications publiées (date de publication)",
-     "CALCULATE ( [Communications publiées], USERELATIONSHIP ( CommunicationsRD[DateEffective], Calendrier[Date] ) )",
-     "#,##0", "Technique (hors spec)"),
-]
+# Mesures techniques hors spec : aucune depuis la v1.1.0.
+EXTRA_MEASURES: list[tuple[str, str, str, str]] = []
+
+# Dossier d'affichage imposé : la spec range [Dernière actualisation] dans la section « Objectifs ».
+FOLDER_OVERRIDES = {"Dernière actualisation": "Technique"}
+
+# Format des mesures non numériques.
+FORMAT_OVERRIDES = {"Dernière actualisation": "dd/MM/yyyy HH:mm"}
 
 # Listes facultatives : absence tolérée (HTTP 404 → table vide), car créées à un lot ultérieur au lot 4.
 OPTIONAL_LISTS = {"GitlabSync"}  # lot 5
@@ -190,6 +186,9 @@ def parse_calculated_columns() -> dict[str, list[tuple[str, str]]]:
             table = m.group(1)
             cur = None
             continue
+        if line.startswith("//"):
+            cur = None  # commentaire libre (ex. « // Mesures (table de mesures) : DerniereActualisation … »)
+            continue
         if not line.strip():
             continue
         if not line[0].isspace():
@@ -242,6 +241,8 @@ def resolve_column(obj: dict, col: dict) -> dict:
         if t != "URL":
             raise SystemExit(f"Transformation booléenne attendue sur une URL : {obj['name']}.{src}")
         kind = "lien"
+    elif t == "URL":
+        kind = "url"
     elif t in ("Text", "Choice", "Note"):
         kind = "text"
     elif t == "Number":
@@ -258,7 +259,7 @@ def resolve_column(obj: dict, col: dict) -> dict:
 
 
 TMDL_TYPE = {"int": "int64", "num": "double", "text": "string", "bool": "boolean",
-             "date": "dateTime", "datetime": "dateTime", "user": "string", "lien": "boolean"}
+             "date": "dateTime", "datetime": "dateTime", "user": "string", "lien": "boolean", "url": "string"}
 FORMAT = {"int": "0", "num": "#,##0.##", "date": "dd/MM/yyyy", "datetime": "dd/MM/yyyy HH:mm"}
 
 
@@ -269,10 +270,14 @@ def m_list(items: list[str]) -> str:
 # --------------------------------------------------------------------------- M (Power Query)
 
 M_LIRE_LISTE = r'''
-(titreListe as text, champs as list, optional expansions as nullable list, optional facultative as nullable logical) as table =>
+(nomInterne as text, champs as list, optional expansions as nullable list, optional facultative as nullable logical, optional bibliotheque as nullable logical) as table =>
 let
     // Lecture paginée de l'API REST SharePoint : seules les colonnes de `champs` sont demandées ($select).
-    chemin = "_api/web/lists/getbytitle('" & Text.Replace(titreListe, "'", "''") & "')/items",
+    // La liste est désignée par son nom interne (URL), stable, et non par son titre affiché (spec § 9.1) :
+    // listes GetList('<chemin du site>/Lists/<NomInterne>'), bibliothèques GetList('<chemin du site>/<NomInterne>').
+    cheminSite = Text.TrimEnd(Uri.Parts(SiteUrl)[Path], "/"),
+    urlServeur = cheminSite & (if bibliotheque = true then "/" else "/Lists/") & nomInterne,
+    chemin = "_api/web/GetList('" & Text.Replace(urlServeur, "'", "''") & "')/items",
     requeteBase = [#"$select" = Text.Combine(champs, ","), #"$top" = "5000"]
         & (if expansions = null or List.IsEmpty(expansions) then [] else [#"$expand" = Text.Combine(expansions, ",")]),
     statutsGeres = if facultative = true then {404} else {},
@@ -340,7 +345,7 @@ in
 M_TYPER = r'''
 (source as table, schema as list) as table =>
 let
-    // schema : liste de paires {colonne, genre} ; genre ∈ int, num, text, bool, date, datetime, user, lien.
+    // schema : liste de paires {colonne, genre} ; genre ∈ int, num, text, bool, date, datetime, user, lien (URL → booléen), url (URL → texte).
     convertir = (genre as text) as function =>
         if genre = "int" then ((v) => if v = null then null else Int64.From(v))
         else if genre = "num" then ((v) => if v = null then null else Number.From(v))
@@ -357,6 +362,11 @@ let
                 url = if v = null then null else if Value.Is(v, type record) then Record.FieldOrDefault(v, "Url", null) else Text.From(v)
             in
                 url <> null and url <> "")
+        else if genre = "url" then ((v) =>
+            let
+                url = if v = null then null else if Value.Is(v, type record) then Record.FieldOrDefault(v, "Url", null) else Text.From(v)
+            in
+                if url = null or url = "" then null else url)
         else ((v) => if v = null then null else Text.From(v)),
     typeM = (genre as text) as type =>
         if genre = "int" then Int64.Type
@@ -371,7 +381,7 @@ in
 '''
 
 
-def partition_m(title: str, cols: list[dict], optional: bool) -> str:
+def partition_m(list_name: str, cols: list[dict], optional: bool) -> str:
     selects = []
     expands = []
     for c in cols:
@@ -379,14 +389,25 @@ def partition_m(title: str, cols: list[dict], optional: bool) -> str:
             selects.append(c["select"])
         if c.get("expand") and c["expand"] not in expands:
             expands.append(c["expand"])
-    schema = "{" + ", ".join('{"%s", "%s"}' % (c["raw"], c["kind"]) for c in cols) + "}"
-    renames = [(c["raw"], c["name"]) for c in cols if c["raw"] != c["name"]]
-    title_m = title.replace('"', '""')
+    # Colonnes booléennes dérivées d'une URL (ADocument, AGitlab) : copie de la colonne brute, puis typage,
+    # afin que la même colonne SharePoint puisse être importée à la fois en clair et en booléen (LienDocument).
+    copies = [(c["raw"], c["name"]) for c in cols if c["kind"] == "lien"]
+    for c in cols:
+        if c["kind"] == "lien":
+            c["typed"] = c["name"]
+        else:
+            c["typed"] = c["raw"]
+    schema = "{" + ", ".join('{"%s", "%s"}' % (c["typed"], c["kind"]) for c in cols) + "}"
+    renames = [(c["raw"], c["name"]) for c in cols if c["kind"] != "lien" and c["raw"] != c["name"]]
     lines = [
         "let",
-        f'    Source = fnLireListeSharePoint("{title_m}", {m_list(selects)}, {m_list(expands)}, {"true" if optional else "false"}),',
-        f"    Typee = fnTyperColonnes(Source, {schema}),",
+        f'    Source = fnLireListeSharePoint("{list_name}", {m_list(selects)}, {m_list(expands)}, {"true" if optional else "false"}),',
     ]
+    prev = "Source"
+    for i, (raw, name) in enumerate(copies, 1):
+        lines.append(f'    Copie{i} = Table.DuplicateColumn({prev}, "{raw}", "{name}"),')
+        prev = f"Copie{i}"
+    lines.append(f"    Typee = fnTyperColonnes({prev}, {schema}),")
     prev = "Typee"
     if renames:
         lines.append("    Renommee = Table.RenameColumns(Typee, {" +
@@ -399,7 +420,7 @@ def partition_m(title: str, cols: list[dict], optional: bool) -> str:
 
 M_SUJET_DOMAINE = '''
 let
-    Source = fnLireListeSharePoint("{title}", {{"Id", "DomainesId"}}, {{}}, false),
+    Source = fnLireListeSharePoint("{name}", {{"Id", "DomainesId"}}, {{}}, false),
     // DomainesId : tableau JSON d'identifiants (format nometadata) ou enregistrement [results] (format verbose).
     Listes = Table.TransformColumns(Source, {{{{"DomainesId", (v) => if v = null then {{}} else if Value.Is(v, type record) then Record.FieldOrDefault(v, "results", {{}}) else v, type list}}}}),
     Developpee = Table.ExpandListColumn(Listes, "DomainesId"),
@@ -414,7 +435,7 @@ in
 M_MESURES = '''
 let
     // Table de mesures : une seule ligne portant l'horodatage de l'actualisation (heure de Paris).
-    Source = #table(type table [DerniereActualisation = datetime], {{fnHeureParis(DateTimeZone.UtcNow())}})
+    Source = #table(type table [DerniereActualisation = datetime], {{fnHeureParis(DateTimeZone.FixedUtcNow())}})
 in
     Source
 '''
@@ -427,7 +448,9 @@ VAR DebutDonnees =
                 MIN ( Candidatures[DateReception] ),
                 MIN ( Livrables[Echeance] ),
                 MIN ( ComptesRendus[Echeance] ),
-                MIN ( Alternants[DateDebut] )
+                MIN ( Alternants[DateDebut] ),
+                MIN ( CommunicationsRD[DateEffective] ),
+                MIN ( Mobilisations[DateMobilisation] )
             },
             NOT ISBLANK ( [Value] )
         ),
@@ -441,7 +464,9 @@ VAR FinDonnees =
                 MAX ( Livrables[Echeance] ),
                 MAX ( ComptesRendus[Echeance] ),
                 MAX ( Alternants[DateFin] ),
-                MAX ( Alternants[DateFinReelle] )
+                MAX ( Alternants[DateFinReelle] ),
+                MAX ( CommunicationsRD[DateEffective] ),
+                MAX ( Mobilisations[DateMobilisation] )
             },
             NOT ISBLANK ( [Value] )
         ),
@@ -496,7 +521,7 @@ DATATABLE (
 
 def tmdl_column(table: str, name: str, dtype: str, *, source: str | None = None, expr: str | None = None,
                 fmt: str | None = None, hidden: bool = False, key: bool = False, sort_by: str | None = None,
-                inferred_name: bool = False, date_only: bool = False) -> list[str]:
+                inferred_name: bool = False, date_only: bool = False, category: str | None = None) -> list[str]:
     out = []
     if expr is not None:
         if "\n" in expr:
@@ -509,6 +534,8 @@ def tmdl_column(table: str, name: str, dtype: str, *, source: str | None = None,
     out.append(f"\t\tdataType: {dtype}")
     if inferred_name:
         out.append("\t\tisNameInferred")
+    if category:
+        out.append(f"\t\tdataCategory: {category}")
     if key:
         out.append("\t\tisKey")
     if hidden:
@@ -579,20 +606,21 @@ def build_model(model: dict) -> dict:
             src = objs["SujetsRD"]
             for c in t["columns"]:
                 lines += tmdl_column(name, c["name"], "int64", source=c["name"], fmt="0", hidden=True)
-            lines += tmdl_partition(name, "m", M_SUJET_DOMAINE.format(title=src["title"].replace('"', '""')))
+            lines += tmdl_partition(name, "m", M_SUJET_DOMAINE.format(name=src["name"]))
         else:
             obj = objs[t["source"]]
             cols = [resolve_column(obj, c) for c in t["columns"]]
             for c in cols:
                 lines += tmdl_column(
                     name, c["name"], TMDL_TYPE[c["kind"]], source=c["name"], fmt=FORMAT.get(c["kind"]),
-                    hidden=c["fk"], key=(c["name"] == "Id"), date_only=(c["kind"] == "date"))
+                    hidden=c["fk"], key=(c["name"] == "Id"), date_only=(c["kind"] == "date"),
+                    category="WebUrl" if c["kind"] == "url" else None)
             for cname, expr in calc.get(name, []):
                 dtype, special = CALC_TYPES[cname]
                 lines += tmdl_column(name, cname, dtype, expr=expr,
                                      fmt="dd/MM/yyyy" if special == "date" else ("0" if dtype == "int64" else None),
                                      date_only=(special == "date"))
-            lines += tmdl_partition(name, "m", partition_m(obj["title"], cols, t["source"] in OPTIONAL_LISTS))
+            lines += tmdl_partition(name, "m", partition_m(obj["name"], cols, t["source"] in OPTIONAL_LISTS))
         lines += [f"\tannotation PBI_ResultType = Table", ""]
         tables_out[name] = lines
         query_order.append(name)
@@ -620,7 +648,9 @@ def build_model(model: dict) -> dict:
     lines = [f"table {MEASURES_TABLE}", f"\tlineageTag: {guid('table', MEASURES_TABLE)}", ""]
     for ms in measures:
         expr = MEASURE_OVERRIDES.get(ms["name"], ms["expr"])
-        lines += tmdl_measure(MEASURES_TABLE, ms["name"], expr, measure_format(ms["name"]), ms["folder"])
+        lines += tmdl_measure(MEASURES_TABLE, ms["name"], expr,
+                              FORMAT_OVERRIDES.get(ms["name"], measure_format(ms["name"])),
+                              FOLDER_OVERRIDES.get(ms["name"], ms["folder"]))
     for name, expr, fmt, folder in EXTRA_MEASURES:
         lines += tmdl_measure(MEASURES_TABLE, name, expr, fmt, folder)
     lines += tmdl_column(MEASURES_TABLE, "DerniereActualisation", "dateTime", source="DerniereActualisation",
@@ -861,24 +891,32 @@ def gauge_filter(indicator: str) -> list:
 
 
 def build_pages() -> list[Page]:
+    """Pages et visuels de spec.md § 9.7 et specs/powerbi-rapport.md (v1.1.0).
+
+    `NomAffichage` n'est utilisé par aucun visuel (§ 9.2) : les tableaux identifient les alternants par IdHNCS.
+    """
     pages: list[Page] = []
     dd, between = "Dropdown", "Between"
+    alternant = proj(col("Alternants", "IdHNCS"), "Alternant")
 
     # 1. Vue exécutive -------------------------------------------------
     p = Page(1, "Vue exécutive")
     p.header([("Calendrier", "Annee", "Année", dd), ("Calendrier", "Trimestre", "Trimestre", dd)])
-    p.cards(["Alternants actifs", "Candidatures reçues", "Livrables validés", "Livrables en retard", "POC réalisés",
-             "Plans de stratégie formalisés", "Communications publiées", "Partenariats académiques actifs",
-             "Mobilisations commerciales"])
+    p.cards(["Alternants actifs", "Candidatures reçues", "Sujets actifs", "Livrables validés", "Livrables en retard",
+             "POC réalisés", "Plans de stratégie formalisés", "Communications publiées",
+             "Partenariats académiques actifs", "Mobilisations commerciales"])
     gauges = ["Alternants accueillis", "POC réalisés", "Plans de stratégie formalisés", "Mobilisations commerciales",
               "Communications publiées", "Partenariats académiques actifs"]
     w = (1248 - 5 * 8) // 6
     for i, m in enumerate(gauges):
         p.add(f"jauge-{m}", "gauge", (16 + i * (w + 8), 214, w, 188),
               {"Y": [mea(m)], "TargetValue": [mea("Cible")]}, title=f"{m} / cible", filters=gauge_filter(m))
-    p.add("livrables-statut", "clusteredColumnChart", (16, 410, 820, 300),
+    p.add("livrables-statut", "clusteredColumnChart", (16, 410, 410, 300),
           {"Category": [col("Livrables", "Statut")], "Y": [mea("Livrables")]}, title="Livrables par statut")
-    p.add("jauge-couverture", "gauge", (844, 410, 420, 300),
+    p.add("candidatures-statut", "clusteredBarChart", (434, 410, 410, 300),
+          {"Category": [col("Candidatures", "Statut")], "Y": [mea("Candidatures reçues")]},
+          title="Candidatures par statut (agrégé)")
+    p.add("jauge-couverture", "gauge", (852, 410, 412, 300),
           {"Y": [mea("Couverture des domaines cibles")], "TargetValue": [mea("Cible")]},
           title="Couverture des domaines cibles / cible",
           objects={"axis": [{"properties": {"min": lit(0), "max": lit(1)}}]},
@@ -894,7 +932,8 @@ def build_pages() -> list[Page]:
              "Taux de transformation", "Doublons signalés"])
     p.add("entonnoir", "funnel", (16, 214, 400, 248),
           {"Y": [mea(m) for m in ["Candidatures reçues", "Candidatures analysées", "Candidatures présélectionnées",
-                                  "Entretiens réalisés", "Candidatures retenues", "Candidatures intégrées"]]},
+                                  "Candidatures avec entretien réalisé", "Candidatures retenues",
+                                  "Candidatures intégrées"]]},
           title="Entonnoir de recrutement")
     p.add("candidatures-mois-canal", "columnChart", (424, 214, 840, 248),
           {"Category": [col("Calendrier", "AnneeMois")], "Series": [col("Candidatures", "Canal")],
@@ -927,7 +966,7 @@ def build_pages() -> list[Page]:
            "Columns": [proj(col("Poles", "Title"), "Pôle")], "Values": [mea("Alternants actifs")]},
           title="Alternants actifs : établissement × pôle")
     p.add("affectations", "tableEx", (16, 460, 1248, 250),
-          {"Values": [col("Affectations", "IdHNCS"), col("Alternants", "NomAffichage"),
+          {"Values": [proj(col("Affectations", "IdHNCS"), "Affectation"), alternant,
                       proj(col("SujetsRD", "Title"), "Sujet"), proj(col("Referents", "Title"), "Référent"),
                       col("Affectations", "DateDebut"), col("Affectations", "DateFin"), col("Affectations", "Statut")]},
           title="Affectations")
@@ -939,22 +978,27 @@ def build_pages() -> list[Page]:
               ("Livrables", "TypeLivrable", "Type de livrable", dd), ("Calendrier", "Date", "Période (échéance)", between)])
     p.cards(["Livrables validés", "Taux de validation", "Livrables en retard", "Taux de remise à l'heure",
              "Taux de validation au premier passage", "Taux de capitalisation", "Corrections en cours",
-             "Comptes rendus manquants"])
+             "Comptes rendus manquants", "Écarts d'échéance GitLab"])
     p.add("livrables-type-statut", "barChart", (16, 214, 616, 238),
           {"Category": [col("Livrables", "TypeLivrable")], "Series": [col("Livrables", "Statut")],
            "Y": [mea("Livrables")]}, title="Livrables par type et statut")
     p.add("echeances-semaine", "lineChart", (640, 214, 624, 238),
           {"Category": [col("Calendrier", "Semaine")], "Y": [mea("Livrables")]},
           title="Échéances des livrables par semaine", sort=[(col("Calendrier", "Semaine"), "Ascending")])
-    p.add("sujets", "tableEx", (16, 460, 616, 250),
+    p.add("sujets", "tableEx", (16, 460, 410, 250),
           {"Values": [col("SujetsRD", "IdHNCS"), proj(col("SujetsRD", "Title"), "Sujet"), col("SujetsRD", "Statut"),
                       mea("Livrables"), mea("Livrables validés"), mea("Avancement moyen (dernier CR)")]},
           title="Avancement par sujet")
-    p.add("gitlab", "tableEx", (640, 460, 624, 250),
+    p.add("livrables-documents", "tableEx", (434, 460, 410, 250),
+          {"Values": [col("Livrables", "IdHNCS"), proj(col("Livrables", "Title"), "Livrable"),
+                      col("Livrables", "Echeance"), col("Livrables", "Statut"),
+                      proj(col("Livrables", "LienDocument"), "Document")]},
+          title="Livrables et documents", sort=[(col("Livrables", "Echeance"), "Ascending")])
+    p.add("gitlab", "tableEx", (852, 460, 412, 250),
           {"Values": [col("SujetsRD", "IdHNCS"), col("GitlabSync", "Milestone"), col("GitlabSync", "MilestoneEcheance"),
                       col("GitlabSync", "MilestoneEtat"), col("GitlabSync", "IssuesOuvertes"),
-                      col("GitlabSync", "MRsOuvertes"), mea("Écarts d'échéance GitLab")]},
-          title="Jalons GitLab en écart d'échéance")
+                      col("GitlabSync", "MRsOuvertes"), proj(col("GitlabSync", "EcartEcheance"), "Écart d'échéance")]},
+          title="Jalons GitLab", sort=[(col("GitlabSync", "MilestoneEcheance"), "Ascending")])
     pages.append(p)
 
     # 5. Établissements et partenariats -------------------------------
@@ -969,10 +1013,17 @@ def build_pages() -> list[Page]:
     p.add("recommandations", "donutChart", (640, 214, 624, 238),
           {"Category": [col("BilansAlternance", "RecommandationPartenariat")], "Y": [mea("Bilans réalisés")]},
           title="Recommandations de partenariat (bilans réalisés)")
-    p.add("conventions", "tableEx", (16, 460, 1248, 250),
+    p.add("conventions", "tableEx", (16, 460, 616, 250),
           {"Values": [col("Conventions", "IdHNCS"), proj(col("Etablissements", "Title"), "Établissement"),
                       col("Conventions", "TypeConvention"), col("Conventions", "DateFin"), col("Conventions", "Statut")]},
           title="Conventions")
+    p.add("prochaines-interactions", "tableEx", (640, 460, 624, 250),
+          {"Values": [col("Etablissements", "IdHNCS"), proj(col("Etablissements", "Title"), "Établissement"),
+                      proj(col("Etablissements", "DateProchaineAction"), "Prochaine action"),
+                      col("Etablissements", "Statut")]},
+          title="Prochaines interactions",
+          filters=[f_not_blank("Etablissements", "DateProchaineAction", hexid("f", "prochaine-action"))],
+          sort=[(col("Etablissements", "DateProchaineAction"), "Ascending")])
     pages.append(p)
 
     # 6. Communications et valorisation -------------------------------
@@ -981,15 +1032,17 @@ def build_pages() -> list[Page]:
     p.cards(["Communications publiées", "Communications en préparation", "Livrables valorisés",
              "Mobilisations commerciales"])
     p.add("publications-mois", "clusteredColumnChart", (16, 214, 616, 238),
-          {"Category": [col("Calendrier", "AnneeMois")], "Y": [mea("Communications publiées (date de publication)")]},
-          title="Publications par mois (date de publication)", sort=[(col("Calendrier", "AnneeMois"), "Ascending")])
+          {"Category": [col("Calendrier", "AnneeMois")], "Y": [mea("Communications publiées")]},
+          title="Publications externes par mois", sort=[(col("Calendrier", "AnneeMois"), "Ascending")])
     p.add("communications-canal", "clusteredColumnChart", (640, 214, 624, 238),
           {"Category": [col("CommunicationsRD", "Canal")],
            "Y": [mea("Communications publiées"), mea("Communications en préparation")]},
           title="Communications par canal et état")
     p.add("communications-publiees", "tableEx", (16, 460, 1248, 250),
-          {"Values": [col("CommunicationsRD", "IdHNCS"), col("CommunicationsRD", "Canal"),
-                      col("CommunicationsRD", "DateEffective"), proj(col("Livrables", "Title"), "Livrable source")]},
+          {"Values": [col("CommunicationsRD", "IdHNCS"), proj(col("CommunicationsRD", "Title"), "Titre"),
+                      col("CommunicationsRD", "Canal"), proj(col("CommunicationsRD", "DateEffective"), "Date"),
+                      col("CommunicationsRD", "Externe"),
+                      proj(col("CommunicationsRD", "UrlPublication"), "Lien public")]},
           title="Communications publiées",
           filters=[f_in("CommunicationsRD", "Statut", ["Publiée"], hexid("f", "publiee"))],
           sort=[(col("CommunicationsRD", "DateEffective"), "Descending")])
@@ -1001,12 +1054,12 @@ def build_pages() -> list[Page]:
     p.cards(["Échéances à 14 jours", "Livrables en retard", "Blocages signalés", "Sujets bloqués",
              "Comptes rendus manquants", "Actions en retard"])
     p.add("livrables-comite", "tableEx", (16, 214, 616, 238),
-          {"Values": [col("Livrables", "IdHNCS"), proj(col("Livrables", "Title"), "Livrable"),
-                      col("Alternants", "NomAffichage"), col("Livrables", "Echeance"), col("Livrables", "Statut"),
+          {"Values": [col("Livrables", "IdHNCS"), proj(col("Livrables", "Title"), "Livrable"), alternant,
+                      col("Livrables", "Echeance"), col("Livrables", "Statut"),
                       mea("Échéances à 14 jours"), mea("Livrables en retard")]},
           title="Livrables : échéances à 14 jours et retards", sort=[(col("Livrables", "Echeance"), "Ascending")])
     p.add("affectations-risque", "tableEx", (640, 214, 624, 238),
-          {"Values": [col("Affectations", "IdHNCS"), col("Alternants", "NomAffichage"),
+          {"Values": [proj(col("Affectations", "IdHNCS"), "Affectation"), alternant,
                       proj(col("SujetsRD", "Title"), "Sujet"), col("Affectations", "Statut"),
                       mea("Affectations actives")]},
           title="Affectations à risque ou bloquées",
@@ -1016,7 +1069,7 @@ def build_pages() -> list[Page]:
                       col("SujetsRD", "Statut"), mea("Sujets bloqués")]},
           title="Sujets bloqués ou à arbitrer")
     p.add("cr-manquants", "tableEx", (640, 460, 624, 250),
-          {"Values": [col("ComptesRendus", "IdHNCS"), col("Alternants", "NomAffichage"),
+          {"Values": [col("ComptesRendus", "IdHNCS"), alternant,
                       col("ComptesRendus", "Echeance"), col("ComptesRendus", "Statut"), mea("Comptes rendus manquants")]},
           title="Comptes rendus manquants")
     pages.append(p)

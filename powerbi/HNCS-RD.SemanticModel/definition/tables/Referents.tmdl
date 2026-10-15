@@ -64,7 +64,7 @@ table Referents
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Référents", {"Id", "IdHNCS", "Title", "Compte/EMail", "CapaciteIndicative", "Disponibilite", "Statut"}, {"Compte"}, false),
+					Source = fnLireListeSharePoint("Referents", {"Id", "IdHNCS", "Title", "Compte/EMail", "CapaciteIndicative", "Disponibilite", "Statut"}, {"Compte"}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"Compte", "user"}, {"CapaciteIndicative", "int"}, {"Disponibilite", "text"}, {"Statut", "text"}}),
 					Renommee = Table.RenameColumns(Typee, {{"Compte", "CompteEmail"}}),
 					Resultat = Table.SelectColumns(Renommee, {"Id", "IdHNCS", "Title", "CompteEmail", "CapaciteIndicative", "Disponibilite", "Statut"})

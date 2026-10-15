@@ -43,6 +43,17 @@ table Etablissements
 
 		annotation SummarizationSetBy = Automatic
 
+	column DateProchaineAction
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 66c2f5b0-cf10-53f1-8c28-98c0c9326afa
+		summarizeBy: none
+		sourceColumn: DateProchaineAction
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
 	column Statut
 		dataType: string
 		lineageTag: 1f76aade-5623-503d-afe6-b3cf2455a286
@@ -55,9 +66,9 @@ table Etablissements
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Écoles et établissements", {"Id", "IdHNCS", "Title", "Ville", "TypeEtablissement", "Statut"}, {}, false),
-					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"Ville", "text"}, {"TypeEtablissement", "text"}, {"Statut", "text"}}),
-					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "Ville", "TypeEtablissement", "Statut"})
+					Source = fnLireListeSharePoint("Etablissements", {"Id", "IdHNCS", "Title", "Ville", "TypeEtablissement", "DateProchaineAction", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"Ville", "text"}, {"TypeEtablissement", "text"}, {"DateProchaineAction", "date"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "Ville", "TypeEtablissement", "DateProchaineAction", "Statut"})
 				in
 					Resultat
 

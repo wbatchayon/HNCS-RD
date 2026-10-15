@@ -127,7 +127,7 @@ table ComptesRendus
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Comptes rendus de suivi", {"Id", "IdHNCS", "AffectationId", "AlternantId", "PeriodeDebut", "PeriodeFin", "Echeance", "DateRemise", "EtatGeneral", "Avancement", "BlocageSignale", "DateValidation", "Statut"}, {}, false),
+					Source = fnLireListeSharePoint("ComptesRendus", {"Id", "IdHNCS", "AffectationId", "AlternantId", "PeriodeDebut", "PeriodeFin", "Echeance", "DateRemise", "EtatGeneral", "Avancement", "BlocageSignale", "DateValidation", "Statut"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"AffectationId", "int"}, {"AlternantId", "int"}, {"PeriodeDebut", "date"}, {"PeriodeFin", "date"}, {"Echeance", "date"}, {"DateRemise", "datetime"}, {"EtatGeneral", "text"}, {"Avancement", "int"}, {"BlocageSignale", "bool"}, {"DateValidation", "datetime"}, {"Statut", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "AffectationId", "AlternantId", "PeriodeDebut", "PeriodeFin", "Echeance", "DateRemise", "EtatGeneral", "Avancement", "BlocageSignale", "DateValidation", "Statut"})
 				in

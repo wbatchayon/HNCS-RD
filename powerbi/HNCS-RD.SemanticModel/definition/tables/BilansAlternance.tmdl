@@ -78,7 +78,7 @@ table BilansAlternance
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Bilans d'alternance", {"Id", "IdHNCS", "AlternantId", "EtablissementId", "DateBilan", "QualiteCollaborationEcole", "RecommandationPartenariat", "Statut"}, {}, false),
+					Source = fnLireListeSharePoint("BilansAlternance", {"Id", "IdHNCS", "AlternantId", "EtablissementId", "DateBilan", "QualiteCollaborationEcole", "RecommandationPartenariat", "Statut"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"AlternantId", "int"}, {"EtablissementId", "int"}, {"DateBilan", "date"}, {"QualiteCollaborationEcole", "text"}, {"RecommandationPartenariat", "text"}, {"Statut", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "AlternantId", "EtablissementId", "DateBilan", "QualiteCollaborationEcole", "RecommandationPartenariat", "Statut"})
 				in

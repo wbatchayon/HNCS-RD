@@ -101,7 +101,7 @@ table Conventions
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Conventions et partenariats", {"Id", "IdHNCS", "EtablissementId", "TypeConvention", "DateDebut", "DateFin", "DateSignature", "DecisionPartenariat", "DateDecisionPartenariat", "Statut"}, {}, false),
+					Source = fnLireListeSharePoint("Conventions", {"Id", "IdHNCS", "EtablissementId", "TypeConvention", "DateDebut", "DateFin", "DateSignature", "DecisionPartenariat", "DateDecisionPartenariat", "Statut"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"EtablissementId", "int"}, {"TypeConvention", "text"}, {"DateDebut", "date"}, {"DateFin", "date"}, {"DateSignature", "date"}, {"DecisionPartenariat", "text"}, {"DateDecisionPartenariat", "date"}, {"Statut", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "EtablissementId", "TypeConvention", "DateDebut", "DateFin", "DateSignature", "DecisionPartenariat", "DateDecisionPartenariat", "Statut"})
 				in

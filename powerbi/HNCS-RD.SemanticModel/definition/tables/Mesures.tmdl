@@ -13,7 +13,7 @@ table Mesures
 
 	measure 'Seuil attente (j)' =
 			VAR v = LOOKUPVALUE ( Parametres[Valeur], Parametres[Cle], "Delai.SeuilAttenteCandidatureJours" )
-			RETURN IFERROR ( VALUE ( v ), 10 )
+			RETURN IF ( ISBLANK ( v ), 10, IFERROR ( VALUE ( v ), 10 ) )
 		formatString: 0
 		displayFolder: Recrutement
 		lineageTag: 2fc039b4-9e06-5908-94cc-98779045b9f8
@@ -55,6 +55,11 @@ table Mesures
 		displayFolder: Recrutement
 		lineageTag: 2522a509-4731-5ae0-9bdd-d193609a5060
 
+	measure 'Candidatures avec entretien réalisé' = CALCULATE ( DISTINCTCOUNT ( Entretiens[CandidatureId] ), Entretiens[Statut] = "Réalisé" )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: 26b93cd4-ea0f-5a80-8dc8-ceb4dbff15e4
+
 	measure 'Entretiens à venir' = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = "Planifié", Entretiens[DateHeure] >= NOW () )
 		formatString: #,##0
 		displayFolder: Recrutement
@@ -85,7 +90,7 @@ table Mesures
 		displayFolder: Effectifs
 		lineageTag: 17fbfba7-1bcd-554a-b9e0-91380a7e5fbc
 
-	measure 'Alternants accueillis' = CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { "Actif", "Suspendu", "Fin planifiée", "Terminé", "Clôturé" } )
+	measure 'Alternants accueillis' = COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { "Actif", "Suspendu", "Fin planifiée", "Terminé", "Clôturé" } && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) ) )
 		formatString: #,##0
 		displayFolder: Effectifs
 		lineageTag: 6b6d1d8b-ed07-5e5b-900b-e49970622e87
@@ -93,7 +98,7 @@ table Mesures
 	measure 'Alternants présents sur la période' =
 			VAR DebutP = MIN ( Calendrier[Date] )
 			VAR FinP = MAX ( Calendrier[Date] )
-			RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> "À intégrer" && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )
+			RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> "À intégrer" && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )
 		formatString: #,##0
 		displayFolder: Effectifs
 		lineageTag: e04be4cf-bdc2-50a7-a1ca-9da3bad19980
@@ -125,7 +130,7 @@ table Mesures
 		displayFolder: Effectifs
 		lineageTag: 12bf48c0-9451-57e2-8255-c96c0c0bd7da
 
-	measure 'Taux de charge référent' = DIVIDE ( [Affectations actives], SUM ( Referents[CapaciteIndicative] ) )
+	measure 'Taux de charge référent' = DIVIDE ( CALCULATE ( DISTINCTCOUNT ( Affectations[AlternantId] ), Affectations[Statut] IN { "Active", "À risque", "Bloquée" } ), SUM ( Referents[CapaciteIndicative] ) )
 		formatString: 0.0%
 		displayFolder: Effectifs
 		lineageTag: 808903ad-cfad-5867-98f1-afc449432b97
@@ -172,7 +177,7 @@ table Mesures
 	measure 'Taux de validation au premier passage' =
 			DIVIDE (
 				CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { "Validé", "Archivé / clôturé" }, Livrables[NbCorrections] = 0 ),
-				CALCULATE ( COUNTROWS ( Livrables ), NOT ISBLANK ( Livrables[DateRevue] ) )
+				[Livrables soumis à revue]
 			)
 		formatString: 0.0%
 		displayFolder: Livrables
@@ -181,7 +186,7 @@ table Mesures
 	measure 'Taux de capitalisation' =
 			DIVIDE (
 				CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = "Archivé / clôturé", Livrables[CapitalisationComplete] = TRUE () ),
-				CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = "Archivé / clôturé" )
+				CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { "Validé", "Archivé / clôturé" } )
 			)
 		formatString: 0.0%
 		displayFolder: Livrables
@@ -226,6 +231,11 @@ table Mesures
 		displayFolder: Livrables
 		lineageTag: 24cb04bd-6f7a-58a6-b4e6-c118501a4004
 
+	measure 'Sujets actifs' = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { "Priorisé", "En cours", "Bloqué" } )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: f0179d5e-41db-5bfc-a13f-2fa9b1c05061
+
 	measure 'Mobilisations commerciales' = COUNTROWS ( Mobilisations )
 		formatString: #,##0
 		displayFolder: Livrables
@@ -243,7 +253,7 @@ table Mesures
 
 	measure 'Taux de remise des comptes rendus' =
 			DIVIDE (
-				COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATEVALUE ( ComptesRendus[DateRemise] ) <= ComptesRendus[Echeance] ) ),
+				COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATE ( YEAR ( ComptesRendus[DateRemise] ), MONTH ( ComptesRendus[DateRemise] ), DAY ( ComptesRendus[DateRemise] ) ) <= ComptesRendus[Echeance] ) ),
 				[Comptes rendus attendus]
 			)
 		formatString: 0.0%
@@ -290,7 +300,7 @@ table Mesures
 		displayFolder: Écoles
 		lineageTag: 4655ef51-7e22-51e9-9be7-d29395e22670
 
-	measure 'Communications publiées' = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = "Publiée" )
+	measure 'Communications publiées' = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = "Publiée", CommunicationsRD[Externe] = TRUE () )
 		formatString: #,##0
 		displayFolder: Communications
 		lineageTag: f3c8bac7-78ce-5332-918b-1c8f4f38604f
@@ -327,13 +337,8 @@ table Mesures
 
 	measure 'Dernière actualisation' = MAX ( Mesures[DerniereActualisation] )
 		formatString: dd/MM/yyyy HH:mm
-		displayFolder: Technique (hors spec)
+		displayFolder: Technique
 		lineageTag: 573c2232-f62d-57f3-af88-88f5052cd6c4
-
-	measure 'Communications publiées (date de publication)' = CALCULATE ( [Communications publiées], USERELATIONSHIP ( CommunicationsRD[DateEffective], Calendrier[Date] ) )
-		formatString: #,##0
-		displayFolder: Technique (hors spec)
-		lineageTag: 2b78cfb2-7d3d-5768-99d5-dd263ed91ea4
 
 	column DerniereActualisation
 		dataType: dateTime
@@ -350,7 +355,7 @@ table Mesures
 		source =
 				let
 					// Table de mesures : une seule ligne portant l'horodatage de l'actualisation (heure de Paris).
-					Source = #table(type table [DerniereActualisation = datetime], {{fnHeureParis(DateTimeZone.UtcNow())}})
+					Source = #table(type table [DerniereActualisation = datetime], {{fnHeureParis(DateTimeZone.FixedUtcNow())}})
 				in
 					Source
 

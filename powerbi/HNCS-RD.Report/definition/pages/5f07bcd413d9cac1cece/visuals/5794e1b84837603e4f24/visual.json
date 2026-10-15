@@ -40,10 +40,10 @@
                       "Entity": "Mesures"
                     }
                   },
-                  "Property": "Communications publiées (date de publication)"
+                  "Property": "Communications publiées"
                 }
               },
-              "queryRef": "Mesures.Communications publiées (date de publication)"
+              "queryRef": "Mesures.Communications publiées"
             }
           ]
         }
@@ -81,7 +81,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Publications par mois (date de publication)'"
+                  "Value": "'Publications externes par mois'"
                 }
               }
             }

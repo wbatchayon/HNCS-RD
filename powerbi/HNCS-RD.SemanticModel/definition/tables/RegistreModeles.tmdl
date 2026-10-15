@@ -55,7 +55,7 @@ table RegistreModeles
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Registre des modèles R&D", {"Id", "IdHNCS", "Title", "TypeModele", "Version", "Statut"}, {}, false),
+					Source = fnLireListeSharePoint("RegistreModeles", {"Id", "IdHNCS", "Title", "TypeModele", "Version", "Statut"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"TypeModele", "text"}, {"Version", "text"}, {"Statut", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "TypeModele", "Version", "Statut"})
 				in

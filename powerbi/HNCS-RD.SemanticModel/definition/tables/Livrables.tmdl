@@ -149,6 +149,15 @@ table Livrables
 
 		annotation SummarizationSetBy = Automatic
 
+	column LienDocument
+		dataType: string
+		dataCategory: WebUrl
+		lineageTag: 0c6dac0b-f257-5675-b09f-eb9653b0c893
+		summarizeBy: none
+		sourceColumn: LienDocument
+
+		annotation SummarizationSetBy = Automatic
+
 	column ADocument
 		dataType: boolean
 		lineageTag: 6800bb1d-5a40-5282-a69e-c2eee8197906
@@ -242,7 +251,7 @@ table Livrables
 
 		annotation SummarizationSetBy = Automatic
 
-	column DatePremierDepotJour = DATEVALUE ( Livrables[DatePremierDepot] )
+	column DatePremierDepotJour = IF ( NOT ISBLANK ( Livrables[DatePremierDepot] ), DATE ( YEAR ( Livrables[DatePremierDepot] ), MONTH ( Livrables[DatePremierDepot] ), DAY ( Livrables[DatePremierDepot] ) ) )
 		dataType: dateTime
 		formatString: dd/MM/yyyy
 		lineageTag: eac9b15c-7f89-5a12-892b-a2a577849b3c
@@ -257,9 +266,10 @@ table Livrables
 		source =
 				let
 					Source = fnLireListeSharePoint("Livrables", {"Id", "IdHNCS", "Title", "AffectationId", "SujetId", "TypeLivrable", "ModeleId", "Echeance", "EcheanceInitiale", "DatePremierDepot", "DateDepot", "DateRevue", "DecisionRevue", "NbCorrections", "DateValidation", "DateArchivage", "LienDocument", "LienGitlab", "DoD1Fonctionnel", "DoD2FicheMethodo", "DoD3Restitution", "DoD4SupportCom", "DoD5Enseignements", "EnRetard", "Statut"}, {}, false),
-					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"AffectationId", "int"}, {"SujetId", "int"}, {"TypeLivrable", "text"}, {"ModeleId", "int"}, {"Echeance", "date"}, {"EcheanceInitiale", "date"}, {"DatePremierDepot", "datetime"}, {"DateDepot", "datetime"}, {"DateRevue", "datetime"}, {"DecisionRevue", "text"}, {"NbCorrections", "int"}, {"DateValidation", "datetime"}, {"DateArchivage", "datetime"}, {"LienDocument", "lien"}, {"LienGitlab", "lien"}, {"DoD1Fonctionnel", "bool"}, {"DoD2FicheMethodo", "bool"}, {"DoD3Restitution", "bool"}, {"DoD4SupportCom", "bool"}, {"DoD5Enseignements", "bool"}, {"EnRetard", "bool"}, {"Statut", "text"}}),
-					Renommee = Table.RenameColumns(Typee, {{"LienDocument", "ADocument"}, {"LienGitlab", "AGitlab"}}),
-					Resultat = Table.SelectColumns(Renommee, {"Id", "IdHNCS", "Title", "AffectationId", "SujetId", "TypeLivrable", "ModeleId", "Echeance", "EcheanceInitiale", "DatePremierDepot", "DateDepot", "DateRevue", "DecisionRevue", "NbCorrections", "DateValidation", "DateArchivage", "ADocument", "AGitlab", "DoD1Fonctionnel", "DoD2FicheMethodo", "DoD3Restitution", "DoD4SupportCom", "DoD5Enseignements", "EnRetard", "Statut"})
+					Copie1 = Table.DuplicateColumn(Source, "LienDocument", "ADocument"),
+					Copie2 = Table.DuplicateColumn(Copie1, "LienGitlab", "AGitlab"),
+					Typee = fnTyperColonnes(Copie2, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"AffectationId", "int"}, {"SujetId", "int"}, {"TypeLivrable", "text"}, {"ModeleId", "int"}, {"Echeance", "date"}, {"EcheanceInitiale", "date"}, {"DatePremierDepot", "datetime"}, {"DateDepot", "datetime"}, {"DateRevue", "datetime"}, {"DecisionRevue", "text"}, {"NbCorrections", "int"}, {"DateValidation", "datetime"}, {"DateArchivage", "datetime"}, {"LienDocument", "url"}, {"ADocument", "lien"}, {"AGitlab", "lien"}, {"DoD1Fonctionnel", "bool"}, {"DoD2FicheMethodo", "bool"}, {"DoD3Restitution", "bool"}, {"DoD4SupportCom", "bool"}, {"DoD5Enseignements", "bool"}, {"EnRetard", "bool"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "AffectationId", "SujetId", "TypeLivrable", "ModeleId", "Echeance", "EcheanceInitiale", "DatePremierDepot", "DateDepot", "DateRevue", "DecisionRevue", "NbCorrections", "DateValidation", "DateArchivage", "LienDocument", "ADocument", "AGitlab", "DoD1Fonctionnel", "DoD2FicheMethodo", "DoD3Restitution", "DoD4SupportCom", "DoD5Enseignements", "EnRetard", "Statut"})
 				in
 					Resultat
 

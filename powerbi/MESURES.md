@@ -1,12 +1,12 @@
 # Mesures du modèle Power BI HNCS-RD
 
-> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` § 9.5 (qui prévaut), à l'exception des écarts listés dans `README.md` § Divergences. Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, § 8.2 indicateurs recommandés) — document source non versionné (H-30).
+> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` § 9.5 (qui prévaut), sans écart (spec v1.2.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, § 8.2 indicateurs recommandés) — document source non versionné (H-30).
 
 Conventions communes :
 
 - toutes les dates proviennent de SharePoint en UTC et sont converties en **heure de Paris** dans Power Query (`fnHeureParis`) ; les colonnes « date seule » deviennent la date locale ;
-- `TODAY ()` / `NOW ()` sont évalués à l'affichage ; dans le service Power BI ils sont en **UTC** (J−1 entre 00:00 et 01:00/02:00, heure de Paris) ;
-- `Calendrier` filtre les candidatures (date de réception), les livrables (échéance) et les comptes rendus (échéance) ; les autres tables ne sont filtrées que par propagation (voir README.md) ;
+- `TODAY ()` / `NOW ()` sont évalués à l'affichage ; dans le service Power BI ils sont en **UTC** (J−1 entre 00:00 et 01:00/02:00, heure de Paris ; écart toléré, H-48) ;
+- `Calendrier` filtre les candidatures (date de réception), les livrables et les comptes rendus (échéance), les communications (date de publication) et les mobilisations (date de mobilisation) ; les autres tables ne sont filtrées que par propagation (voir README.md) ;
 - les indicateurs servent le pilotage collectif, jamais l'évaluation individuelle (cadrage § 8.2).
 
 ## Recrutement
@@ -37,12 +37,12 @@ Candidatures actives =
 
 - **Définition** : Seuil (jours) au-delà duquel une candidature active est « en attente » : paramètre `Delai.SeuilAttenteCandidatureJours` (10 par défaut).
 - **Format** : `0` — dossier d'affichage « Recrutement »
-- **Point de vigilance** : Si la clé est absente de `Parametres`, `VALUE ( BLANK () )` peut renvoyer une valeur vide sans erreur : `IFERROR` ne joue alors pas et le seuil vaut 0 au lieu de 10 (à vérifier dans Desktop ; voir Divergences).
+- **Point de vigilance** : Repli sur 10 si la clé est absente (valeur vide) ou non numérique (spec v1.1.0).
 
 ```dax
 Seuil attente (j) =
     VAR v = LOOKUPVALUE ( Parametres[Valeur], Parametres[Cle], "Delai.SeuilAttenteCandidatureJours" )
-    RETURN IFERROR ( VALUE ( v ), 10 )
+    RETURN IF ( ISBLANK ( v ), 10, IFERROR ( VALUE ( v ), 10 ) )
 ```
 
 ### [Candidatures en attente]
@@ -116,11 +116,22 @@ Taux de présélection =
 
 - **Définition** : Nombre d'entretiens au statut « Réalisé ».
 - **Format** : `#,##0` — dossier d'affichage « Recrutement »
-- **Point de vigilance** : Compte des entretiens, pas des candidatures : une candidature avec deux entretiens compte deux fois dans l'entonnoir (voir Divergences).
+- **Point de vigilance** : Compte des entretiens, pas des candidatures (une candidature peut en avoir plusieurs) : l'entonnoir utilise [Candidatures avec entretien réalisé].
 
 ```dax
 Entretiens réalisés =
     CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = "Réalisé" )
+```
+
+### [Candidatures avec entretien réalisé]
+
+- **Définition** : Nombre de candidatures distinctes ayant au moins un entretien « Réalisé ».
+- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Point de vigilance** : Étape « entretien » de l'entonnoir de recrutement ; suit la date de réception de la candidature (relation Entretiens → Candidatures).
+
+```dax
+Candidatures avec entretien réalisé =
+    CALCULATE ( DISTINCTCOUNT ( Entretiens[CandidatureId] ), Entretiens[Statut] = "Réalisé" )
 ```
 
 ### [Entretiens à venir]
@@ -193,18 +204,18 @@ Alternants actifs =
 
 ### [Alternants accueillis]
 
-- **Définition** : Alternants effectivement arrivés (tous statuts sauf « À intégrer »).
+- **Définition** : Alternants effectivement arrivés (tous statuts sauf « À intégrer »), hors alternances annulées avant leur début (`DateFinReelle` < `DateDebut`).
 - **Format** : `#,##0` — dossier d'affichage « Effectifs »
-- **Point de vigilance** : Comparée à la cible indicative (3) sans borne de période : cumul depuis l'origine.
+- **Point de vigilance** : Comparée à la cible indicative (3) sans borne de période : cumul depuis l'origine ; non filtrée par `Calendrier`.
 
 ```dax
 Alternants accueillis =
-    CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { "Actif", "Suspendu", "Fin planifiée", "Terminé", "Clôturé" } )
+    COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { "Actif", "Suspendu", "Fin planifiée", "Terminé", "Clôturé" } && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) ) )
 ```
 
 ### [Alternants présents sur la période]
 
-- **Définition** : Alternants dont la période [DateDebut ; DateFinReelle ou DateFin] chevauche la période sélectionnée dans `Calendrier`.
+- **Définition** : Alternants arrivés (hors « À intégrer » et hors alternances annulées avant leur début) dont la période [DateDebut ; DateFinReelle ou DateFin] chevauche la période sélectionnée dans `Calendrier`.
 - **Format** : `#,##0` — dossier d'affichage « Effectifs »
 - **Point de vigilance** : Sans sélection, la période est toute l'étendue du calendrier.
 
@@ -212,7 +223,7 @@ Alternants accueillis =
 Alternants présents sur la période =
     VAR DebutP = MIN ( Calendrier[Date] )
     VAR FinP = MAX ( Calendrier[Date] )
-    RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> "À intégrer" && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )
+    RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> "À intégrer" && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )
 ```
 
 ### [Affectations actives]
@@ -267,13 +278,13 @@ Alternants sans affectation active =
 
 ### [Taux de charge référent]
 
-- **Définition** : Affectations actives ÷ somme des capacités indicatives des référents (dans le contexte).
+- **Définition** : Nombre d'alternants distincts ayant une affectation « Active », « À risque » ou « Bloquée » ÷ somme des capacités indicatives des référents (dans le contexte).
 - **Format** : `0.0%` — dossier d'affichage « Effectifs »
-- **Point de vigilance** : Au total, inclut les affectations sans référent au numérateur ; capacité vide = 0 (taux vide si aucune capacité).
+- **Point de vigilance** : Un alternant ayant deux affectations concomitantes (H-42) n'est compté qu'une fois ; au total, les affectations sans référent restent au numérateur ; capacité vide = 0.
 
 ```dax
 Taux de charge référent =
-    DIVIDE ( [Affectations actives], SUM ( Referents[CapaciteIndicative] ) )
+    DIVIDE ( CALCULATE ( DISTINCTCOUNT ( Affectations[AlternantId] ), Affectations[Statut] IN { "Active", "À risque", "Bloquée" } ), SUM ( Referents[CapaciteIndicative] ) )
 ```
 
 ## Projets et livrables
@@ -360,29 +371,29 @@ Taux de remise à l'heure =
 
 ### [Taux de validation au premier passage]
 
-- **Définition** : Livrables validés sans aucune demande de corrections ÷ livrables ayant été revus (`DateRevue`).
+- **Définition** : Livrables validés ou archivés sans aucune demande de corrections ÷ livrables soumis à revue (au moins un dépôt).
 - **Format** : `0.0%` — dossier d'affichage « Livrables »
-- **Point de vigilance** : Cadrage : à utiliser pour améliorer le processus, jamais comme mesure individuelle. Le cadrage propose « ÷ livrables soumis à revue » (voir Divergences).
+- **Point de vigilance** : Cadrage : à utiliser pour améliorer le processus, jamais comme mesure individuelle. Les livrables soumis non encore revus font baisser le taux.
 
 ```dax
 Taux de validation au premier passage =
     DIVIDE (
         CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { "Validé", "Archivé / clôturé" }, Livrables[NbCorrections] = 0 ),
-        CALCULATE ( COUNTROWS ( Livrables ), NOT ISBLANK ( Livrables[DateRevue] ) )
+        [Livrables soumis à revue]
     )
 ```
 
 ### [Taux de capitalisation]
 
-- **Définition** : Livrables archivés avec document lié (et DoD complète pour un POC ou un plan) ÷ livrables archivés.
+- **Définition** : Livrables archivés avec document lié (et DoD complète pour un POC ou un plan) ÷ livrables validés ou archivés.
 - **Format** : `0.0%` — dossier d'affichage « Livrables »
-- **Point de vigilance** : Cadrage : doit refléter la Definition of Done ; `ADocument` ne contrôle que la présence du lien, pas les métadonnées du document.
+- **Point de vigilance** : Cadrage : doit refléter la Definition of Done ; un livrable validé non encore archivé compte comme non capitalisé ; `ADocument` ne contrôle que la présence du lien.
 
 ```dax
 Taux de capitalisation =
     DIVIDE (
         CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = "Archivé / clôturé", Livrables[CapitalisationComplete] = TRUE () ),
-        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = "Archivé / clôturé" )
+        CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { "Validé", "Archivé / clôturé" } )
     )
 ```
 
@@ -464,11 +475,22 @@ Sujets bloqués =
     CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { "Bloqué", "À arbitrer" } )
 ```
 
+### [Sujets actifs]
+
+- **Définition** : Sujets au statut « Priorisé », « En cours » ou « Bloqué ».
+- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Point de vigilance** : Photo à la date du rapport (non filtrée par `Calendrier`).
+
+```dax
+Sujets actifs =
+    CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { "Priorisé", "En cours", "Bloqué" } )
+```
+
 ### [Mobilisations commerciales]
 
 - **Définition** : Nombre de mobilisations d'un livrable (rendez-vous client, appel d'offres…).
 - **Format** : `#,##0` — dossier d'affichage « Livrables »
-- **Point de vigilance** : Cible indicative 8. Filtrée par l'échéance du livrable mobilisé lorsque `Calendrier` est filtré (voir Divergences).
+- **Point de vigilance** : Cible indicative 8. Datée par `DateMobilisation` (relation active vers `Calendrier`) ; la relation vers le livrable mobilisé est inactive.
 
 ```dax
 Mobilisations commerciales =
@@ -503,12 +525,12 @@ Comptes rendus manquants =
 
 - **Définition** : Comptes rendus échus remis au plus tard à l'échéance ÷ comptes rendus échus.
 - **Format** : `0.0%` — dossier d'affichage « Comptes rendus »
-- **Point de vigilance** : `DATEVALUE` sur une date-heure : conversion implicite texte ↔ date dans la culture du modèle (fr-FR).
+- **Point de vigilance** : `DateRemise` (heure de Paris) est ramenée à la date par `DATE ( YEAR, MONTH, DAY )`.
 
 ```dax
 Taux de remise des comptes rendus =
     DIVIDE (
-        COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATEVALUE ( ComptesRendus[DateRemise] ) <= ComptesRendus[Echeance] ) ),
+        COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATE ( YEAR ( ComptesRendus[DateRemise] ), MONTH ( ComptesRendus[DateRemise] ), DAY ( ComptesRendus[DateRemise] ) ) <= ComptesRendus[Echeance] ) ),
         [Comptes rendus attendus]
     )
 ```
@@ -597,13 +619,13 @@ Bilans réalisés =
 
 ### [Communications publiées]
 
-- **Définition** : Communications au statut « Publiée ».
+- **Définition** : Communications **externes** au statut « Publiée ».
 - **Format** : `#,##0` — dossier d'affichage « Communications »
-- **Point de vigilance** : Cible indicative 30. Avec un filtre `Calendrier`, le filtre passe par l'échéance du livrable source (relation active) et non par la date de publication : utiliser la mesure technique « Communications publiées (date de publication) » pour une analyse temporelle (voir Divergences).
+- **Point de vigilance** : Cible indicative 30 (publications valorisant HNCS). Datée par `DateEffective` (relation active vers `Calendrier`) ; les synthèses internes publiées ne sont pas comptées.
 
 ```dax
 Communications publiées =
-    CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = "Publiée" )
+    CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = "Publiée", CommunicationsRD[Externe] = TRUE () )
 ```
 
 ### [Communications en préparation]
@@ -618,9 +640,9 @@ Communications en préparation =
 
 ### [Livrables valorisés]
 
-- **Définition** : Nombre de livrables distincts ayant au moins une communication publiée.
+- **Définition** : Nombre de livrables distincts ayant au moins une communication publiée (interne ou externe).
 - **Format** : `#,##0` — dossier d'affichage « Communications »
-- **Point de vigilance** : Implémentée avec `DISTINCTCOUNTNOBLANK` : `DISTINCTCOUNT` de la spec compte la valeur vide comme un livrable (voir Divergences).
+- **Point de vigilance** : `DISTINCTCOUNTNOBLANK` : une communication sans livrable source n'est pas comptée. La relation vers `Livrables` est inactive : les segments sur les livrables ne filtrent pas cette mesure.
 
 ```dax
 Livrables valorisés =
@@ -633,7 +655,7 @@ Livrables valorisés =
 
 - **Définition** : Actions d'intégration / checklists non terminées dont l'échéance est dépassée.
 - **Format** : `#,##0` — dossier d'affichage « Qualité »
-- **Point de vigilance** : Le rôle Referent ne voit aucune action (RLS).
+- **Point de vigilance** : La relation `ActionsIntegration[AlternantId]` → `Alternants` est active : un filtre sur les alternants (pôle, établissement) écarte les actions rattachées à une seule candidature. Les rôles Referent et RelationEcoles ne voient aucune action (RLS).
 
 ```dax
 Actions en retard =
@@ -675,26 +697,15 @@ Cible =
     SELECTEDVALUE ( Objectifs[Cible] )
 ```
 
-## Mesures techniques (hors spec)
+## Mesures techniques
 
 ### [Dernière actualisation]
 
-- **Définition** : Horodatage (heure de Paris) de la dernière actualisation du modèle.
-- **Format** : `dd/MM/yyyy HH:mm` — dossier d'affichage « Technique (hors spec) »
-- **Point de vigilance** : Mesure technique hors spec, affichée sur chaque page (specs/powerbi-rapport.md).
+- **Définition** : Horodatage (heure de Paris) de la dernière actualisation du modèle : maximum de la colonne masquée `Mesures[DerniereActualisation]`, calculée en Power Query (`DateTimeZone.FixedUtcNow` converti en heure de Paris).
+- **Format** : `dd/MM/yyyy HH:mm` — dossier d'affichage « Technique »
+- **Point de vigilance** : Affichée sur chaque page (specs/powerbi-rapport.md) ; dossier d'affichage « Technique ».
 
 ```dax
 Dernière actualisation =
     MAX ( Mesures[DerniereActualisation] )
-```
-
-### [Communications publiées (date de publication)]
-
-- **Définition** : Communications publiées, filtrées par leur date de publication (`DateEffective`) grâce à la relation inactive activée par `USERELATIONSHIP`.
-- **Format** : `#,##0` — dossier d'affichage « Technique (hors spec) »
-- **Point de vigilance** : Mesure technique hors spec, utilisée par l'histogramme mensuel de la page 6.
-
-```dax
-Communications publiées (date de publication) =
-    CALCULATE ( [Communications publiées], USERELATIONSHIP ( CommunicationsRD[DateEffective], Calendrier[Date] ) )
 ```

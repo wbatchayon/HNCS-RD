@@ -105,7 +105,7 @@ table GitlabSync
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Synchronisation GitLab", {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "DateSynchro"}, {}, true),
+					Source = fnLireListeSharePoint("GitlabSync", {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "DateSynchro"}, {}, true),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"SujetId", "int"}, {"GitlabProjetId", "int"}, {"Milestone", "text"}, {"MilestoneEcheance", "date"}, {"MilestoneEtat", "text"}, {"IssuesOuvertes", "int"}, {"IssuesFermees", "int"}, {"MRsOuvertes", "int"}, {"EcartEcheance", "bool"}, {"DateSynchro", "datetime"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "DateSynchro"})
 				in

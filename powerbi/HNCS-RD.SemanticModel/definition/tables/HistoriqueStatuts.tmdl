@@ -72,7 +72,7 @@ table HistoriqueStatuts
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Historique des statuts", {"Id", "Title", "Objet", "StatutAvant", "StatutApres", "DateChangement", "Origine", "Resultat"}, {}, false),
+					Source = fnLireListeSharePoint("HistoriqueStatuts", {"Id", "Title", "Objet", "StatutAvant", "StatutApres", "DateChangement", "Origine", "Resultat"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"Title", "text"}, {"Objet", "text"}, {"StatutAvant", "text"}, {"StatutApres", "text"}, {"DateChangement", "datetime"}, {"Origine", "text"}, {"Resultat", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "Title", "Objet", "StatutAvant", "StatutApres", "DateChangement", "Origine", "Resultat"})
 				in

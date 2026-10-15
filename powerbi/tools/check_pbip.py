@@ -43,18 +43,21 @@ DEPLOY = PBI / "deploy" / "Publish-HNCSRDPowerBI.ps1"
 SCHEMA_PREFIX = "https://developer.microsoft.com/json-schemas/fabric/"
 MEASURES_TABLE = "Mesures"
 
-# Divergences volontaires avec spec.md § 9.5 (documentées dans README.md § Divergences).
-ALLOWED_MEASURE_DIVERGENCES = {
-    "Livrables valorisés":
-        'CALCULATE ( DISTINCTCOUNTNOBLANK ( CommunicationsRD[LivrableSourceId] ), CommunicationsRD[Statut] = "Publiée" )',
-}
-# Mesures techniques hors spec autorisées (dossier « Technique (hors spec) »).
-ALLOWED_EXTRA_MEASURES = {"Dernière actualisation", "Communications publiées (date de publication)"}
+# Divergences volontaires avec spec.md § 9.5 (documentées dans README.md § Divergences) : aucune en v1.1.0.
+ALLOWED_MEASURE_DIVERGENCES: dict[str, str] = {}
+# Mesures hors spec autorisées : aucune en v1.1.0.
+ALLOWED_EXTRA_MEASURES: set[str] = set()
 FOLDERS = {"Recrutement", "Effectifs", "Livrables", "Comptes rendus", "Écoles", "Communications", "Qualité",
-           "Objectifs", "Technique (hors spec)"}
-EXPECTED_ROLES = ["Direction", "PilotageRD", "Administration", "Referent"]
-NOMAFFICHAGE_PAGES = {3, 7}
-OPTIONAL_LISTS = {"GitlabSync"}
+           "Objectifs", "Technique"}
+EXPECTED_ROLES = ["Direction", "PilotageRD", "Administration", "RelationEcoles", "Referent"]
+NOMAFFICHAGE_PAGES: set[int] = set()  # § 9.2 v1.1.0 : NomAffichage absent de tous les visuels
+OPTIONAL_LISTS = {"GitlabSync"}  # § 9.1 : lecture facultative (404 → table vide)
+# Références exigées par specs/powerbi-rapport.md sans notation Table[Colonne] explicite.
+EXTRA_PAGE_REFS = {
+    4: [("Column", "Livrables", "LienDocument"), ("Column", "GitlabSync", "EcartEcheance")],
+    6: [("Column", "CommunicationsRD", "Title"), ("Column", "CommunicationsRD", "UrlPublication")],
+}
+REPORT_SUBSPEC = ROOT / "specs" / "powerbi-rapport.md"
 
 errors: list[str] = []
 
@@ -298,6 +301,9 @@ def spec_calc_columns() -> dict[tuple[str, str], str]:
         if m:
             table = m.group(1)
             continue
+        if l.startswith("//"):
+            cur = None
+            continue
         if not l.strip():
             continue
         if not l[0].isspace():
@@ -358,7 +364,7 @@ def expected_source(obj: dict, col: dict) -> tuple[str, dict | None, str]:
         if col["transform"] == "bool":
             return src, c, "boolean"
         typ = {"Text": "string", "Choice": "string", "Note": "string", "Number": "int64" if str(c.get("decimals")) == "0"
-               else "double", "Boolean": "boolean", "Date": "dateTime", "DateTime": "dateTime"}.get(t)
+               else "double", "Boolean": "boolean", "Date": "dateTime", "DateTime": "dateTime", "URL": "string"}.get(t)
         return src, c, typ
     if src.endswith("Id") and cols.get(src[:-2], {}).get("type") in ("Lookup", "LookupMulti"):
         return src, cols[src[:-2]], "int64"
@@ -399,9 +405,12 @@ def check_model(model: dict) -> dict[str, dict]:
         err("expressions.tmdl : paramètre M SiteUrl absent")
     for token in ("Web.Contents(", "SiteUrl,", "RelativePath = chemin", "Query = requete", '#"$select"', '#"$top" = "5000"',
                   '#"$expand"', "odata.nextLink", "$skiptoken", 'Accept = "application/json;odata=nometadata"',
-                  "_api/web/lists/getbytitle('"):
+                  "_api/web/GetList('", '"/Lists/"', "Uri.Parts(SiteUrl)[Path]", "ManualStatusHandling",
+                  "expression fnHeureParis", "fnHeureParis(v)"):
         if token not in ex:
             err(f"expressions.tmdl : élément attendu absent de la lecture SharePoint : {token}")
+    if "getbytitle" in ex.lower():
+        err("expressions.tmdl : getbytitle interdit (§ 9.1 : listes désignées par leur nom interne via GetList)")
     if len(re.findall(r"Web\.Contents\(", ex)) != 1:
         err("expressions.tmdl : un seul appel Web.Contents attendu (source unique, actualisable dans le service)")
 
@@ -436,15 +445,20 @@ def check_model(model: dict) -> dict[str, dict]:
         src = parts[0].get("source", "")
         if "Web.Contents" in src or "SharePoint." in src or "OData." in src:
             err(f"{name} : la partition doit passer par fnLireListeSharePoint (aucune autre source)")
-        m = re.search(r'fnLireListeSharePoint\(\s*"((?:[^"]|"")*)"\s*,\s*(\{[^}]*\})\s*,\s*(\{[^}]*\})\s*,\s*(true|false)\s*\)', src)
+        m = re.search(r'fnLireListeSharePoint\(\s*"((?:[^"]|"")*)"\s*,\s*(\{[^}]*\})\s*,\s*(\{[^}]*\})\s*,\s*(true|false)\s*(?:,\s*(true|false)\s*)?\)', src)
         if not m:
-            err(f"{name} : appel fnLireListeSharePoint(titre, {{champs}}, {{expansions}}, facultative) introuvable")
+            err(f"{name} : appel fnLireListeSharePoint(nomInterne, {{champs}}, {{expansions}}, facultative) introuvable")
             continue
-        title, selects, expands, optional = m.group(1).replace('""', '"'), m_strings(m.group(2)), m_strings(m.group(3)), m.group(4)
+        list_name, selects, expands, optional = m.group(1).replace('""', '"'), m_strings(m.group(2)), m_strings(m.group(3)), m.group(4)
+        library = m.group(5) == "true"
         source_list = "SujetsRD" if name == "SujetDomaine" else t["source"]
         obj = objs[source_list]
-        if title != obj["title"]:
-            err(f"{name} : titre de liste « {title} » ≠ titre SharePoint « {obj['title']} »")
+        if list_name != obj["name"]:
+            err(f"{name} : la liste doit être désignée par son nom interne « {obj['name']} » (obtenu « {list_name} »)")
+        if library != (obj.get("kind") == "library"):
+            err(f"{name} : drapeau bibliothèque incohérent avec le type de {obj['name']} ({obj.get('kind')})")
+        # Conversion en heure de Paris : chaque colonne Date / DateTime est typée « date » / « datetime » par fnTyperColonnes.
+        schema = dict(re.findall(r'\{"(\w+)", "(\w+)"\}', src.split("fnTyperColonnes(", 1)[1])) if "fnTyperColonnes(" in src else {}
         if (optional == "true") != (source_list in OPTIONAL_LISTS):
             err(f"{name} : caractère facultatif de la liste incohérent")
         if name == "SujetDomaine":
@@ -456,7 +470,12 @@ def check_model(model: dict) -> dict[str, dict]:
         expected_selects = []
         for c in t["columns"]:
             sel, spcol, typ = expected_source(obj, c)
-            expected_selects.append(sel)
+            if sel not in expected_selects:
+                expected_selects.append(sel)
+            if spcol and spcol.get("type") in ("Date", "DateTime") and c["transform"] is None:
+                want_kind = "date" if spcol["type"] == "Date" else "datetime"
+                if schema.get(c["source"]) != want_kind:
+                    err(f"{name}[{c['name']}] : conversion en heure de Paris attendue (genre « {want_kind} » dans fnTyperColonnes)")
             if spcol is None and sel != "Id":
                 err(f"{name}[{c['name']}] : colonne source {c['source']} inconnue dans {source_list}")
                 continue
@@ -541,6 +560,11 @@ def check_model(model: dict) -> dict[str, dict]:
     for c in mt["columns"].values():
         if "isHidden" not in c["props"]:
             err(f"Mesures[{c['name']}] : colonne technique non masquée")
+    if "DerniereActualisation" not in mt["columns"]:
+        err("Mesures[DerniereActualisation] : colonne masquée attendue (§ 9.4)")
+    msrc = next(iter(mt["partitions"].values()), {}).get("source", "")
+    if "DateTimeZone.FixedUtcNow()" not in msrc or "fnHeureParis(" not in msrc:
+        err("Mesures : DerniereActualisation doit être DateTimeZone.FixedUtcNow converti en heure de Paris (§ 9.4)")
     return tables
 
 
@@ -741,8 +765,12 @@ def check_report(docs: dict, tables: dict) -> None:
     if sorted(order) != folders:
         err("pages.json : pageOrder ≠ dossiers de pages")
     expected = spec_pages()
+    required = subspec_requirements()
+    if sorted(required) != list(range(1, len(expected) + 1)):
+        err(f"specs/powerbi-rapport.md : pages {sorted(required)} illisibles ou incomplètes")
     displays = []
     for idx, pid in enumerate(order, 1):
+        page_refs = set()
         page = docs.get(RDEF / "pages" / pid / "page.json")
         if not page:
             err(f"Page {pid} : page.json absent")
@@ -764,6 +792,7 @@ def check_report(docs: dict, tables: dict) -> None:
             if not v.get("visual", {}).get("visualType"):
                 err(f"{rel(vf)} : visualType manquant")
             for kind, ent, prop in iter_refs(v):
+                page_refs.add((kind, ent, prop))
                 t = tables.get(ent)
                 if t is None:
                     err(f"{rel(vf)} : table inconnue {ent}")
@@ -772,7 +801,7 @@ def check_report(docs: dict, tables: dict) -> None:
                 elif kind == "Column" and prop not in t["columns"]:
                     err(f"{rel(vf)} : colonne inconnue {ent}[{prop}]")
                 if ent == "Alternants" and prop == "NomAffichage" and idx not in NOMAFFICHAGE_PAGES:
-                    err(f"{rel(vf)} : NomAffichage hors des pages 3 et 7 (specs/powerbi-rapport.md)")
+                    err(f"{rel(vf)} : NomAffichage utilisé dans un visuel (interdit, § 9.2 v1.1.0)")
             for proj in iter_projections(v):
                 if proj.get("queryRef") and "field" in proj:
                     f = proj["field"]
@@ -782,8 +811,25 @@ def check_report(docs: dict, tables: dict) -> None:
                         err(f"{rel(vf)} : queryRef {proj['queryRef']} ≠ {ref}")
         if not vnames:
             err(f"Page {page.get('displayName')} : aucun visuel")
+        for ref in required.get(idx, []) + [("Measure", MEASURES_TABLE, "Dernière actualisation")]:
+            if ref not in page_refs:
+                err(f"Page {idx} ({page.get('displayName')}) : {ref[1]}[{ref[2]}] exigé par specs/powerbi-rapport.md absent")
     if displays != expected:
         err(f"Pages {displays} ≠ § 9.7 {expected}")
+
+
+def subspec_requirements() -> dict[int, list[tuple[str, str, str]]]:
+    """Mesures `[X]` et colonnes `Table[Colonne]` citées par page dans specs/powerbi-rapport.md."""
+    req: dict[int, list] = {}
+    for line in REPORT_SUBSPEC.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\| (\d+)\. [^|]+\|(.*)\|\s*$", line)
+        if not m:
+            continue
+        n, rest = int(m.group(1)), m.group(2)
+        refs = [("Measure", MEASURES_TABLE, x) for x in re.findall(r"`\[([^\]]+)\]`", rest)]
+        refs += [("Column", a, b) for a, b in re.findall(r"`(\w+)\[(\w+)\]`", rest)]
+        req[n] = refs + EXTRA_PAGE_REFS.get(n, [])
+    return req
 
 
 def iter_projections(v):

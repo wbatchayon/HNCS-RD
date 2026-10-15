@@ -47,7 +47,7 @@ table Poles
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("Pôles R&D", {"Id", "IdHNCS", "Title", "CodePole", "Statut"}, {}, false),
+					Source = fnLireListeSharePoint("Poles", {"Id", "IdHNCS", "Title", "CodePole", "Statut"}, {}, false),
 					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"CodePole", "text"}, {"Statut", "text"}}),
 					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "CodePole", "Statut"})
 				in
