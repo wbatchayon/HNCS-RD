@@ -2,7 +2,7 @@
 
 | Propriété | Valeur |
 | --- | --- |
-| Version de la spec | 1.3.0 |
+| Version de la spec | 1.4.0 |
 | Date | 2026-10-14 |
 | Statut | Lot 0 — à valider en atelier (voir § 13) ; v1.1.0 intègre la revue de conformité RC-01 à RC-39 et les retours des agents (§ 14.3) |
 | Sources fonctionnelles | `Processus.md` ; `Cadrage_Fonctionnel_Automatisation_R&D_HNCS.docx` (v0.1) ; schéma « Architecture cible — Système de suivi R&D HNCS » |
@@ -1165,6 +1165,7 @@ Toutes les bibliothèques ont le versioning activé. La colonne Titre des docume
 3. Si la transition est **refusée** : le statut est **rétabli** à `StatutPrecedent` par le compte de service, l'événement est historisé (`Refusée — annulée`, motif), et l'acteur est notifié (N-90). Aucun effet métier n'est exécuté. Limite connue : le statut refusé reste visible quelques secondes (H-17).
 3 bis. **Refus d'une création** (`∅` → statut initial) : il n'existe pas de statut à rétablir ; l'élément est envoyé à la **corbeille du site** par le compte de service (récupérable 93 jours, jamais supprimé définitivement par un flux), l'événement est historisé (`Refusée — annulée`, motif) et l'auteur est notifié (N-90).
 4. `∅` désigne la création. `*` dans « De » désigne tout statut de l'énumération autre que le statut d'arrivée.
+4 bis. Un contrôle `G_*` est évalué **au moment de la transition** qu'il garde ; il n'est pas réévalué ensuite (ex. une affectation terminée dont le référent est devenu inactif reste valide ; une fiche alternant reprise de l'existant reste valide si `Fonction.RepriseExistantActive` repasse à Non).
 5. Plusieurs valeurs séparées par ` ; ` dans « De » ou « Vers » sont développées en autant de lignes dans la liste `TransitionsStatuts` (codes suffixés `-01`, `-02`…).
 6. Le rôle `FLUX` n'apparaît **jamais** sur une transition dont le statut d'arrivée matérialise une décision humaine (P-01), listée ci-dessous. Vérifié par `tools/spec_extract.py` et `tests/offline`.
 7. Les objets sans tableau de transitions (Offres, Entretiens, Établissements, Modèles, Actions, Bilans, référentiels) ont des statuts libres pour les groupes habilités en écriture (§ 7). Les changements de statut et de résultat des **entretiens** sont toutefois historisés par PA-03 (Objet = Entretien), et les champs protégés (P-09) restent contrôlés.
@@ -1345,6 +1346,22 @@ Note : la **décision de partenariat** (`DecisionPartenariat`) n'est pas un stat
 
 Note : l'issue d'un GO/NO-GO négatif est « Suspendu » (report ou reformulation) ou « Abandonné », toujours motivée (H-26).
 
+### 6.5 Formats des empreintes (P-09)
+
+Les empreintes sont des colonnes `Text` masquées écrites **uniquement** par les flux. Format JSON compact, clés dans l'ordre ci-dessous, dates `AAAA-MM-JJ`, identifiants de recherche = ID SharePoint (entier), personnes = adresse e-mail en minuscules, valeur absente = `null`. Une empreinte **vide** signifie « non encore initialisée » : le flux l'initialise à partir des valeurs courantes **sans rien rétablir** (cas des données importées ou créées avant l'activation des flux).
+
+| Colonne | Liste | Format |
+| --- | --- | --- |
+| `EmpreinteVerrou` | Affectations | `{"AlternantId":12,"SujetId":3,"ReferentId":5,"DateDebut":"2026-11-02"}` |
+| `EmpreinteRevue` | Livrables | `{"AffectationId":7,"Proprietaire":"a@x","Reviseur":"r@x","Echeance":"2026-12-01","DoD":[false,false,false,false,false],"NbCorrections":0,"DecisionRevue":null,"Valideur":null,"DateValidation":null,"VersionValidee":null,"DatePremierDepot":null,"DateDepot":null,"DateRevue":null}` (dates-heures au format ISO 8601 UTC) |
+| `EmpreinteRevue` | ComptesRendus | `{"AffectationId":7,"Valideur":"r@x","Echeance":"2026-11-16","PeriodeDebut":"2026-11-02","PeriodeFin":"2026-11-15","DateValidation":null,"DateRemise":null}` |
+| `EmpreinteCommentaire` | Livrables | Texte brut de `CommentaireRevue` lors de la dernière décision |
+| `EmpreinteAction` | ActionsIntegration | `{"Bloquante":true,"Statut":"À faire"}` |
+| `EmpreinteReferent` | Alternants | ID SharePoint du référent principal validé, en texte (`"5"`), ou vide |
+| `EmpreinteDecision` | Conventions | Valeur de `DecisionPartenariat` validée, en texte, ou vide |
+
+Historisation hors statut (exceptions documentées de `HistoriqueStatuts`) : (a) **résultat d'entretien** — une entrée Objet = Entretien avec `StatutAvant`/`StatutApres` = statut de l'entretien et `Motif` = « Résultat : {Resultat} » ; (b) **changement de référent principal** — une entrée Objet = Alternant, `CodeTransition` = `REF-PRINCIPAL`, `StatutAvant`/`StatutApres` = `IdHNCS` des référents.
+
 ### 6.6 Catalogue des contrôles
 
 ### CONTROLES
@@ -1456,6 +1473,8 @@ L'héritage est rompu **sur toutes les listes et bibliothèques du modèle** (sa
 | LivrablesRD | FC | CSS | CSS | — | CSS | IL(CSS) | R | — |
 | SuiviAlternants | FC | R | R | — | IL(CSS) | IL(CSS) | — | — |
 | EcolesPartenariats | FC | CSS | R | CSS | — | — | — | CSS |
+
+Note : une cellule `—` n'exclut pas les accès **nominatifs** posés par les flux au § 7.4 (ex. un membre de G_RD désigné participant d'un entretien lit cet entretien, H-28).
 
 ### 7.4 Permissions au niveau élément ou dossier (posées par les flux)
 
@@ -1784,7 +1803,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | Élément | Contrat |
 | --- | --- |
 | Déclencheur fonctionnel | Arrivée de la date de remise définie ; remise ou validation d'un compte rendu |
-| PA-08b — planifié (06:45) | Pour chaque affectation « Active », « À risque » ou « Bloquée » dont la cadence effective (`CadenceCR`, sinon `CR.CadenceGlobale`) n'est pas « Par jalon » : si aucun compte rendu ne couvre la période courante → en créer un « Attendu » (`PeriodeDebut`, `PeriodeFin` selon la cadence : Hebdomadaire = 7 j, Quinzaine = 14 j, Mensuelle = mois calendaire ; `Echeance` = `PeriodeFin` + `CR.DelaiRemiseJours`) ; mettre à jour `ProchaineEcheanceCR`. Rappel N-30 à l'alternant la veille de l'échéance. Si `G_CR_ECHU` → « Non remis » (CR-T04, `FLUX`) et N-31 au référent. |
+| PA-08b — planifié (06:45) | Pour chaque affectation « Active », « À risque » ou « Bloquée » dont la cadence effective (`CadenceCR`, sinon `CR.CadenceGlobale`) n'est pas « Par jalon » : si aucun compte rendu ne couvre la période courante → en créer un « Attendu » (`PeriodeDebut`, `PeriodeFin` selon la cadence : Hebdomadaire = 7 j, Quinzaine = 14 j, Mensuelle = mois calendaire ; `Echeance` = `PeriodeFin` + `CR.DelaiRemiseJours`) ; mettre à jour `ProchaineEcheanceCR`. Rappel N-30 à l'alternant la veille de l'échéance. Si `G_CR_ECHU` → « Non remis » (CR-T04, `FLUX`) et N-31 au référent. Pour une cadence « Par jalon », aucun compte rendu n'est créé automatiquement ; les rappels et le passage « Non remis » s'appliquent aux comptes rendus créés manuellement (ils ont une échéance). |
 | PA-08 — déclencheur | `ComptesRendus` créé ou modifié, statut cible ∈ partition PA-08 |
 | Traitement | **Champs protégés** (P-09) : `EmpreinteRevue` comparée en premier ; modification non autorisée → rétablie, N-92. **Création** : `IdHNCS`, `Title`, `Alternant` (copié), `Valideur` = compte du référent de l'affectation ; permissions élément (§ 7.4). Transitions : PA-00A puis contrôles (dont `G_VALIDEUR_LEGITIME`). **Remis** : `G_CR_COMPLET`, `DateRemise`, N-32 au valideur ; si `BlocageSignale` = Oui → N-33 à G_DRD. **Validé** : `DateValidation`, N-34 à l'alternant. **À compléter** : `G_COMMENTAIRE_REFERENT`, N-34 à l'alternant. PA-00B dans tous les cas. |
 | Transitions | CR-T01 à CR-T06 |
@@ -1894,7 +1913,9 @@ Règle : aucune colonne `perso` ou `confidentiel` n'est importée, **sauf** `Alt
 | GitlabSync | GitlabSync | Id ; SujetId ; GitlabProjetId ; Milestone ; MilestoneEcheance ; MilestoneEtat ; IssuesOuvertes ; IssuesFermees ; MRsOuvertes ; EcartEcheance ; DateSynchro |
 | Parametres | Parametres | Title (→ Cle) ; Valeur |
 | Calendrier | DAX | Date ; Annee ; Mois ; NumMois ; Trimestre ; Semaine ; AnneeMois |
-| Objectifs | DAX (DATATABLE) | Indicateur ; Cible — cibles indicatives à un an du cadrage § 2.4 |
+| Objectifs | DAX (DATATABLE) | Indicateur ; Cible |
+
+La table `Objectifs` contient les cibles indicatives à un an du cadrage § 2.4 (voir § 9.5).
 
 ### 9.3 Relations
 
@@ -2170,7 +2191,7 @@ Le script de déploiement accepte `-Lot <n>` et déploie **cumulativement** tous
 | Droits d'accès | Matrice § 7.3 vérifiée persona par persona (lecture, écriture, refus) | `tests/e2e/Access.Tests.ps1` |
 | Réconciliation Power BI | Chaque mesure clé recalculée depuis SharePoint et comparée | `tests/e2e/reconciliation/` |
 
-Données de test **fictives** uniquement (noms et e-mails factices, domaine `example.org`).
+Données de test **fictives** uniquement (noms et e-mails factices, domaine `example.org`). Elles sont importées comme des **données déjà validées** (`StatutPrecedent` = `Statut`, empreintes vides ou cohérentes) et **flux désactivés** (ou avant le lot 2) : sinon les flux de création traiteraient ces éléments comme de nouvelles saisies. Les identifiants du jeu utilisent la plage `9xxx` (aucune collision avec PA-00D) ; le jeu peut ajouter des entrées fictives de référentiel (`MOD-2026-9xxx`, `DOM-2026-9xxx`) pour couvrir tous les statuts.
 
 ### 12.1 Scénarios de recette (cadrage § 10.1 et compléments)
 
@@ -2243,7 +2264,7 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | H-39 | Statuts d'établissement dérivés | « Établissement d'accueil », « Partenariat à évaluer » et « Partenaire actif » sont posés par les flux comme **constats** (alternant accueilli, recommandation de bilan, convention de partenariat signée après décision), jamais comme décisions | Rendre ces statuts manuels | Direction R&D |
 | H-40 | Confirmation d'intégration | Réservée à ADMIN (CAND-T14) ; la R&D et le référent sont informés (N-16) | Ajouter RD ou DIRECTION_RD aux acteurs | Administration + Direction R&D |
 | H-41 | Choix de calcul des indicateurs | « Alternants actifs » inclut « Fin planifiée » et exclut « Suspendu » ; remise à l'heure mesurée sur l'échéance courante (l'échéance initiale est conservée) ; délai de traitement = réception → intégration ou clôture ; dossiers incomplets non distingués dans le délai de présélection | Modifier les mesures | Direction R&D |
-| H-42 | Affectations concomitantes | Autorisées sans limite (cadrage § 6.3 : « si la règle HNCS le permet ») | Ajouter un contrôle dans PA-05 | Direction R&D |
+| H-42 | Affectations concomitantes | Autorisées sans limite (cadrage § 6.3 : « si la règle HNCS le permet ») ; seules les affectations d'une même **chaîne de remplacement** (`AffectationRemplacee`) ne se chevauchent pas | Ajouter un contrôle dans PA-05 | Direction R&D |
 | H-43 | Composition du groupe Relation écoles | Responsables de la relation école (pôle 4) et membres de la R&D qui préparent la relation | Ajuster les membres | Direction R&D |
 | H-44 | Équipe Teams | Une équipe « HNCS R&D » distincte, créée par le provisioning si `Teams.Creer` = true ; canaux Général, Comité R&D, Alternants | Utiliser une équipe existante | DSI + Direction R&D |
 | H-45 | Portée du partage à la transmission | `Recrutement.PartageTransmission` = Groupe (toute l'équipe administrative) ; valeur « Destinataire » pour limiter au seul destinataire | Paramètre seulement | Administration |
@@ -2281,6 +2302,7 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | Version | Date | Auteur | Modification |
 | --- | --- | --- | --- |
 | 1.0.0 | 2026-10-14 | Équipe projet | Première version complète (lot 0) |
+| 1.4.0 | 2026-10-16 | Équipe projet | Retours du jeu de test : formats des empreintes et historisations hors statut (§ 6.5), contrôles évalués au moment de la transition, accès nominatifs sous la matrice, cadence « Par jalon », import des données de test flux désactivés, H-42 précisé |
 | 1.3.0 | 2026-10-15 | Équipe projet | Retours des guides (18 points) et de Power BI (E-01–E-05) : doublon vérifié, échéance et réviseur protégés, champs protégés des comptes rendus, compte Microsoft 365 requis pour activer une affectation, `G_ACTION_FORMALITE` renforcé, arbitrage des sujets par la Direction Générale, prolongation d'alternance, dossier administratif dès la transmission, notifications complétées, audiences Power BI, H-53 et H-54 |
 | 1.2.0 | 2026-10-15 | Équipe projet | Retours du provisionnement : `IdHNCS` sans contrainte d'unicité SharePoint, définition de `hidden`, noms internes dans les validations, titre des documents facultatif, listes système et groupes par défaut, liens dans les vues, paramètres vides complétés, propriétaire des modèles initiaux, conventions d'URL et de lot 0 |
 | 1.1.0 | 2026-10-15 | Équipe projet | Revue de conformité RC-01 à RC-39 (contrôle `G_VALIDEUR_LEGITIME`, champs protégés P-09, transitions des sujets et PA-14, décision de partenariat avant signature, création d'alternant contrôlée, référent principal dérivé, matrice d'accès resserrée, RACI et escalade, scénarios de recette, H-31 à H-52) ; retours des agents GitLab (G1–G10) et Power BI (D-01–D-13) ; flux PA-00F |
