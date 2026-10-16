@@ -1536,7 +1536,7 @@ function Ensure-HNCSRDColumn {
     $ecarts = @(Compare-HNCSRDFieldSchema -SchemaActuel (Get-HNCSRDSchemaXml -Field $champ) -SchemaAttendu $attendu)
     if ($ecarts.Count -eq 0) { Add-HNCSRDResultat -Statut Inchange -Cible $cible; return }
     $bloquants = @($ecarts | Where-Object { -not $_.Corrigeable })
-    foreach ($b in $bloquants) { Add-HNCSRDResultat -Statut Erreur -Cible $cible -Message ("{0} : attendu « {1} », constaté « {2} » (non modifiable : supprimer/recréer manuellement après sauvegarde)" -f $b.Propriete, $b.Attendu, $b.Constate) }
+    foreach ($b in $bloquants) { Add-HNCSRDResultat -Statut Erreur -Cible $cible -Message ("{0} : attendu « {1} », constaté « {2} » (non modifiable par le script : supprimer puis recréer la colonne, voir README « Changement de type d'une colonne »)" -f $b.Propriete, $b.Attendu, $b.Constate) }
     if ($bloquants.Count -gt 0) { return }
     $texte = ($ecarts | ForEach-Object { '{0} « {1} » -> « {2} »' -f $_.Propriete, $_.Constate, $_.Attendu }) -join ' ; '
     if (Test-HNCSRDSimulation) { Add-HNCSRDResultat -Statut Simule -Cible $cible -Message $texte; return }
@@ -1918,12 +1918,70 @@ function Ensure-HNCSRDParameters {
     }
 }
 
+function Get-HNCSRDSeedCle {
+    <#
+    .SYNOPSIS
+        Clé de rapprochement d'un référentiel initial (spec § 2.2, v1.6.0 ; fonction pure).
+    .DESCRIPTION
+        Recherche de l'existant par Code si les lignes en portent un (ModelesActions), sinon par Title.
+        ChampReserve = IdHNCS si les lignes portent un identifiant réservé (Poles : POL-Px ; autres : plage
+        0001-0099 de 2026), sinon $null.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Lignes)
+    $champs = @()
+    if ($Lignes.Count -gt 0) { $champs = @($Lignes[0].PSObject.Properties.Name) }
+    $recherche = 'Title'
+    if ($champs -contains 'Code') { $recherche = 'Code' }
+    $reserve = $null
+    if ($champs -contains 'IdHNCS') { $reserve = 'IdHNCS' }
+    return [pscustomobject]@{ ChampRecherche = $recherche; ChampReserve = $reserve }
+}
+
+function Resolve-HNCSRDSeedAction {
+    <#
+    .SYNOPSIS
+        Décide du traitement d'une ligne de référentiel initial (fonction pure, spec § 2.2, v1.6.0).
+    .PARAMETER ParRecherche
+        Table valeur de la clé de recherche (Title ou Code) -> { Id ; IdHNCS } des éléments existants.
+    .PARAMETER ParIdHNCS
+        Table IdHNCS non vide -> { Id ; Cle } des éléments existants.
+    .OUTPUTS
+        { Action = Creer | Inchange | RenseignerId | Erreur ; ItemId ; Message }.
+        L'existant n'est jamais écrasé : seul un IdHNCS vide est complété par l'identifiant réservé ; un
+        identifiant réservé déjà porté par un autre élément est une erreur.
+    #>
+    [CmdletBinding()]
+    param(
+        [AllowEmptyString()][string]$Cle,
+        [AllowEmptyString()][string]$IdReserve,
+        [Parameter(Mandatory)][hashtable]$ParRecherche,
+        [Parameter(Mandatory)][hashtable]$ParIdHNCS
+    )
+    $resultat = { param($a, $i, $m) [pscustomobject]@{ Action = $a; ItemId = $i; Message = $m } }
+    $autre = $null
+    if ($IdReserve -and $ParIdHNCS.ContainsKey($IdReserve)) { $autre = $ParIdHNCS[$IdReserve] }
+    if ($ParRecherche.ContainsKey($Cle)) {
+        $ex = $ParRecherche[$Cle]
+        $idActuel = [string]$ex.IdHNCS
+        if (-not $IdReserve -or $idActuel -ceq $IdReserve) { return (& $resultat 'Inchange' $ex.Id 'Existant conservé (jamais écrasé)') }
+        if ($idActuel) { return (& $resultat 'Erreur' $ex.Id ("L'élément existant (ID {0}) porte l'identifiant {1} au lieu de l'identifiant réservé {2}" -f $ex.Id, $idActuel, $IdReserve)) }
+        if ($autre -and [int]$autre.Id -ne [int]$ex.Id) { return (& $resultat 'Erreur' $ex.Id ("Identifiant réservé {0} déjà porté par un autre élément (ID {1}, « {2} »)" -f $IdReserve, $autre.Id, $autre.Cle)) }
+        return (& $resultat 'RenseignerId' $ex.Id ("IdHNCS vide complété par l'identifiant réservé {0}" -f $IdReserve))
+    }
+    if ($autre) { return (& $resultat 'Erreur' $autre.Id ("Identifiant réservé {0} déjà porté par un autre élément (ID {1}, « {2} »)" -f $IdReserve, $autre.Id, $autre.Cle)) }
+    return (& $resultat 'Creer' $null 'Création')
+}
+
 function Ensure-HNCSRDSeeds {
     <#
     .SYNOPSIS
         Injecte les référentiels initiaux (seeds du modèle : Poles, DomainesCibles, ModelesActions,
-        RegistreModeles) sans jamais écraser un élément existant (clé IdHNCS, sinon Code, sinon Title).
+        RegistreModeles) sans jamais écraser un élément existant.
     .DESCRIPTION
+        Identifiants réservés (spec § 2.2, v1.6.0) : l'existant est recherché par Title (Code pour
+        ModelesActions) ; un IdHNCS vide reçoit l'identifiant réservé ; un identifiant réservé déjà porté par
+        un autre élément est une erreur (Resolve-HNCSRDSeedAction).
         Les marqueurs <…> sont résolus depuis Config.Parametres (ex. RegistreModeles.Proprietaire =
         <EmailDirectionRD>) ; les lookups sont résolus par IdHNCS (ex. POL-P2 -> ID du pôle). Les éléments
         créés avec un Statut reçoivent StatutPrecedent = Statut et DateStatut = date du déploiement
@@ -1939,19 +1997,45 @@ function Ensure-HNCSRDSeeds {
         $lignes = @($s.Value)
         if ($lignes.Count -eq 0) { continue }
         $champsLigne = @($lignes[0].PSObject.Properties.Name)
-        $champCle = 'Title'
-        if ($champsLigne -contains 'IdHNCS') { $champCle = 'IdHNCS' } elseif ($champsLigne -contains 'Code') { $champCle = 'Code' }
+        $seedCle = Get-HNCSRDSeedCle -Lignes $lignes
+        $champCle = $seedCle.ChampRecherche
         if (-not $liste) {
             if (Test-HNCSRDSimulation) { Add-HNCSRDResultat -Statut Simule -Cible $nomListe -Message "$($lignes.Count) éléments (liste à créer)"; continue }
             Add-HNCSRDResultat -Statut Erreur -Cible $nomListe -Message 'Liste absente'; continue
         }
         $types = Get-HNCSRDColumnTypes -Object $objet -Lot $Lot
-        $existants = Get-HNCSRDItemsParCle -List $liste -Champ $champCle
+        $parRecherche = @{}; $parId = @{}
+        foreach ($it in @(Get-PnPListItem -List $liste -PageSize 500)) {
+            $vc = [string]$it[$champCle]
+            $vi = ''
+            if ($seedCle.ChampReserve) { $vi = [string]$it['IdHNCS'] }
+            if ($vc) {
+                if ($parRecherche.ContainsKey($vc)) { Add-HNCSRDResultat -Statut Avertissement -Cible "$nomListe / $vc" -Message "Plusieurs éléments portent ce $champCle (ID $($parRecherche[$vc].Id) retenu, ID $($it.Id) ignoré)" }
+                else { $parRecherche[$vc] = [pscustomobject]@{ Id = [int]$it.Id; IdHNCS = $vi } }
+            }
+            if ($vi -and -not $parId.ContainsKey($vi)) { $parId[$vi] = [pscustomobject]@{ Id = [int]$it.Id; Cle = $vc } }
+        }
         $dateDeploiement = Get-Date
         foreach ($ligne in $lignes) {
             $cle = [string]$ligne.$champCle
+            $idReserve = ''
+            if ($seedCle.ChampReserve) { $idReserve = [string]$ligne.IdHNCS }
             $cible = "$nomListe / $cle"
-            if ($existants.ContainsKey($cle)) { Add-HNCSRDResultat -Statut Inchange -Cible $cible -Message 'Existant conservé (jamais écrasé)'; continue }
+            if ($idReserve) { $cible = "$cible ($idReserve)" }
+            $decision = Resolve-HNCSRDSeedAction -Cle $cle -IdReserve $idReserve -ParRecherche $parRecherche -ParIdHNCS $parId
+            if ($decision.Action -eq 'Inchange') { Add-HNCSRDResultat -Statut Inchange -Cible $cible -Message $decision.Message; continue }
+            if ($decision.Action -eq 'Erreur') { Add-HNCSRDResultat -Statut Erreur -Cible $cible -Message $decision.Message; continue }
+            if ($decision.Action -eq 'RenseignerId') {
+                if (Test-HNCSRDSimulation) { Add-HNCSRDResultat -Statut Simule -Cible $cible -Message $decision.Message; continue }
+                try {
+                    Set-PnPListItem -List $liste -Identity $decision.ItemId -Values @{ IdHNCS = $idReserve } -ErrorAction Stop | Out-Null
+                    $parId[$idReserve] = [pscustomobject]@{ Id = [int]$decision.ItemId; Cle = $cle }
+                    $script:HNCSRD.CacheLookup.Remove("$nomListe|$idReserve")
+                    Add-HNCSRDResultat -Statut MisAJour -Cible $cible -Message $decision.Message
+                }
+                catch { Add-HNCSRDResultat -Statut Erreur -Cible $cible -Message $_.Exception.Message }
+                continue
+            }
             try {
                 $valeurs = @{}
                 foreach ($nomChamp in $champsLigne) {
@@ -2163,6 +2247,7 @@ Export-ModuleMember -Function @(
     'Get-HNCSRDTransitionValeurs', 'Compare-HNCSRDTransitionItem',
     'Ensure-HNCSRDSite', 'Ensure-HNCSRDPermissionLevels', 'Ensure-HNCSRDGroups', 'Set-HNCSRDVersioning', 'Ensure-HNCSRDList',
     'Ensure-HNCSRDTitleColumn', 'Ensure-HNCSRDColumn', 'Set-HNCSRDListValidation', 'Ensure-HNCSRDView', 'Sync-HNCSRDAttributions',
+    'Get-HNCSRDSeedCle', 'Resolve-HNCSRDSeedAction',
     'Set-HNCSRDListPermissions', 'Set-HNCSRDSitePermissions', 'Get-HNCSRDGroupesParDefaut', 'Clear-HNCSRDGroupesParDefaut', 'Ensure-HNCSRDParameters', 'Ensure-HNCSRDSeeds', 'Sync-HNCSRDTransitions',
     'Ensure-HNCSRDNavigation', 'Ensure-HNCSRDTeam'
 )

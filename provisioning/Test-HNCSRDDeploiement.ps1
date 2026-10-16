@@ -231,12 +231,15 @@ try {
         if (-not $ls) { continue }
         $lignes = @($s.Value)
         if ($lignes.Count -eq 0) { continue }
-        $cle = 'Title'
-        if ($lignes[0].PSObject.Properties.Name -contains 'IdHNCS') { $cle = 'IdHNCS' } elseif ($lignes[0].PSObject.Properties.Name -contains 'Code') { $cle = 'Code' }
+        # Identifiants réservés (spec § 2.2, v1.6.0) : recherche par Title (Code pour ModelesActions).
+        $sc = Get-HNCSRDSeedCle -Lignes $lignes
+        $cle = $sc.ChampRecherche
         $items = Get-HNCSRDItemsParCle -List $ls -Champ $cle
         foreach ($l in $lignes) {
             $script:Controles++
-            if (-not $items.ContainsKey([string]$l.$cle)) { Add-Ecart 'Seeds' $s.Name ([string]$l.$cle) 'présent' 'absent' 'Avertissement' }
+            $vc = [string]$l.$cle
+            if (-not $items.ContainsKey($vc)) { Add-Ecart 'Seeds' $s.Name $vc 'présent' 'absent' 'Avertissement'; continue }
+            if ($sc.ChampReserve) { Test-Egal 'Seeds' $s.Name "$vc / IdHNCS réservé" ([string]$l.IdHNCS) ([string]$items[$vc]['IdHNCS']) }
         }
     }
 

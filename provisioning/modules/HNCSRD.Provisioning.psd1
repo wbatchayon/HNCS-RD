@@ -23,7 +23,7 @@
         'Get-HNCSRDTransitionValeurs', 'Compare-HNCSRDTransitionItem',
         'Ensure-HNCSRDSite', 'Ensure-HNCSRDPermissionLevels', 'Ensure-HNCSRDGroups', 'Set-HNCSRDVersioning', 'Ensure-HNCSRDList',
         'Ensure-HNCSRDTitleColumn', 'Ensure-HNCSRDColumn', 'Set-HNCSRDListValidation', 'Ensure-HNCSRDView', 'Sync-HNCSRDAttributions',
-        'Set-HNCSRDListPermissions', 'Set-HNCSRDSitePermissions', 'Get-HNCSRDGroupesParDefaut', 'Clear-HNCSRDGroupesParDefaut', 'Ensure-HNCSRDParameters', 'Ensure-HNCSRDSeeds', 'Sync-HNCSRDTransitions',
+        'Get-HNCSRDSeedCle', 'Resolve-HNCSRDSeedAction', 'Set-HNCSRDListPermissions', 'Set-HNCSRDSitePermissions', 'Get-HNCSRDGroupesParDefaut', 'Clear-HNCSRDGroupesParDefaut', 'Ensure-HNCSRDParameters', 'Ensure-HNCSRDSeeds', 'Sync-HNCSRDTransitions',
         'Ensure-HNCSRDNavigation', 'Ensure-HNCSRDTeam'
     )
     CmdletsToExport      = @()

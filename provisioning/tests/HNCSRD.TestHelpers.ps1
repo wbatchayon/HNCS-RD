@@ -372,5 +372,51 @@ function Invoke-HNCSRDPureTests {
             if (-not $cible.prefix) { & $echec "$($o.name).$($c.name) : la cible $($c.lookup) n'a pas d'IdHNCS" }
         }
     }
+    # Référentiels : identifiants réservés (spec § 2.2, v1.6.0)
+    foreach ($sp in $modele.seeds.PSObject.Properties) {
+        $sc = Get-HNCSRDSeedCle -Lignes @($sp.Value)
+        $attendu = 'Title'; if ($sp.Name -eq 'ModelesActions') { $attendu = 'Code' }
+        if ($sc.ChampRecherche -ne $attendu) { & $echec "Seed $($sp.Name) : recherche par $($sc.ChampRecherche) (attendu $attendu)" }
+        $vusR = @{}; $vusI = @{}
+        foreach ($ligne in @($sp.Value)) {
+            $vr = [string]$ligne.($sc.ChampRecherche)
+            if (-not $vr -or $vusR.ContainsKey($vr)) { & $echec "Seed $($sp.Name) : clé de recherche vide ou en double « $vr »" }
+            $vusR[$vr] = $true
+            if ($sc.ChampReserve) {
+                $ir = [string]$ligne.IdHNCS
+                if ($vusI.ContainsKey($ir)) { & $echec "Seed $($sp.Name) : identifiant réservé en double $ir" }
+                $vusI[$ir] = $true
+                $o = Get-HNCSRDObject -Name $sp.Name -Model $modele
+                $ok = $false
+                if ($sp.Name -eq 'Poles') { $ok = ($ir -ceq ('POL-' + [string]$ligne.CodePole)) }
+                elseif ($ir -match ('^' + [regex]::Escape([string]$o.prefix) + '-2026-00(\d\d)$')) { $ok = ([int]$Matches[1] -ge 1) }
+                if (-not $ok) { & $echec "Seed $($sp.Name) : identifiant $ir hors plage réservée" }
+            }
+        }
+    }
+    $parR = @{ 'Pôle A' = [pscustomobject]@{ Id = 1; IdHNCS = '' }; 'Pôle B' = [pscustomobject]@{ Id = 2; IdHNCS = 'POL-P2' }; 'Pôle C' = [pscustomobject]@{ Id = 3; IdHNCS = 'POL-P9' } }
+    $parI = @{ 'POL-P2' = [pscustomobject]@{ Id = 2; Cle = 'Pôle B' }; 'POL-P9' = [pscustomobject]@{ Id = 3; Cle = 'Pôle C' } }
+    $cas = @(
+        @{ C = 'Pôle A'; I = 'POL-P1'; A = 'RenseignerId' },
+        @{ C = 'Pôle B'; I = 'POL-P2'; A = 'Inchange' },
+        @{ C = 'Pôle C'; I = 'POL-P3'; A = 'Erreur' },
+        @{ C = 'Pôle D'; I = 'POL-P4'; A = 'Creer' },
+        @{ C = 'Pôle D'; I = 'POL-P2'; A = 'Erreur' },
+        @{ C = 'Pôle A'; I = 'POL-P9'; A = 'Erreur' },
+        @{ C = 'Pôle A'; I = ''; A = 'Inchange' },
+        @{ C = 'Nouveau'; I = ''; A = 'Creer' }
+    )
+    foreach ($k in $cas) {
+        $d = Resolve-HNCSRDSeedAction -Cle $k.C -IdReserve $k.I -ParRecherche $parR -ParIdHNCS $parI
+        if ($d.Action -ne $k.A) { & $echec ("Identifiants réservés : {0} / {1} -> {2} (attendu {3})" -f $k.C, $k.I, $d.Action, $k.A) }
+    }
+    # RX-01 : empreintes longues en Note brute (masquées des formulaires)
+    foreach ($ref in @('Livrables.EmpreinteRevue', 'Livrables.EmpreinteCommentaire', 'ComptesRendus.EmpreinteRevue')) {
+        $nl, $nc = $ref -split '\.'
+        $col = @((Get-HNCSRDObject -Name $nl -Model $modele).columns | Where-Object { $_.name -eq $nc })
+        if ($col.Count -ne 1) { & $echec "$ref absente du modèle"; continue }
+        $xe = ([xml](ConvertTo-HNCSRDFieldXml -Column $col[0] -Model $modele)).DocumentElement
+        if ($xe.GetAttribute('Type') -ne 'Note' -or $xe.GetAttribute('RichText') -ne 'FALSE' -or $xe.GetAttribute('ShowInEditForm') -ne 'FALSE') { & $echec "$ref : Note brute masquée attendue" }
+    }
     return [pscustomobject]@{ Colonnes = $nbColonnes; Echecs = $echecs.ToArray() }
 }

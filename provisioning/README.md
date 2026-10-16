@@ -78,7 +78,7 @@ simulé / avertissements / erreurs).
 | `Validation` | § 2.4 | `ValidationFormula` / `ValidationMessage` après toutes les colonnes (noms internes traduits en noms affichés) |
 | `Vues` | `specs/sharepoint-vues.md` | CAML généré (`ConvertTo-HNCSRDCaml`), 30 éléments par page, vue par défaut, regroupements dépliés ; listes : `LinkTitle` (en tête si la vue ne cite pas `Title`) ; bibliothèques : `DocIcon` et `LinkFilename` en tête ; mise à jour de la vue de même nom |
 | `Permissions` | § 7.2, § 7.3 | Héritage rompu sans copie (une seule fois, sous-éléments préservés) ; attributions = matrice (`FC`, `CSS`, `R` ; `R+IL(x)` → `R` ; `—` et `IL(x)` → rien) ; site : G_PROP FC, autres R ; attributions non prévues retirées et journalisées ; « Accès limité » jamais retiré ; groupes par défaut du site vidés et sans attribution (jamais supprimés) ; listes système laissées en héritage |
-| `Referentiels` | `specs/referentiels-initiaux.md` | Paramètres (marqueurs `<BoiteRD>`… remplacés depuis `Parametres` de la config) et seeds (pôles, domaines avec résolution `POL-Px`, modèles d'actions, registre des modèles avec `Proprietaire` = `<EmailDirectionRD>`) ; éléments injectés : `StatutPrecedent` = `Statut`, `DateStatut` = date du déploiement ; **jamais d'écrasement** d'une valeur non vide (clé Title, IdHNCS ou Code), valeur de paramètre vide complétée depuis la configuration |
+| `Referentiels` | `specs/referentiels-initiaux.md` | Paramètres (marqueurs `<BoiteRD>`… remplacés depuis `Parametres` de la config) et seeds (pôles, domaines avec résolution `POL-Px`, modèles d'actions, registre des modèles avec `Proprietaire` = `<EmailDirectionRD>`) ; identifiants réservés (recherche par `Title` ou `Code`, `IdHNCS` vide complété, erreur si l'identifiant est déjà porté) ; éléments injectés : `StatutPrecedent` = `Statut`, `DateStatut` = date du déploiement ; **jamais d'écrasement** d'une valeur non vide (clé Title, IdHNCS ou Code), valeur de paramètre vide complétée depuis la configuration |
 | `Transitions` | § 6, § 11 | `TransitionsStatuts` synchronisée **en entier** quel que soit le lot (clé = code) : ajout, mise à jour, `Actif` = Non pour les codes disparus, jamais de suppression |
 | `Navigation` | § 4.2 | Navigation rapide : A. Recrutement, B. Gestion des alternants, C. Production R&D, D. Écoles et partenariats, Bibliothèques, Technique |
 | `Teams` | § 2.2, H-44 | Si `Teams.Creer` = true : équipe distincte (canaux Général, Comité R&D, Alternants), onglet site web vers le site ; ce n'est pas le référentiel |
@@ -97,6 +97,32 @@ simulé / avertissements / erreurs).
   `Test-HNCSRDDeploiement.ps1`, qui contrôle aussi l'absence de doublons d'`IdHNCS` non vides et que les
   groupes par défaut du site sont vides.
 - En cas d'échec, corriger la cause et relancer la même commande : chaque objet est traité indépendamment.
+
+## Référentiels initiaux : identifiants réservés
+
+Les éléments des référentiels initiaux portent des `IdHNCS` **réservés** fixés par la spec (§ 2.2 :
+plage `0001`–`0099` de 2026, `POL-Px` pour les pôles). L'étape `Referentiels` recherche l'existant par
+`Title` (par `Code` pour `ModelesActions` ; par clé `Title` pour `Parametres`), complète un `IdHNCS` vide
+avec l'identifiant réservé, ne modifie aucun autre champ, et signale une **erreur** si l'identifiant réservé
+est déjà porté par un autre élément ou si l'élément trouvé porte un autre identifiant (correction manuelle).
+
+## Changement de type d'une colonne (site déjà déployé)
+
+Le script ne change jamais le type d'une colonne existante (erreur « Type : attendu … constaté … »). La
+spec v1.6.0 (RX-01) fait passer de `Text` à `Note` (texte brut) trois empreintes techniques :
+`Livrables.EmpreinteRevue`, `Livrables.EmpreinteCommentaire` et `ComptesRendus.EmpreinteRevue`. Sur un
+déploiement neuf, rien à faire. Sur un site déjà déployé :
+
+1. Désactiver les flux PA-07 et PA-08 (et PA-00D) pendant l'opération.
+2. Supprimer les trois colonnes (paramètres de la liste ou
+   `Remove-PnPField -List Lists/Livrables -Identity EmpreinteRevue -Force`, idem pour
+   `EmpreinteCommentaire` et pour `Lists/ComptesRendus` / `EmpreinteRevue`). Leur contenu est purement
+   technique : aucune donnée métier n'est perdue.
+3. Rejouer `pwsh ./provisioning/Deploy-HNCSRD.ps1 -Lot <n> -Etapes Colonnes` : les colonnes sont recréées
+   avec le même nom interne, en type `Note`, masquées des formulaires.
+4. Réactiver les flux : PA-00D réinitialise les empreintes vides à partir des valeurs courantes (§ 6.5,
+   « empreinte vide = non encore initialisée »).
+5. Contrôler avec `Test-HNCSRDDeploiement.ps1`.
 
 ## Réutilisation par les autres scripts
 
