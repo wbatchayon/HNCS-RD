@@ -815,6 +815,25 @@ def f_in(t: str, c: str, values: list[str], name: str) -> dict:
     }
 
 
+def f_bool(t: str, c: str, value: bool, name: str) -> dict:
+    """Filtre de visuel « colonne booléenne = valeur »."""
+    alias = t[0].lower()
+    return {
+        "name": name,
+        "field": col(t, c),
+        "type": "Categorical",
+        "filter": {
+            "Version": 2,
+            "From": [{"Name": alias, "Entity": t, "Type": 0}],
+            "Where": [{"Condition": {"In": {
+                "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": alias}}, "Property": c}}],
+                "Values": [[{"Literal": {"Value": "true" if value else "false"}}]],
+            }}}],
+        },
+        "howCreated": "User",
+    }
+
+
 def f_not_blank(t: str, c: str, name: str) -> dict:
     alias = t[0].lower()
     return {
@@ -999,7 +1018,9 @@ def build_pages() -> list[Page]:
           {"Values": [col("SujetsRD", "IdHNCS"), col("GitlabSync", "Milestone"), col("GitlabSync", "MilestoneEcheance"),
                       col("GitlabSync", "MilestoneEtat"), col("GitlabSync", "IssuesOuvertes"),
                       col("GitlabSync", "MRsOuvertes"), proj(col("GitlabSync", "EcartEcheance"), "Écart d'échéance")]},
-          title="Jalons GitLab", sort=[(col("GitlabSync", "MilestoneEcheance"), "Ascending")])
+          title="Jalons GitLab", sort=[(col("GitlabSync", "MilestoneEcheance"), "Ascending")],
+          # RX-07 : les lignes orphelines (jalon supprimé, sujet détaché) sont exclues des indicateurs et du tableau.
+          filters=[f_bool("GitlabSync", "Orpheline", False, hexid("f", "gitlab-orpheline"))])
     pages.append(p)
 
     # 5. Établissements et partenariats -------------------------------

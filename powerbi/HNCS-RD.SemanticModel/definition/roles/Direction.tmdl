@@ -1,6 +1,10 @@
 role Direction
 	modelPermission: read
 
+	tablePermission Parametres = Parametres[Cle] = "Delai.SeuilAttenteCandidatureJours"
+
+	tablePermission HistoriqueStatuts = FALSE ()
+
 	tablePermission Alternants
 		columnPermission NomAffichage
 			metadataPermission: none

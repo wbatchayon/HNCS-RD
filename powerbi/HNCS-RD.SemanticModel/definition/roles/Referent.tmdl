@@ -14,11 +14,16 @@ role Referent
 					)
 				)
 
+	tablePermission ActionsIntegration =
+			NOT ISBLANK ( ActionsIntegration[AlternantId] ) && ActionsIntegration[AlternantId] IN CALCULATETABLE ( VALUES ( Affectations[AlternantId] ), FILTER ( ALL ( Affectations ), Affectations[ReferentId] IN CALCULATETABLE ( VALUES ( Referents[Id] ), Referents[CompteEmail] = USERPRINCIPALNAME () ) ) )
+
 	tablePermission Candidatures = FALSE ()
 
 	tablePermission Entretiens = FALSE ()
 
-	tablePermission ActionsIntegration = FALSE ()
+	tablePermission Parametres = Parametres[Cle] = "Delai.SeuilAttenteCandidatureJours"
+
+	tablePermission HistoriqueStatuts = FALSE ()
 
 	annotation HNCS_Membres = Référents (affectation dans le service Power BI, H-16)
 

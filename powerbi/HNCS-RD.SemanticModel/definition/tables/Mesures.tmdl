@@ -325,7 +325,7 @@ table Mesures
 		displayFolder: Qualité
 		lineageTag: e02298d6-45ea-5356-8327-756b2fddb9d9
 
-	measure 'Écarts d''échéance GitLab' = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE () )
+	measure 'Écarts d''échéance GitLab' = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE (), GitlabSync[Orpheline] = FALSE () )
 		formatString: #,##0
 		displayFolder: Qualité
 		lineageTag: 22b25e7d-d4cc-570e-9233-94f38930a4e4

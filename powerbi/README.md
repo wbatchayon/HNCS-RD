@@ -1,7 +1,7 @@
 # Power BI — HNCS-RD (lot 4)
 
 Projet Power BI du système de suivi R&D, au format **PBIP** : modèle sémantique en **TMDL**, rapport au format
-**PBIR**. Il met en œuvre `spec.md` § 9 (v1.3.0, qui prévaut) et `specs/powerbi-rapport.md`. Reporting **en lecture
+**PBIR**. Il met en œuvre `spec.md` § 9 (v1.6.0, qui prévaut) et `specs/powerbi-rapport.md`. Reporting **en lecture
 seule** : aucune réécriture vers SharePoint.
 
 ## 1. Structure
@@ -134,19 +134,23 @@ la période sélectionnée). Les relations communications → livrable source et
 
 | Rôle | Membres (service) | RLS | OLS |
 | --- | --- | --- | --- |
-| Direction | Direction Générale | aucune | `Alternants[NomAffichage]` : `metadataPermission: none` |
+| Direction | Direction Générale | `Parametres` : seule la clé `Delai.SeuilAttenteCandidatureJours` ; `HistoriqueStatuts` : `FALSE ()` | `Alternants[NomAffichage]` : `metadataPermission: none` |
 | PilotageRD | Direction R&D, équipe R&D | aucune | aucune |
 | Administration | Équipe administrative | `Candidatures` : `NOT ISBLANK ( Candidatures[DateTransmissionAdmin] )` (et donc leurs entretiens) ; `Livrables`, `ComptesRendus`, `Mobilisations`, `GitlabSync` : `FALSE ()` | aucune |
-| RelationEcoles | Relation écoles (G_ECO) | `Candidatures`, `Entretiens`, `ActionsIntegration`, `Livrables`, `ComptesRendus`, `Mobilisations`, `GitlabSync` : `FALSE ()` | aucune |
-| Referent | Référents | `Referents[CompteEmail] = USERPRINCIPALNAME ()` ; alternants de ses affectations ; `Candidatures`, `Entretiens`, `ActionsIntegration` : `FALSE ()` | aucune |
+| RelationEcoles | Relation écoles (G_ECO) | `Candidatures`, `Entretiens`, `ActionsIntegration`, `Livrables`, `ComptesRendus`, `Mobilisations`, `GitlabSync` : `FALSE ()` ; `Parametres` : seule la clé `Delai.SeuilAttenteCandidatureJours` ; `HistoriqueStatuts` : `FALSE ()` | `Alternants[NomAffichage]` : `metadataPermission: none` |
+| Referent | Référents | `Referents[CompteEmail] = USERPRINCIPALNAME ()` ; alternants de ses affectations ; `ActionsIntegration` : actions rattachées aux alternants de ses affectations (`AlternantId` non vide) ; `Candidatures`, `Entretiens` : `FALSE ()` ; `Parametres` : seule la clé `Delai.SeuilAttenteCandidatureJours` ; `HistoriqueStatuts` : `FALSE ()` | aucune |
 
 - Les membres sont affectés **dans le service** (H-16) : *Modèle sémantique > Sécurité*. Aucun membre n'est versionné.
 - Les membres doivent être **Lecteurs** de l'espace (les rôles Administrateur, Membre et Contributeur ne sont pas
   soumis à la RLS/OLS). Les alternants n'ont **aucun** accès (H-19) ; pas de rôle Communication / Avant-vente (H-52).
 - Une personne relève d'**un seul** rôle : Power BI interdit de cumuler un rôle avec OLS (`Direction`) et un rôle avec
   RLS (`Administration`, `RelationEcoles`, `Referent`).
-- `NomAffichage` n'est utilisé par aucun visuel : l'OLS est une défense en profondeur, et aucun visuel n'est en erreur
-  pour la Direction. Les tableaux identifient les alternants par leur `IdHNCS`.
+- `NomAffichage` n'est utilisé par aucun visuel : l'OLS est une défense en profondeur, et aucun visuel n'est en erreur.
+  Règle (RX-03) : la colonne est masquée par OLS pour **tout rôle dont le groupe SharePoint n'a pas d'accès à la liste
+  `Alternants`** (matrice § 7.3 : G_DIR et G_ECO → `Direction`, `RelationEcoles`) ; `check_pbip.py` la vérifie à partir
+  de la matrice. Les tableaux identifient les alternants par leur `IdHNCS`.
+- RX-04 : les rôles `Direction`, `RelationEcoles` et `Referent` ne voient de `Parametres` que la clé du seuil d'attente
+  (utilisée par `[Seuil attente (j)]`) et aucune ligne de `HistoriqueStatuts` (`[Transitions refusées]` vide).
 - La RLS `Referent` compare `USERPRINCIPALNAME ()` à l'adresse `EMail` du compte SharePoint (UPN = adresse, H-47).
 
 ### 5.1 Pages par public : audiences de l'application Power BI
@@ -177,7 +181,7 @@ RLS / OLS. Les liens `LienDocument` (page 4) sont visibles de la Direction, qui 
 | 1 | Vue exécutive | 10 cartes (dont `[Sujets actifs]`), 6 jauges indicateur / `[Cible]`, jauge couverture (0-100 %), livrables par statut, candidatures par statut ; segments année, trimestre |
 | 2 | Recrutement | 8 cartes, entonnoir (… → `[Candidatures avec entretien réalisé]` → …), candidatures par mois × canal, motifs agrégés, entretiens à venir ; segments canal, offre, période, statut |
 | 3 | Effectifs et encadrement | 6 cartes, alternants par pôle, charge des référents, matrice établissement × pôle, tableau des affectations (IdHNCS affectation et alternant, sans nom) ; segments pôle, établissement, référent, période |
-| 4 | Projets et livrables | 9 cartes (dont `[Écarts d'échéance GitLab]`), livrables type × statut, échéances par semaine, avancement par sujet, livrables et documents (`LienDocument`), tous les jalons GitLab (colonne `EcartEcheance`) ; segments pôle (`PoleNom`), sujet, type, période |
+| 4 | Projets et livrables | 9 cartes (dont `[Écarts d'échéance GitLab]`), livrables type × statut, échéances par semaine, avancement par sujet, livrables et documents (`LienDocument`), jalons GitLab non orphelins (colonne `EcartEcheance`, filtre de visuel `Orpheline` = Faux, RX-07) ; segments pôle (`PoleNom`), sujet, type, période |
 | 5 | Établissements et partenariats | 5 cartes, alternants accueillis par établissement, recommandations, conventions, prochaines interactions (`DateProchaineAction`) ; segments établissement, type de convention |
 | 6 | Communications et valorisation | 4 cartes, publications externes par mois (`DateEffective`), communications par canal, communications publiées (IdHNCS, titre, canal, date, externe, `UrlPublication`) ; segments canal, période |
 | 7 | Comité R&D | 6 cartes ; tableaux livrables (14 jours / retard), affectations à risque ou bloquées, sujets bloqués, comptes rendus manquants ; segments pôle, référent |
@@ -282,11 +286,14 @@ apostrophe est doublée (`'Établissement d''accueil'`) et un booléen vaut `1` 
 | Livrables valorisés | CommunicationsRD | nombre de `LivrableSourceId` **distincts non vides** parmi `Statut eq 'Publiée'` | — |
 | Actions en retard | ActionsIntegration | statut ∈ {À faire, En cours, Bloquée} et `Echeance` < aujourd'hui | — |
 | Transitions refusées | HistoriqueStatuts | `Resultat eq 'Refusée — annulée'` | — |
+| Écarts d'échéance GitLab | GitlabSync | `EcartEcheance eq 1 and Orpheline ne 1` (vide = Non ; lignes orphelines exclues) | — |
 
 Contrôles complémentaires par rôle (*Afficher en tant que* ou API `executeQueries` avec `impersonatedUserName`) :
 `Administration` ne voit que les candidatures transmises et aucun livrable ; `RelationEcoles` aucune candidature, aucun
-livrable ni compte rendu ; `Referent` uniquement les alternants de ses affectations ; `Direction` aucune colonne
-`NomAffichage`.
+livrable ni compte rendu, ni `NomAffichage` ; `Referent` uniquement les alternants de ses affectations et leurs actions
+(`[Actions en retard]` recalculé sur ce périmètre) ; `Direction` aucune colonne `NomAffichage` ; pour `Direction`,
+`RelationEcoles` et `Referent`, `Parametres` réduit à `Delai.SeuilAttenteCandidatureJours` et `[Transitions refusées]`
+vide.
 
 ## 10. Divergences et questions pour la spec
 
@@ -303,7 +310,8 @@ Le projet n'a plus **aucune** surcharge de mesure ni mesure hors spec.
 E-01 section « Technique » de § 9.5, E-02 tableau des communications publiées avec colonne `Externe`, E-03
 `LienDocument` visible de la Direction (accepté), E-04 taux de capitalisation (effet voulu), E-05 RLS Administration
 sans filtre des actions (documenté). v1.3.0 ajoute `Candidatures.DoublonVerifie` et le filtre correspondant de
-`[Doublons signalés]`. Aucun point ouvert côté Power BI.
+`[Doublons signalés]`. v1.6.0 (revue croisée) : RX-03 OLS `NomAffichage` pour RelationEcoles, RX-04 `Parametres` /
+`HistoriqueStatuts` restreints, RX-05 actions du référent, RX-07 `GitlabSync.Orpheline`. Aucun point ouvert côté Power BI.
 
 ## 11. Limites
 

@@ -1,6 +1,6 @@
 # Mesures du modèle Power BI HNCS-RD
 
-> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` § 9.5 (qui prévaut), sans écart (spec v1.3.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, § 8.2 indicateurs recommandés) — document source non versionné (H-30).
+> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` § 9.5 (qui prévaut), sans écart (spec v1.6.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, § 8.2 indicateurs recommandés) — document source non versionné (H-30).
 
 Conventions communes :
 
@@ -37,7 +37,7 @@ Candidatures actives =
 
 - **Définition** : Seuil (jours) au-delà duquel une candidature active est « en attente » : paramètre `Delai.SeuilAttenteCandidatureJours` (10 par défaut).
 - **Format** : `0` — dossier d'affichage « Recrutement »
-- **Point de vigilance** : Repli sur 10 si la clé est absente (valeur vide) ou non numérique (spec v1.1.0).
+- **Point de vigilance** : Repli sur 10 si la clé est absente (valeur vide) ou non numérique. Pour les rôles Direction, RelationEcoles et Referent, la RLS ne laisse voir de `Parametres` que cette clé (RX-04) : la mesure reste juste.
 
 ```dax
 Seuil attente (j) =
@@ -655,7 +655,7 @@ Livrables valorisés =
 
 - **Définition** : Actions d'intégration / checklists non terminées dont l'échéance est dépassée.
 - **Format** : `#,##0` — dossier d'affichage « Qualité »
-- **Point de vigilance** : La relation `ActionsIntegration[AlternantId]` → `Alternants` est active : un filtre sur les alternants (pôle, établissement) écarte les actions rattachées à une seule candidature. Les rôles Referent et RelationEcoles ne voient aucune action (RLS).
+- **Point de vigilance** : La relation `ActionsIntegration[AlternantId]` → `Alternants` est active : un filtre sur les alternants (pôle, établissement) écarte les actions rattachées à une seule candidature. RLS : le rôle Referent ne voit que les actions des alternants de ses affectations (RX-05) ; RelationEcoles n'en voit aucune.
 
 ```dax
 Actions en retard =
@@ -666,7 +666,7 @@ Actions en retard =
 
 - **Définition** : Transitions de statut annulées par les flux (`Refusée — annulée` dans `HistoriqueStatuts`).
 - **Format** : `#,##0` — dossier d'affichage « Qualité »
-- **Point de vigilance** : Indicateur de qualité du processus, pas de faute individuelle (H-17).
+- **Point de vigilance** : Indicateur de qualité du processus, pas de faute individuelle (H-17). Vide pour les rôles Direction, RelationEcoles et Referent (`HistoriqueStatuts` : `FALSE ()`, RX-04).
 
 ```dax
 Transitions refusées =
@@ -675,13 +675,13 @@ Transitions refusées =
 
 ### [Écarts d'échéance GitLab]
 
-- **Définition** : Jalons GitLab dont l'échéance diffère de celle du livrable rattaché (lot 5).
+- **Définition** : Jalons GitLab non orphelins dont l'échéance diffère de celle du livrable rattaché (lot 5).
 - **Format** : `#,##0` — dossier d'affichage « Qualité »
-- **Point de vigilance** : Vide tant que la synchronisation GitLab (lot 5) n'est pas déployée.
+- **Point de vigilance** : Les lignes orphelines (jalon supprimé, sujet détaché : `Orpheline` = Oui) sont conservées dans `GitlabSync` mais exclues (RX-07) ; vide tant que la synchronisation GitLab (lot 5) n'est pas déployée.
 
 ```dax
 Écarts d'échéance GitLab =
-    CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE () )
+    CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE (), GitlabSync[Orpheline] = FALSE () )
 ```
 
 ## Objectifs indicatifs

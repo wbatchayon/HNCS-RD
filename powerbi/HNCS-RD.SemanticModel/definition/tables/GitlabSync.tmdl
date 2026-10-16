@@ -92,6 +92,14 @@ table GitlabSync
 
 		annotation SummarizationSetBy = Automatic
 
+	column Orpheline
+		dataType: boolean
+		lineageTag: f2a15c9a-60d2-5a52-aeb4-0d2fbaee07c7
+		summarizeBy: none
+		sourceColumn: Orpheline
+
+		annotation SummarizationSetBy = Automatic
+
 	column DateSynchro
 		dataType: dateTime
 		formatString: dd/MM/yyyy HH:mm
@@ -105,9 +113,9 @@ table GitlabSync
 		mode: import
 		source =
 				let
-					Source = fnLireListeSharePoint("GitlabSync", {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "DateSynchro"}, {}, true),
-					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"SujetId", "int"}, {"GitlabProjetId", "int"}, {"Milestone", "text"}, {"MilestoneEcheance", "date"}, {"MilestoneEtat", "text"}, {"IssuesOuvertes", "int"}, {"IssuesFermees", "int"}, {"MRsOuvertes", "int"}, {"EcartEcheance", "bool"}, {"DateSynchro", "datetime"}}),
-					Resultat = Table.SelectColumns(Typee, {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "DateSynchro"})
+					Source = fnLireListeSharePoint("GitlabSync", {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "Orpheline", "DateSynchro"}, {}, true),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"SujetId", "int"}, {"GitlabProjetId", "int"}, {"Milestone", "text"}, {"MilestoneEcheance", "date"}, {"MilestoneEtat", "text"}, {"IssuesOuvertes", "int"}, {"IssuesFermees", "int"}, {"MRsOuvertes", "int"}, {"EcartEcheance", "bool"}, {"Orpheline", "bool"}, {"DateSynchro", "datetime"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "Orpheline", "DateSynchro"})
 				in
 					Resultat
 

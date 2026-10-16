@@ -58,6 +58,16 @@ EXTRA_PAGE_REFS = {
     6: [("Column", "CommunicationsRD", "Title"), ("Column", "CommunicationsRD", "UrlPublication")],
 }
 REPORT_SUBSPEC = ROOT / "specs" / "powerbi-rapport.md"
+# Rôle Power BI → groupes SharePoint de son public (§ 7.1, § 9.6) ; sert à la règle OLS RX-03.
+ROLE_GROUPS = {
+    "Direction": ["G_DIR"],
+    "PilotageRD": ["G_DRD", "G_RD"],
+    "Administration": ["G_ADM"],
+    "RelationEcoles": ["G_ECO"],
+    "Referent": ["G_REF"],
+}
+# Filtres de visuel exigés : (page, table, colonne, valeur littérale) — RX-07 : jalons orphelins exclus.
+REQUIRED_VISUAL_FILTERS = [(4, "GitlabSync", "Orpheline", "false")]
 
 errors: list[str] = []
 
@@ -695,9 +705,21 @@ def check_roles(model: dict, tables: dict) -> None:
                     err(f"Rôle {name} : colonne inconnue {t}[{c}]")
     if set(roles) - set(EXPECTED_ROLES):
         err(f"Rôles hors spec : {sorted(set(roles) - set(EXPECTED_ROLES))}")
-    d = roles.get("Direction")
-    if d and d["tables"].get("Alternants", {}).get("columns", {}).get("NomAffichage") != "none":
-        err("Rôle Direction : columnPermission NomAffichage metadataPermission: none requis (P-04)")
+    # RX-03 : NomAffichage masqué (OLS) pour tout rôle dont un groupe SharePoint n'a aucun accès à Alternants (§ 7.3).
+    matrix = model["matrix"].get("Alternants", {})
+    for name, groups in ROLE_GROUPS.items():
+        r = roles.get(name)
+        if not r:
+            continue
+        no_access = any(matrix.get(g, "—") in ("—", "", None) for g in groups)
+        masked = r["tables"].get("Alternants", {}).get("columns", {}).get("NomAffichage") == "none"
+        if no_access and not masked:
+            err(f"Rôle {name} : groupe sans accès SharePoint à Alternants ({', '.join(groups)}) → "
+                "columnPermission NomAffichage metadataPermission: none requis (P-04, RX-03)")
+    for name in ("Direction", "RelationEcoles"):
+        d = roles.get(name)
+        if d and d["tables"].get("Alternants", {}).get("columns", {}).get("NomAffichage") != "none":
+            err(f"Rôle {name} : columnPermission NomAffichage metadataPermission: none requis (P-04)")
 
 
 def iter_refs(node, aliases=None):
@@ -789,6 +811,21 @@ def check_report(docs: dict, tables: dict) -> None:
             if v["name"] in vnames:
                 err(f"{rel(vf)} : nom de visuel en double")
             vnames.add(v["name"])
+            for fpage, ftable, fcol, fval in REQUIRED_VISUAL_FILTERS:
+                if idx != fpage or v.get("visual", {}).get("visualType") != "tableEx":
+                    continue
+                if not any(e == ftable for _, e, _ in iter_refs(v.get("visual", {}).get("query", {}))):
+                    continue
+                ok = False
+                for f in v.get("filterConfig", {}).get("filters", []):
+                    fld = f.get("field", {}).get("Column", {})
+                    if fld.get("Property") == fcol and fld.get("Expression", {}).get("SourceRef", {}).get("Entity") == ftable:
+                        cond = f.get("filter", {}).get("Where", [{}])[0].get("Condition", {})
+                        vals = [x.get("Literal", {}).get("Value")
+                                for row in cond.get("In", {}).get("Values", []) for x in row]
+                        ok = vals == [fval]
+                if not ok:
+                    err(f"{rel(vf)} : filtre de visuel {ftable}[{fcol}] = {fval} requis (RX-07)")
             if not v.get("visual", {}).get("visualType"):
                 err(f"{rel(vf)} : visualType manquant")
             for kind, ent, prop in iter_refs(v):
