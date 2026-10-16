@@ -1,6 +1,6 @@
-# Sous-spécification — Rapport Power BI (visuels)
+# Sous-spécification : Rapport Power BI (visuels)
 
-> Alignée sur `spec.md` § 9 (qui prévaut). Toutes les mesures citées sont définies dans `spec.md` § 9.5 ; aucun visuel ne crée de mesure implicite sur une colonne `perso` ou `confidentiel` (aucune n'est importée).
+> Alignée sur `spec.md` [9](../spec.md#9-modèle-power-bi-et-mesures-dax) (qui prévaut). Toutes les mesures citées sont définies dans `spec.md` [9.5](../spec.md#95-mesures) ; aucun visuel ne crée de mesure implicite sur une colonne `perso` ou `confidentiel` (aucune n'est importée).
 
 ## Règles de présentation
 
@@ -17,4 +17,4 @@
 | 5. Établissements et partenariats | Établissement, Type de convention | Cartes : `[Établissements collaborants]`, `[Partenariats académiques actifs]`, `[Partenariats à évaluer]`, `[Conventions à renouveler]`, `[Bilans réalisés]` ; barres `[Alternants accueillis]` par `Etablissements[Title]` ; tableau des conventions (IdHNCS, établissement, type, fin, statut) ; tableau des prochaines interactions (`Etablissements[DateProchaineAction]`) ; répartition `BilansAlternance[RecommandationPartenariat]` |
 | 6. Communications et valorisation | Canal, Calendrier | Cartes : `[Communications publiées]`, `[Communications en préparation]`, `[Livrables valorisés]`, `[Mobilisations commerciales]` ; histogramme des publications par mois ; tableau des communications publiées, internes comprises (IdHNCS, titre, canal, date, `Externe`, lien public `UrlPublication`) ; la carte `[Communications publiées]` ne compte que les externes |
 | 7. Comité R&D | Pôle, Référent | Tableaux : livrables `[Échéances à 14 jours]` et en retard ; affectations « À risque » / « Bloquée » ; sujets `[Sujets bloqués]` ; comptes rendus manquants ; `[Blocages signalés]` ; `[Actions en retard]` |
-| 8. Qualité des données | — | `[Affectations incomplètes]`, `[Livrables sans modèle]`, `[Doublons signalés]`, `[Transitions refusées]` par objet ; tableau des transitions refusées (IdHNCS, statut demandé, date) |
+| 8. Qualité des données | - | `[Affectations incomplètes]`, `[Livrables sans modèle]`, `[Doublons signalés]`, `[Transitions refusées]` par objet ; tableau des transitions refusées (IdHNCS, statut demandé, date) |

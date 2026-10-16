@@ -29,13 +29,13 @@ COLUMN_TYPES = {
     "Text", "Note", "Choice", "MultiChoice", "Number", "Boolean", "Date", "DateTime",
     "User", "UserMulti", "Lookup", "LookupMulti", "URL",
 }
-PERMISSION_LEVELS = {"FC", "CSS", "R", "—"}
+PERMISSION_LEVELS = {"FC", "CSS", "R", "-"}
 GROUP_ROLES = {
     "PROPRIETAIRE": "G_PROP", "DIRECTION_RD": "G_DRD", "RD": "G_RD", "ADMIN": "G_ADM",
     "REFERENT": "G_REF", "ALTERNANT": "G_ALT", "DIRECTION": "G_DIR", "ECOLES": "G_ECO",
 }
 FLUX_EXCEPTIONS = {"CAND-T02"}
-EMPTY = {"", "—", "-"}
+EMPTY = {"", "-", "-"}
 
 
 class SpecError(Exception):
@@ -180,8 +180,8 @@ def parse_lists(lines):
         if len(tables) < 2:
             raise SpecError(f"{name} : tableau de propriétés et tableau de colonnes attendus")
         props = {r["Propriété"]: unquote(r["Valeur"]) for r in tables[0]}
-        prefix = props.get("Préfixe ID", "—")
-        status_enum = props.get("Énumération de statut", "—")
+        prefix = props.get("Préfixe ID", "-")
+        status_enum = props.get("Énumération de statut", "-")
         obj = {
             "name": name,
             "kind": kind,
@@ -451,7 +451,7 @@ def validate(model) -> list[str]:
         for g, lvl in perms.items():
             if g not in groups:
                 errs.append(f"Matrice : groupe inconnu {g}")
-            m_lvl = re.fullmatch(r"(?:(FC|CSS|R)\+)?IL\((\w+)\)|(FC|CSS|R|—)", lvl)
+            m_lvl = re.fullmatch(r"(?:(FC|CSS|R)\+)?IL\((\w+)\)|(FC|CSS|R|-)", lvl)
             bases = [b for b in (m_lvl.groups() if m_lvl else ()) if b]
             if not bases or any(b not in PERMISSION_LEVELS for b in bases):
                 errs.append(f"Matrice {name}/{g} : niveau inconnu {lvl}")
@@ -582,7 +582,7 @@ def build() -> dict:
     measures, measures_dax = parse_measures(lines)
 
     model = {
-        "$comment": "FICHIER GÉNÉRÉ par tools/spec_extract.py à partir de spec.md — ne pas modifier à la main.",
+        "$comment": "FICHIER GÉNÉRÉ par tools/spec_extract.py à partir de spec.md, ne pas modifier à la main.",
         "specVersion": version,
         "site": {"url": "https://<tenant>.sharepoint.com/sites/HNCS-RD", "title": "HNCS-R&D", "template": "STS#3",
                  "lcid": 1036, "timeZone": "Romance Standard Time"},
