@@ -1,0 +1,30 @@
+[
+  {
+    "IdHNCS": "RES-2026-9001",
+    "Title": "Projet GitLab du démonstrateur PRA",
+    "TypeRessource": "Projet GitLab",
+    "Url": "https://gitlab.example.org/hncs-rd/suj-2026-9001-demonstrateur-pra",
+    "Sujet": "SUJ-2026-9001",
+    "Responsable": "@persona:REF1",
+    "Statut": "Actif"
+  },
+  {
+    "IdHNCS": "RES-2026-9002",
+    "Title": "VM de démonstration PRA",
+    "TypeRessource": "VM Proxmox",
+    "Url": "https://proxmox.example.org/#v1:0:=qemu%2F9001",
+    "Sujet": "SUJ-2026-9001",
+    "Responsable": "@persona:IT",
+    "Commentaire": "Aucun identifiant stocké ici.",
+    "Statut": "Actif"
+  },
+  {
+    "IdHNCS": "RES-2026-9003",
+    "Title": "Serveur de démonstration déploiement (retiré)",
+    "TypeRessource": "Serveur OVH",
+    "Url": "https://demo-deploiement.example.org",
+    "Sujet": "SUJ-2026-9004",
+    "Responsable": "@persona:IT",
+    "Statut": "Inactif"
+  }
+]

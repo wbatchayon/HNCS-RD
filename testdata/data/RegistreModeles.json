@@ -1,0 +1,46 @@
+[
+  {
+    "IdHNCS": "MOD-2026-9001",
+    "Title": "Fiche de cadrage de sujet (recette)",
+    "TypeModele": "Cadrage de sujet",
+    "TypeLivrableCible": "Fiche de cadrage",
+    "Version": "1.0",
+    "Proprietaire": "@persona:DIR_RD",
+    "DateApprobation": "@J-60",
+    "DateEntreeVigueur": "@J-55",
+    "LienFichier": "@site:/ModelesRD/MOD-2026-9001-fiche-cadrage.docx",
+    "HistoriqueVersions": "1.0 : version approuvée pour la recette.",
+    "ApplicableA": [
+      "POC / démonstrateur",
+      "Plan de stratégie"
+    ],
+    "CreationAuto": true,
+    "DelaiStandardJours": 15,
+    "Statut": "Approuvé"
+  },
+  {
+    "IdHNCS": "MOD-2026-9002",
+    "Title": "Fiche de démonstration (recette)",
+    "TypeModele": "Fiche POC",
+    "TypeLivrableCible": "Fiche de démonstration",
+    "Version": "0.9",
+    "Proprietaire": "@persona:REF1",
+    "ApplicableA": [
+      "POC / démonstrateur"
+    ],
+    "CreationAuto": false,
+    "Statut": "En validation"
+  },
+  {
+    "IdHNCS": "MOD-2026-9003",
+    "Title": "Ancien modèle de compte rendu (recette)",
+    "TypeModele": "Compte rendu",
+    "TypeLivrableCible": "Autre",
+    "Version": "0.3",
+    "Proprietaire": "@persona:DIR_RD",
+    "DateApprobation": "@J-400",
+    "DateEntreeVigueur": "@J-390",
+    "CreationAuto": false,
+    "Statut": "Obsolète"
+  }
+]

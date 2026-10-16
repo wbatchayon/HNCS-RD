@@ -1,0 +1,43 @@
+[
+  {
+    "IdHNCS": "REF-2026-9001",
+    "Title": "Référent Un (fictif)",
+    "Compte": "@persona:REF1",
+    "EmailPro": "@persona:REF1",
+    "Poles": [
+      "POL-P1",
+      "POL-P2"
+    ],
+    "Expertise": "Infrastructure, sauvegarde, PRA.",
+    "CapaciteIndicative": 3,
+    "Disponibilite": "Disponible",
+    "Statut": "Actif"
+  },
+  {
+    "IdHNCS": "REF-2026-9002",
+    "Title": "Référente Deux (fictive)",
+    "Compte": "@persona:REF2",
+    "EmailPro": "@persona:REF2",
+    "Poles": [
+      "POL-P2",
+      "POL-P4"
+    ],
+    "Expertise": "Stratégie, migration, relations écoles.",
+    "CapaciteIndicative": 4,
+    "Disponibilite": "Partiellement disponible",
+    "Statut": "Actif"
+  },
+  {
+    "IdHNCS": "REF-2026-9003",
+    "Title": "Ancien référent (fictif)",
+    "Compte": "@persona:RD2",
+    "EmailPro": "@persona:RD2",
+    "Poles": [
+      "POL-P3"
+    ],
+    "Expertise": "Communication technique.",
+    "CapaciteIndicative": 0,
+    "Disponibilite": "Indisponible",
+    "Statut": "Inactif"
+  }
+]

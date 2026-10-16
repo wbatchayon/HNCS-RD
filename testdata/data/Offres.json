@@ -1,0 +1,52 @@
+[
+  {
+    "IdHNCS": "OFF-2026-9001",
+    "Title": "Alternance — ingénieur infrastructure (POC et démonstrateurs)",
+    "TypeOffre": "Alternance",
+    "Pole": "POL-P1",
+    "Competences": "Virtualisation, sauvegarde, scripts (offre fictive).",
+    "DateDebutPeriode": "@J-200",
+    "DateFinPeriode": "@J+160",
+    "CanauxPublication": [
+      "Site HNCS",
+      "LinkedIn",
+      "France Travail"
+    ],
+    "LienAnnonce": "https://www.example.org/offres/hncs-rd-off-9001",
+    "Statut": "Publiée"
+  },
+  {
+    "IdHNCS": "OFF-2026-9002",
+    "Title": "Stage — plan de stratégie sauvegarde et PRA",
+    "TypeOffre": "Stage",
+    "Pole": "POL-P2",
+    "DateDebutPeriode": "@J-300",
+    "DateFinPeriode": "@J-120",
+    "CanauxPublication": [
+      "Site HNCS",
+      "École / établissement"
+    ],
+    "Statut": "Pourvue"
+  },
+  {
+    "IdHNCS": "OFF-2026-9003",
+    "Title": "Alternance — communication technique R&D",
+    "TypeOffre": "Alternance",
+    "Pole": "POL-P3",
+    "DateDebutPeriode": "@J+30",
+    "DateFinPeriode": "@J+395",
+    "Statut": "Brouillon"
+  },
+  {
+    "IdHNCS": "OFF-2026-9004",
+    "Title": "Stage — cartographie des réseaux d'entreprise",
+    "TypeOffre": "Stage",
+    "Pole": "POL-P2",
+    "DateDebutPeriode": "@J-250",
+    "DateFinPeriode": "@J-60",
+    "CanauxPublication": [
+      "LinkedIn"
+    ],
+    "Statut": "Close"
+  }
+]

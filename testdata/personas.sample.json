@@ -1,0 +1,89 @@
+{
+  "$comment": "Modèle de personas de recette. Copier en testdata/personas.json (ignoré par git) et remplacer les UPN par des comptes de test du tenant de recette. Les clés commençant par $ sont ignorées.",
+  "IT": {
+    "upn": "it.admin@contoso.onmicrosoft.com",
+    "groupes": ["G_PROP"],
+    "description": "Administrateur M365 / IT (propriétaire de la plateforme)"
+  },
+  "SVC": {
+    "upn": "svc-hncs-rd@contoso.onmicrosoft.com",
+    "groupes": ["G_PROP"],
+    "compteService": true,
+    "description": "Compte de service des flux (H-13) : rôle FLUX"
+  },
+  "DIR_RD": {
+    "upn": "direction.rd@contoso.onmicrosoft.com",
+    "groupes": ["G_DRD"],
+    "description": "Direction R&D (arbitrages, réouverture, décisions de partenariat, validation des communications)"
+  },
+  "RD1": {
+    "upn": "rd.analyste1@contoso.onmicrosoft.com",
+    "groupes": ["G_RD"],
+    "description": "Membre de l'équipe R&D (analyse des candidatures, affectations)"
+  },
+  "RD2": {
+    "upn": "rd.analyste2@contoso.onmicrosoft.com",
+    "groupes": ["G_RD"],
+    "description": "Second membre de l'équipe R&D ; ancien référent (REF-2026-9003, inactif)"
+  },
+  "ADMIN_KARINE": {
+    "upn": "karine.admin@contoso.onmicrosoft.com",
+    "groupes": ["G_ADM"],
+    "description": "Administration (exemple : Karine) : entretiens, décision finale, formalités, conventions"
+  },
+  "REF1": {
+    "upn": "referent.un@contoso.onmicrosoft.com",
+    "groupes": ["G_REF"],
+    "description": "Référent REF-2026-9001 (pôles P1, P2)"
+  },
+  "REF2": {
+    "upn": "referente.deux@contoso.onmicrosoft.com",
+    "groupes": ["G_REF"],
+    "description": "Référente REF-2026-9002 (pôles P2, P4)"
+  },
+  "ALT1": {
+    "upn": "alternant.un@contoso.onmicrosoft.com",
+    "groupes": ["G_ALT"],
+    "description": "Alternant ALT-2026-9001 (actif, affectation AFF-2026-9001)"
+  },
+  "ALT2": {
+    "upn": "alternant.deux@contoso.onmicrosoft.com",
+    "groupes": ["G_ALT"],
+    "description": "Alternant ALT-2026-9002 (actif, affectation à risque)"
+  },
+  "ALT3": {
+    "upn": "alternant.trois@contoso.onmicrosoft.com",
+    "groupes": ["G_ALT"],
+    "description": "Alternant ALT-2026-9003 (changement de sujet puis de référent)"
+  },
+  "ALT4": {
+    "upn": "alternant.quatre@contoso.onmicrosoft.com",
+    "groupes": ["G_ALT"],
+    "description": "Alternant ALT-2026-9006 (suspendu)"
+  },
+  "ALT5": {
+    "upn": "alternant.cinq@contoso.onmicrosoft.com",
+    "groupes": ["G_ALT"],
+    "description": "Alternant ALT-2026-9007 (fin planifiée)"
+  },
+  "ALT_FIN": {
+    "upn": "alternant.fin@contoso.onmicrosoft.com",
+    "groupes": ["G_ALT"],
+    "description": "Alternant ALT-2026-9005 (terminé, accès non encore retirés : action CLO-06 à faire)"
+  },
+  "ALT_ANCIEN": {
+    "upn": "alternant.ancien@contoso.onmicrosoft.com",
+    "groupes": [],
+    "description": "Ancien alternant ALT-2026-9008 (clôturé, accès retirés) : aucun accès attendu"
+  },
+  "DIRECTION": {
+    "upn": "direction.generale@contoso.onmicrosoft.com",
+    "groupes": ["G_DIR"],
+    "description": "Direction Générale (lecture de pilotage, validation des communications)"
+  },
+  "ECOLES": {
+    "upn": "relation.ecoles@contoso.onmicrosoft.com",
+    "groupes": ["G_ECO"],
+    "description": "Responsable de la relation écoles (pôle 4)"
+  }
+}

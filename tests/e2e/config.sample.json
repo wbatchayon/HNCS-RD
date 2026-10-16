@@ -1,0 +1,15 @@
+{
+  "$comment": "Copier en tests/e2e/config.json (ignoré par git). Chemins relatifs à ce fichier. ModeConnexion : Interactive ou DeviceLogin (une authentification par persona, mise en cache pour la session).",
+  "SiteUrl": "https://contoso.sharepoint.com/sites/HNCS-RD-Recette",
+  "ClientId": "00000000-0000-0000-0000-000000000000",
+  "Tenant": "contoso.onmicrosoft.com",
+  "ModeConnexion": "Interactive",
+  "PersonasPath": "../../testdata/personas.json",
+  "ModelPath": "../../provisioning/model/model.generated.json",
+  "DataPath": "../../testdata/data",
+  "DelaiFluxSecondes": 300,
+  "IntervalleSondageSecondes": 15,
+  "PersonasIgnorees": ["SVC"],
+  "PartageTransmission": "Groupe",
+  "UrlRapportPowerBI": ""
+}

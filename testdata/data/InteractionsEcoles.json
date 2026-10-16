@@ -1,0 +1,36 @@
+[
+  {
+    "IdHNCS": "INT-2026-9001",
+    "Title": "Point de suivi des alternants",
+    "Etablissement": "ECO-2026-9001",
+    "DateInteraction": "@J-10",
+    "Interlocuteur": "Contact Fictif 1",
+    "TypeInteraction": "Réunion",
+    "ResponsableHNCS": "@persona:ECOLES",
+    "Resume": "Point semestriel sur trois alternants (fictif).",
+    "ProchaineAction": "Point de suivi annuel",
+    "DateProchaineAction": "@J+5",
+    "LienDocument": "@site:/EcolesPartenariats/ECO-2026-9001/compte-rendu-point-suivi.docx"
+  },
+  {
+    "IdHNCS": "INT-2026-9002",
+    "Title": "Forum entreprises",
+    "Etablissement": "ECO-2026-9002",
+    "DateInteraction": "@J-20",
+    "Interlocuteur": "Contact Fictif 2",
+    "TypeInteraction": "Événement / forum",
+    "ResponsableHNCS": "@persona:ECOLES",
+    "Resume": "Stand HNCS au forum (fictif)."
+  },
+  {
+    "IdHNCS": "INT-2026-9003",
+    "Title": "Premier échange par courriel",
+    "Etablissement": "ECO-2026-9004",
+    "DateInteraction": "@J-40",
+    "Interlocuteur": "Contact Fictif 4",
+    "TypeInteraction": "E-mail",
+    "ResponsableHNCS": "@persona:ECOLES",
+    "ProchaineAction": "Premier contact à planifier",
+    "DateProchaineAction": "@J+20"
+  }
+]
