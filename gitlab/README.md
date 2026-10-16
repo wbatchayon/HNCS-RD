@@ -187,6 +187,7 @@ Dans GitLab : *Run pipeline* sur `main` avec `SYNC_DRY_RUN` = `1` lance le job d
 | `DerniereActivite` | `last_activity_at` du projet (à la minute) | idem |
 | `IdLivrable` | vide | premier `LIV-\d{4}-\d{4,}` du titre du jalon |
 | `EcartEcheance` | Non | Oui si l'échéance du jalon ≠ `Echeance` du livrable (jalon sans échéance compris) ; Non si le livrable est introuvable (avertissement au journal) |
+| `Orpheline` | Non tant que le projet est rattaché à un sujet | Non tant que le jalon existe ; Oui si la ligne n'a plus de correspondance (jalon supprimé, sujet détaché, projet retiré du sujet) |
 | `DateSynchro` | date de la dernière **écriture** de la ligne | idem |
 
 Fonctionnement :
@@ -194,6 +195,11 @@ Fonctionnement :
 - **Idempotence** : une ligne n'est créée que si sa `CleSynchro` est absente et n'est mise à jour que
   si un champ a changé (seuls les champs modifiés sont envoyés, avec `DateSynchro`). Un second passage
   sans changement n'écrit rien.
+- **Lignes orphelines** (spec § 10.3) : une ligne existante sans correspondance GitLab (jalon supprimé,
+  sujet détaché, projet retiré du sujet) n'est **jamais supprimée** : elle passe à `Orpheline` = Oui
+  (une seule écriture, avec `DateSynchro`) et reste exclue des indicateurs Power BI ; si elle redevient
+  valide (jalon rétabli, projet rattaché à nouveau), elle repasse à Non. Les lignes d'un projet
+  illisible lors du passage (erreur GitLab) ne sont ni recalculées ni marquées.
 - **Pagination** : en-tête `X-Next-Page` (GitLab), `@odata.nextLink` (Graph). Les MR sont comptées par
   l'en-tête `X-Total`, ou par parcours complet s'il est absent.
 - **Nouvelles tentatives** : jusqu'à 5 essais sur HTTP 429, 500, 502, 503, 504 et erreurs réseau, en
@@ -216,7 +222,7 @@ Incidents courants :
 | Code 1, HTTP 404 sur un projet | `GitlabProjetId` erroné, projet supprimé, jeton sans accès au sous-groupe | corriger le sujet ou les droits du jeton |
 | Code 1, HTTP 401 GitLab | jeton expiré ou révoqué | régénérer le jeton de groupe, mettre à jour `GITLAB_TOKEN` |
 | Avertissement « livrable introuvable » | identifiant mal saisi dans le titre du jalon | corriger le titre du jalon dans GitLab |
-| Avertissement « ligne orpheline » | jalon supprimé ou sujet détaché | ligne conservée ; suppression manuelle par G_PROP si souhaité |
+| Avertissement « ligne orpheline » | jalon supprimé, sujet détaché ou projet retiré du sujet | ligne conservée et marquée `Orpheline` = Oui ; suppression manuelle par G_PROP si souhaité |
 
 ### Création du projet d'un sujet (lot 3)
 
@@ -254,7 +260,7 @@ python -m unittest discover -s gitlab/sync/tests -v
 
 Exécutés aussi par la CI GitHub (`.github/workflows/ci.yml`) et par le job `tests-synchro` du pipeline
 GitLab. Ils couvrent l'extraction des identifiants, la clé de synchronisation, le calcul d'écart, les
-dates de Paris, l'idempotence, la pagination, les nouvelles tentatives, la simulation et les codes de
+dates de Paris, l'idempotence, le marquage des lignes orphelines, la pagination, les nouvelles tentatives, la simulation et les codes de
 sortie, sans aucun accès réseau.
 
 ## Limites
@@ -262,7 +268,7 @@ sortie, sans aucun accès réseau.
 - Jalons de **projet** uniquement (les jalons de groupe ne sont pas lus).
 - Comptage des issues par `issues_statistics` (filtre sur le **titre** du jalon) : renommer un jalon
   est sans effet sur la clé (`milestoneId`), mais deux jalons de même titre seraient confondus.
-- Pas de suppression des lignes orphelines ; pas de mise à jour de `DateSynchro` sans changement
+- Pas de suppression des lignes orphelines (seulement `Orpheline` = Oui) ; pas de mise à jour de `DateSynchro` sans changement
   (`DateSynchro` = date de la dernière écriture de la ligne, spec § 4).
 - En repli `Sites.Selected`, la limitation à `GitlabSync` repose sur le code (H-31).
 - Un livrable doit avoir un `IdHNCS` (attribué par PA-00D) pour recevoir un jalon.

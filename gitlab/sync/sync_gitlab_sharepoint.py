@@ -12,8 +12,9 @@ Pour chaque sujet de `SujetsRD` ayant un `GitlabProjetId` :
     (`LIV-aaaa-nnnn`), `EcartEcheance` = échéance du jalon différente de `Livrables.Echeance`.
 
 Idempotent : une ligne n'est écrite que si au moins un champ a changé (`DateSynchro` est alors
-mise à jour). Les lignes orphelines (jalon supprimé, sujet sans projet) sont signalées, jamais
-supprimées.
+mise à jour). Les lignes orphelines (jalon supprimé, sujet détaché ou projet retiré du sujet) sont
+marquées `Orpheline` = Oui et signalées, jamais supprimées ; une ligne qui redevient valide repasse
+à Non (spec § 10.3).
 
 Configuration (variables d'environnement, jamais de secret dans le code ni dans le dépôt) :
   GITLAB_URL            ex. https://gitlab.example.com
@@ -90,6 +91,7 @@ CHAMPS_SYNC: dict[str, str] = {
     "DerniereActivite": "instant",
     "IdLivrable": "texte",
     "EcartEcheance": "booleen",
+    "Orpheline": "booleen",
 }
 CHAMP_DATE_SYNCHRO = "DateSynchro"
 
@@ -325,6 +327,7 @@ def construire_lignes(sujet: Sujet, donnees: DonneesProjet, echeances_livrables:
         "DerniereActivite": activite,
         "IdLivrable": None,
         "EcartEcheance": False,
+        "Orpheline": False,
     }]
     for jalon in sorted(donnees.jalons, key=lambda j: j.id):
         id_livrable = extraire_id_livrable(jalon.titre)
@@ -351,6 +354,7 @@ def construire_lignes(sujet: Sujet, donnees: DonneesProjet, echeances_livrables:
             "DerniereActivite": activite,
             "IdLivrable": id_livrable,
             "EcartEcheance": ecart,
+            "Orpheline": False,
         })
     return lignes
 
@@ -385,8 +389,10 @@ def calculer_operations(
     * clé présente et au moins un champ différent -> mise à jour des seuls champs modifiés
       + `DateSynchro` ;
     * rien de changé -> aucune écriture (idempotence) ;
-    * clé existante sans ligne cible -> orpheline (signalée, jamais supprimée), sauf pour les
-      projets en échec de lecture (`projets_ignores`), dont les lignes ne sont pas recalculées.
+    * clé existante sans ligne cible -> orpheline : `Orpheline` = Oui (+ `DateSynchro`) si elle ne
+      l'est pas déjà, jamais supprimée ; sauf pour les projets en échec de lecture
+      (`projets_ignores`), dont les lignes ne sont ni recalculées ni marquées ;
+    * une ligne cible porte toujours `Orpheline` = Non : une ligne qui redevient valide est rétablie.
     """
     ignores = {int(p) for p in projets_ignores}
     index: dict[str, Mapping[str, Any]] = {}
@@ -426,6 +432,11 @@ def calculer_operations(
         if projet.isdigit() and int(projet) in ignores:
             continue
         plan.orphelines.append(cle)
+        existant = index[cle]
+        if normaliser("booleen", (existant.get("fields") or {}).get("Orpheline")):
+            plan.inchangees += 1
+        else:
+            plan.mises_a_jour.append((str(existant.get("id")), cle, {"Orpheline": True, CHAMP_DATE_SYNCHRO: date_synchro}))
     return plan
 
 
@@ -804,7 +815,8 @@ def executer(config: Config, dry_run: bool = False, http: Optional[ClientHttp] =
 
     plan = calculer_operations(lignes, existants, date_synchro, en_echec)
     for cle in plan.orphelines:
-        LOG.warning("Ligne GitlabSync %s sans correspondance GitLab (jalon supprimé ou sujet détaché) : conservée.", cle)
+        LOG.warning("Ligne GitlabSync %s sans correspondance GitLab (jalon supprimé, sujet détaché ou projet retiré) : "
+                    "conservée, marquée Orpheline.", cle)
     LOG.info("Plan : %d création(s), %d mise(s) à jour, %d inchangée(s), %d orpheline(s).",
              len(plan.creations), len(plan.mises_a_jour), plan.inchangees, len(plan.orphelines))
 

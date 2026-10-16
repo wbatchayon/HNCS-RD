@@ -294,7 +294,7 @@ class TestCalculDesOperations(unittest.TestCase):
             "Title": "hncs-rd/p", "CleSynchro": "42:901", "SujetLookupId": "3", "GitlabProjetId": 42,
             "Milestone": "LIV-2026-0010 — Plan PRA", "MilestoneEcheance": "2026-11-30", "MilestoneEtat": "active",
             "IssuesOuvertes": 2, "IssuesFermees": 3, "MRsOuvertes": 1, "DerniereActivite": "2026-10-13T16:45:00Z",
-            "IdLivrable": "LIV-2026-0010", "EcartEcheance": False,
+            "IdLivrable": "LIV-2026-0010", "EcartEcheance": False, "Orpheline": False,
         }]
 
     @staticmethod
@@ -339,12 +339,25 @@ class TestCalculDesOperations(unittest.TestCase):
         plan = sync.calculer_operations(lignes, [self.existant_identique()], self.DATE)
         self.assertIsNone(plan.mises_a_jour[0][2]["MilestoneEcheance"])
 
-    def test_orphelines_signalees_sauf_projet_en_echec(self):
-        orphelin = {"id": "101", "fields": {"CleSynchro": "42:777"}}
+    def test_orphelines_marquees_sauf_projet_en_echec(self):
+        orphelin = {"id": "101", "fields": {"CleSynchro": "42:777", "Orpheline": False}}
         echec = {"id": "102", "fields": {"CleSynchro": "55:0"}}
         plan = sync.calculer_operations(self.lignes(), [self.existant_identique(), orphelin, echec], self.DATE, {55})
         self.assertEqual(plan.orphelines, ["42:777"])
+        self.assertEqual(plan.creations, [])
+        self.assertEqual(plan.mises_a_jour, [("101", "42:777", {"Orpheline": True, "DateSynchro": self.DATE})])
+
+    def test_orpheline_deja_marquee_aucune_ecriture(self):
+        orphelin = {"id": "101", "fields": {"CleSynchro": "42:777", "Orpheline": True}}
+        plan = sync.calculer_operations(self.lignes(), [self.existant_identique(), orphelin], self.DATE)
+        self.assertEqual(plan.orphelines, ["42:777"])
         self.assertEqual(plan.nb_ecritures, 0)
+
+    def test_ligne_redevenue_valide_repasse_a_non(self):
+        existant = self.existant_identique()
+        existant["fields"]["Orpheline"] = True
+        plan = sync.calculer_operations(self.lignes(), [existant], self.DATE)
+        self.assertEqual(plan.mises_a_jour, [("100", "42:901", {"Orpheline": False, "DateSynchro": self.DATE})])
 
 
 class TestPaginationEtNouvellesTentatives(unittest.TestCase):
@@ -449,6 +462,50 @@ class TestExecutionComplete(unittest.TestCase):
         par_cle = {i["fields"]["CleSynchro"]: i["fields"] for i in serveur.sync_items.values()}
         self.assertTrue(par_cle["42:901"]["EcartEcheance"])
         self.assertEqual(sync.normaliser_date(par_cle["42:901"]["MilestoneEcheance"]), "2026-12-15")
+
+    @staticmethod
+    def par_cle(serveur):
+        return {i["fields"]["CleSynchro"]: i["fields"] for i in serveur.sync_items.values()}
+
+    def test_cycle_de_vie_d_une_ligne_orpheline(self):
+        serveur = FauxServeur()
+        self.executer(serveur)
+        self.assertFalse(self.par_cle(serveur)["42:902"]["Orpheline"])
+        jalon = serveur.projets[42]["jalons"].pop()  # jalon 902 supprimé dans GitLab
+
+        serveur.appels.clear()
+        self.assertEqual(self.executer(serveur), 0)
+        self.assertEqual(len(serveur.ecritures()), 1)
+        self.assertTrue(self.par_cle(serveur)["42:902"]["Orpheline"])
+        self.assertEqual(len(serveur.sync_items), 3, "jamais de suppression")
+
+        serveur.appels.clear()
+        self.assertEqual(self.executer(serveur), 0)
+        self.assertEqual(serveur.ecritures(), [], "orpheline déjà marquée : aucune écriture")
+
+        serveur.projets[42]["jalons"].append(jalon)  # jalon rétabli
+        serveur.appels.clear()
+        self.assertEqual(self.executer(serveur), 0)
+        self.assertEqual(len(serveur.ecritures()), 1)
+        self.assertFalse(self.par_cle(serveur)["42:902"]["Orpheline"])
+
+    def test_projet_retire_du_sujet_lignes_marquees(self):
+        serveur = FauxServeur()
+        self.executer(serveur)
+        del serveur.sujets[0]["fields"]["GitlabProjetId"]
+        serveur.appels.clear()
+        self.assertEqual(self.executer(serveur), 0)
+        self.assertEqual(len(serveur.ecritures()), 3)
+        self.assertTrue(all(f["Orpheline"] for f in self.par_cle(serveur).values()))
+
+    def test_projet_en_echec_non_marque_orphelin(self):
+        serveur = FauxServeur()
+        self.executer(serveur)
+        serveur.pannes.extend([("/projects/42", 404, {})])
+        serveur.appels.clear()
+        self.assertEqual(self.executer(serveur), 1)
+        self.assertEqual(serveur.ecritures(), [])
+        self.assertFalse(any(f["Orpheline"] for f in self.par_cle(serveur).values()))
 
     def test_simulation_n_ecrit_rien(self):
         serveur = FauxServeur()
