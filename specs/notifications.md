@@ -6,8 +6,8 @@
 
 - **Expéditeur** : boîte partagée `Destinataires.BoiteRD`. **Objet** : `[HNCS-R&D][N-xx] …`.
 - **Canal** : `Mail` (courriel), `Teams` (message du bot Flow, uniquement si `Fonction.NotificationsTeams` = Oui et destinataire nominatif), `Mail+Teams`.
-- Toute notification contient un **lien vers l'élément SharePoint source** et, si utile, vers le dossier documentaire. **Jamais** de pièce jointe CV ou document confidentiel.
-- **Données exposées** : `ID` = identifiants `IdHNCS` et statuts ; `NOM` = nom de la personne concernée (alternant, candidat) ; `COMM` = commentaires de revue destinés à leur auteur. Les notifications vers des groupes larges (G_DIR, comité) sont limitées à `ID` et agrégats.
+- Toute notification **interne** contient un **lien vers l'élément SharePoint source** et, si utile, vers le dossier documentaire. Exception : N-02 et N-07, adressées au candidat (externe), ne contiennent aucun lien SharePoint. **Jamais** de pièce jointe CV ou document confidentiel.
+- **Données exposées** : `ID` = identifiants `IdHNCS`, statuts, dates, motifs codifiés ou motifs de décision, et noms des **acteurs internes** (valideur, décideur) ; `NOM` = nom de la personne concernée (alternant, candidat) ; `COMM` = commentaires de revue destinés à leur auteur. N-45 ne recopie pas le commentaire de l'approbateur (lien seulement). Les notifications vers des groupes larges (G_DIR, comité) sont limitées à `ID` et agrégats.
 - Le texte exact des messages au candidat (N-02, N-07) doit être validé avant activation (H-09).
 - Les modèles HTML sont livrés dans `flows/templates/` sous le nom `N-xx.html`.
 
@@ -27,7 +27,7 @@
 | N-10 | PA-03b | Participants de l'entretien | Mail+Teams | Rappel : entretien {IdHNCS} le {date} | Date, modalité, lien de réunion | ID ; NOM |
 | N-11 | PA-03 | G_RD, responsable d'analyse | Mail | Entretien réalisé pour {IdHNCS} | Statut de la candidature uniquement, **sans** commentaire d'évaluation | ID |
 | N-12 | PA-03 | Destinataires.Administration | Mail | Décision attendue pour {IdHNCS} | Lien vers la candidature | ID ; NOM |
-| N-13 | PA-03 | Destinataires.Administration, responsable d'analyse | Mail+Teams | Candidature {IdHNCS} retenue | Rappel : autoriser le lancement des formalités | ID ; NOM |
+| N-13 | PA-03 | Membres de G_ADM, responsable d'analyse | Mail+Teams | Candidature {IdHNCS} retenue | Rappel : autoriser le lancement des formalités | ID ; NOM |
 | N-14 | PA-03b | Destinataires.Administration | Mail | Résultat d'entretien à saisir ({IdHNCS}) | Lien vers l'entretien | ID |
 | N-15 | PA-04 | Destinataires.Administration | Mail | Formalités lancées pour {IdHNCS} | Liste des actions, responsables, échéances | ID ; NOM |
 | N-16 | PA-04 | G_RD, référent pressenti, Destinataires.Administration | Mail+Teams | Intégration confirmée : {IdAlternant} | Date de début, pôle, référent, liens vers la fiche et le dossier de suivi | ID ; NOM |
@@ -65,5 +65,5 @@
 | N-90 | PA-00B | Auteur de la modification | Mail+Teams | Changement de statut refusé ({IdHNCS}) | Statut demandé, motif du refus, statut rétabli, marche à suivre | ID |
 | N-91 | PA-05 ; PA-04 | Auteur de la modification | Mail+Teams | {IdHNCS} : modification annulée | Champs verrouillés (affectation active, référent principal dérivé), procédure « nouvelle affectation » | ID |
 | N-92 | PA-04 ; PA-07 ; PA-08 ; PA-10 | Auteur de la modification | Mail+Teams | {IdHNCS} : modification d'un champ protégé annulée | Champ concerné, rôle habilité, valeur rétablie (P-09) | ID |
-| N-98 | PA-00E | Destinataires.Support, G_PROP | Mail | Erreurs de flux à reprendre ({n}) | Liste des erreurs non reprises avec liens d'exécution | ID |
-| N-99 | PA-00C | Destinataires.Support | Mail | Erreur du flux {code} | Message, objet, lien d'exécution, procédure de reprise | ID |
+| N-98 | PA-00E | `hncs_SupportEmail` (variable d'environnement), G_PROP | Mail | Erreurs de flux à reprendre ({n}) | Liste des erreurs non reprises avec liens d'exécution | ID |
+| N-99 | PA-00C | `hncs_SupportEmail` (variable d'environnement) | Mail | Erreur du flux {code} | Message, objet, lien d'exécution, procédure de reprise | ID |

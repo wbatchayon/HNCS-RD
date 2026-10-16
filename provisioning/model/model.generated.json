@@ -1,6 +1,6 @@
 {
   "$comment": "FICHIER GÉNÉRÉ par tools/spec_extract.py à partir de spec.md — ne pas modifier à la main.",
-  "specVersion": "1.4.0",
+  "specVersion": "1.5.0",
   "site": {
     "url": "https://<tenant>.sharepoint.com/sites/HNCS-RD",
     "title": "HNCS-R&D",
@@ -5812,7 +5812,7 @@
           "label": "Dernier rappel envoyé",
           "type": "Text",
           "required": false,
-          "description": "Ex. `J-7:2026-10-14` (évite les doublons de rappel)",
+          "description": "Palier et échéance concernée, ex. `J-7:2026-12-01` ou `J+1:2026-12-01` (date = échéance, pas date d'envoi) : un palier n'est envoyé qu'une fois par échéance",
           "enum": null,
           "lookup": null,
           "default": null,
@@ -11810,7 +11810,7 @@
     {
       "code": "G_DECISION_PARTENARIAT",
       "object": "Convention",
-      "rule": "Si `TypeConvention` ∈ {Convention de partenariat ; Sponsoring} : `DecisionPartenariat` ∈ {Partenariat retenu ; Sponsoring retenu} et `DecideurPartenariat` renseigné (décision humaine préalable)",
+      "rule": "Si `TypeConvention` ∈ {Convention de partenariat ; Sponsoring} : `DecisionPartenariat` ∈ {Partenariat retenu ; Sponsoring retenu} **déjà validée** (égale à `EmpreinteDecision`) et `DecideurPartenariat` renseigné : la décision est enregistrée et tracée **avant** la signature, jamais dans la même modification",
       "flow": "PA-10"
     },
     {
@@ -12023,14 +12023,14 @@
       "id": "PA-00C",
       "name": "Journaliser une erreur",
       "type": "Flux enfant",
-      "lot": "2",
+      "lot": "1",
       "trigger": "Appel par un flux parent"
     },
     {
       "id": "PA-00D",
-      "name": "Attribuer les identifiants manquants",
+      "name": "Attribuer les identifiants et initialiser les empreintes",
       "type": "Planifié (toutes les heures) + manuel",
-      "lot": "2",
+      "lot": "1",
       "trigger": "Récurrence"
     },
     {
@@ -14707,7 +14707,7 @@
     {
       "code": "N-13",
       "flow": "PA-03",
-      "recipients": "Destinataires.Administration, responsable d'analyse",
+      "recipients": "Membres de G_ADM, responsable d'analyse",
       "channel": "Mail+Teams",
       "subject": "Candidature {IdHNCS} retenue",
       "content": "Rappel : autoriser le lancement des formalités",
@@ -15138,7 +15138,7 @@
     {
       "code": "N-98",
       "flow": "PA-00E",
-      "recipients": "Destinataires.Support, G_PROP",
+      "recipients": "`hncs_SupportEmail` (variable d'environnement), G_PROP",
       "channel": "Mail",
       "subject": "Erreurs de flux à reprendre ({n})",
       "content": "Liste des erreurs non reprises avec liens d'exécution",
@@ -15149,7 +15149,7 @@
     {
       "code": "N-99",
       "flow": "PA-00C",
-      "recipients": "Destinataires.Support",
+      "recipients": "`hncs_SupportEmail` (variable d'environnement)",
       "channel": "Mail",
       "subject": "Erreur du flux {code}",
       "content": "Message, objet, lien d'exécution, procédure de reprise",
@@ -16824,6 +16824,14 @@
     {
       "id": "H-51",
       "subject": "Livrables ouverts lors d'un remplacement d'affectation"
+    },
+    {
+      "id": "H-55",
+      "subject": "Empreintes non initialisées"
+    },
+    {
+      "id": "H-56",
+      "subject": "Doublons de notifications à la reprise"
     },
     {
       "id": "H-53",
