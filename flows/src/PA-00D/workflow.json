@@ -56,6 +56,23 @@
           },
           "runAfter": {}
         },
+        "Initialiser_NbEmpreintes": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "NbEmpreintes",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialiser_NbIdentifiants": [
+              "Succeeded"
+            ]
+          }
+        },
         "Principal": {
           "type": "Scope",
           "actions": {
@@ -2772,10 +2789,752 @@
                   "Failed"
                 ]
               }
+            },
+            "Lot2_actif": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Historique des statuts",
+                  "$filter": "Origine eq 'Flux'",
+                  "$top": 1
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Si_identifiants_attribues": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Si_lot2_actif": {
+              "type": "If",
+              "expression": "@greater(length(coalesce(body('Lot2_actif')?['value'], createArray())), 0)",
+              "actions": {
+                "Empreintes_Affectations": {
+                  "type": "Scope",
+                  "actions": {
+                    "Empreintes_vides_Affectations": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Affectations",
+                          "$filter": "EmpreinteVerrou eq null and (StatutPrecedent eq 'Active' or StatutPrecedent eq 'À risque' or StatutPrecedent eq 'Bloquée' or StatutPrecedent eq 'Terminée' or StatutPrecedent eq 'Clôturée')",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_empreinte_Affectations": {
+                      "type": "Foreach",
+                      "foreach": "@body('Empreintes_vides_Affectations')?['value']",
+                      "actions": {
+                        "Initialiser_EmpreinteVerrou_Affectations": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Affectations",
+                              "id": "@items('Pour_empreinte_Affectations')?['ID']",
+                              "item/EmpreinteVerrou": "@{concat('{\"AlternantId\":', if(equals(items('Pour_empreinte_Affectations')?['Alternant']?['Id'], null), 'null', string(items('Pour_empreinte_Affectations')?['Alternant']?['Id'])), ',\"SujetId\":', if(equals(items('Pour_empreinte_Affectations')?['Sujet']?['Id'], null), 'null', string(items('Pour_empreinte_Affectations')?['Sujet']?['Id'])), ',\"ReferentId\":', if(equals(items('Pour_empreinte_Affectations')?['Referent']?['Id'], null), 'null', string(items('Pour_empreinte_Affectations')?['Referent']?['Id'])), ',\"DateDebut\":', if(empty(items('Pour_empreinte_Affectations')?['DateDebut']), 'null', concat('\"', if(empty(items('Pour_empreinte_Affectations')?['DateDebut']), '', formatDateTime(convertTimeZone(items('Pour_empreinte_Affectations')?['DateDebut'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), '\"')), '}')}",
+                              "item/Alternant/Id": "@items('Pour_empreinte_Affectations')?['Alternant']?['Id']",
+                              "item/Sujet/Id": "@items('Pour_empreinte_Affectations')?['Sujet']?['Id']",
+                              "item/DateDebut": "@items('Pour_empreinte_Affectations')?['DateDebut']",
+                              "item/CadenceCR/Value": "@{items('Pour_empreinte_Affectations')?['CadenceCR']?['Value']}",
+                              "item/Statut/Value": "@{items('Pour_empreinte_Affectations')?['Statut']?['Value']}"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_empreinte_Affectations": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbEmpreintes",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Initialiser_EmpreinteVerrou_Affectations": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Empreintes_vides_Affectations": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Empreintes_Livrables": {
+                  "type": "Scope",
+                  "actions": {
+                    "Empreintes_vides_Livrables": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Livrables",
+                          "$filter": "EmpreinteRevue eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_empreinte_Livrables": {
+                      "type": "Foreach",
+                      "foreach": "@body('Empreintes_vides_Livrables')?['value']",
+                      "actions": {
+                        "Empreinte_Livrables": {
+                          "type": "Compose",
+                          "inputs": "@concat('{\"AffectationId\":', if(equals(items('Pour_empreinte_Livrables')?['Affectation']?['Id'], null), 'null', string(items('Pour_empreinte_Livrables')?['Affectation']?['Id'])), ',\"Proprietaire\":', if(or(equals(toLower(coalesce(items('Pour_empreinte_Livrables')?['Proprietaire']?['Email'], '')), null), equals(string(toLower(coalesce(items('Pour_empreinte_Livrables')?['Proprietaire']?['Email'], ''))), '')), 'null', concat('\"', replace(replace(string(toLower(coalesce(items('Pour_empreinte_Livrables')?['Proprietaire']?['Email'], ''))), '\\', '\\\\'), '\"', '\\\"'), '\"')), ',\"Reviseur\":', if(or(equals(toLower(coalesce(items('Pour_empreinte_Livrables')?['Reviseur']?['Email'], '')), null), equals(string(toLower(coalesce(items('Pour_empreinte_Livrables')?['Reviseur']?['Email'], ''))), '')), 'null', concat('\"', replace(replace(string(toLower(coalesce(items('Pour_empreinte_Livrables')?['Reviseur']?['Email'], ''))), '\\', '\\\\'), '\"', '\\\"'), '\"')), ',\"Echeance\":', if(empty(items('Pour_empreinte_Livrables')?['Echeance']), 'null', concat('\"', if(empty(items('Pour_empreinte_Livrables')?['Echeance']), '', formatDateTime(convertTimeZone(items('Pour_empreinte_Livrables')?['Echeance'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), '\"')), ',\"DoD\":', concat('[', if(equals(items('Pour_empreinte_Livrables')?['DoD1Fonctionnel'], true), 'true', 'false'), ',', if(equals(items('Pour_empreinte_Livrables')?['DoD2FicheMethodo'], true), 'true', 'false'), ',', if(equals(items('Pour_empreinte_Livrables')?['DoD3Restitution'], true), 'true', 'false'), ',', if(equals(items('Pour_empreinte_Livrables')?['DoD4SupportCom'], true), 'true', 'false'), ',', if(equals(items('Pour_empreinte_Livrables')?['DoD5Enseignements'], true), 'true', 'false'), ']'), ',\"NbCorrections\":', if(equals(items('Pour_empreinte_Livrables')?['NbCorrections'], null), 'null', string(items('Pour_empreinte_Livrables')?['NbCorrections'])), ',\"DecisionRevue\":', if(or(equals(items('Pour_empreinte_Livrables')?['DecisionRevue']?['Value'], null), equals(string(items('Pour_empreinte_Livrables')?['DecisionRevue']?['Value']), '')), 'null', concat('\"', replace(replace(string(items('Pour_empreinte_Livrables')?['DecisionRevue']?['Value']), '\\', '\\\\'), '\"', '\\\"'), '\"')), ',\"Valideur\":', if(or(equals(toLower(coalesce(items('Pour_empreinte_Livrables')?['Valideur']?['Email'], '')), null), equals(string(toLower(coalesce(items('Pour_empreinte_Livrables')?['Valideur']?['Email'], ''))), '')), 'null', concat('\"', replace(replace(string(toLower(coalesce(items('Pour_empreinte_Livrables')?['Valideur']?['Email'], ''))), '\\', '\\\\'), '\"', '\\\"'), '\"')), ',\"DateValidation\":', if(empty(items('Pour_empreinte_Livrables')?['DateValidation']), 'null', concat('\"', formatDateTime(items('Pour_empreinte_Livrables')?['DateValidation'], 'yyyy-MM-ddTHH:mm:ssZ'), '\"')), ',\"VersionValidee\":', if(or(equals(items('Pour_empreinte_Livrables')?['VersionValidee'], null), equals(string(items('Pour_empreinte_Livrables')?['VersionValidee']), '')), 'null', concat('\"', replace(replace(string(items('Pour_empreinte_Livrables')?['VersionValidee']), '\\', '\\\\'), '\"', '\\\"'), '\"')), ',\"DatePremierDepot\":', if(empty(items('Pour_empreinte_Livrables')?['DatePremierDepot']), 'null', concat('\"', formatDateTime(items('Pour_empreinte_Livrables')?['DatePremierDepot'], 'yyyy-MM-ddTHH:mm:ssZ'), '\"')), ',\"DateDepot\":', if(empty(items('Pour_empreinte_Livrables')?['DateDepot']), 'null', concat('\"', formatDateTime(items('Pour_empreinte_Livrables')?['DateDepot'], 'yyyy-MM-ddTHH:mm:ssZ'), '\"')), ',\"DateRevue\":', if(empty(items('Pour_empreinte_Livrables')?['DateRevue']), 'null', concat('\"', formatDateTime(items('Pour_empreinte_Livrables')?['DateRevue'], 'yyyy-MM-ddTHH:mm:ssZ'), '\"')), '}')",
+                          "runAfter": {}
+                        },
+                        "Initialiser_EmpreinteRevue_Livrables": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Livrables",
+                              "id": "@items('Pour_empreinte_Livrables')?['ID']",
+                              "item/EmpreinteRevue": "@{outputs('Empreinte_Livrables')}",
+                              "item/Affectation/Id": "@items('Pour_empreinte_Livrables')?['Affectation']?['Id']",
+                              "item/TypeLivrable/Value": "@{items('Pour_empreinte_Livrables')?['TypeLivrable']?['Value']}",
+                              "item/Proprietaire/Claims": "@{items('Pour_empreinte_Livrables')?['Proprietaire']?['Claims']}",
+                              "item/Echeance": "@items('Pour_empreinte_Livrables')?['Echeance']",
+                              "item/Statut/Value": "@{items('Pour_empreinte_Livrables')?['Statut']?['Value']}",
+                              "item/Title": "@items('Pour_empreinte_Livrables')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {
+                            "Empreinte_Livrables": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Compter_empreinte_Livrables": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbEmpreintes",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Initialiser_EmpreinteRevue_Livrables": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Empreintes_vides_Livrables": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Empreintes_Affectations": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Empreintes_ComptesRendus": {
+                  "type": "Scope",
+                  "actions": {
+                    "Liste_deployee_emp_ComptesRendus": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "HttpRequest"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "parameters/method": "GET",
+                          "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/ComptesRendus'), ''')?$select=Id')}",
+                          "parameters/headers": {
+                            "Accept": "application/json;odata=nometadata",
+                            "Content-Type": "application/json;odata=nometadata"
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Liste_presente_emp_ComptesRendus": {
+                      "type": "Compose",
+                      "inputs": "@not(empty(body('Liste_deployee_emp_ComptesRendus')?['Id']))",
+                      "runAfter": {
+                        "Liste_deployee_emp_ComptesRendus": [
+                          "Succeeded",
+                          "Failed"
+                        ]
+                      }
+                    },
+                    "Si_liste_deployee_empreinte_ComptesRendus": {
+                      "type": "If",
+                      "expression": "@equals(string(outputs('Liste_presente_emp_ComptesRendus')), 'True')",
+                      "actions": {
+                        "Empreintes_vides_ComptesRendus": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Comptes rendus de suivi",
+                              "$filter": "EmpreinteRevue eq null",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Pour_empreinte_ComptesRendus": {
+                          "type": "Foreach",
+                          "foreach": "@body('Empreintes_vides_ComptesRendus')?['value']",
+                          "actions": {
+                            "Empreinte_ComptesRendus": {
+                              "type": "Compose",
+                              "inputs": "@concat('{\"AffectationId\":', if(equals(items('Pour_empreinte_ComptesRendus')?['Affectation']?['Id'], null), 'null', string(items('Pour_empreinte_ComptesRendus')?['Affectation']?['Id'])), ',\"Valideur\":', if(or(equals(toLower(coalesce(items('Pour_empreinte_ComptesRendus')?['Valideur']?['Email'], '')), null), equals(string(toLower(coalesce(items('Pour_empreinte_ComptesRendus')?['Valideur']?['Email'], ''))), '')), 'null', concat('\"', replace(replace(string(toLower(coalesce(items('Pour_empreinte_ComptesRendus')?['Valideur']?['Email'], ''))), '\\', '\\\\'), '\"', '\\\"'), '\"')), ',\"Echeance\":', if(empty(items('Pour_empreinte_ComptesRendus')?['Echeance']), 'null', concat('\"', if(empty(items('Pour_empreinte_ComptesRendus')?['Echeance']), '', formatDateTime(convertTimeZone(items('Pour_empreinte_ComptesRendus')?['Echeance'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), '\"')), ',\"PeriodeDebut\":', if(empty(items('Pour_empreinte_ComptesRendus')?['PeriodeDebut']), 'null', concat('\"', if(empty(items('Pour_empreinte_ComptesRendus')?['PeriodeDebut']), '', formatDateTime(convertTimeZone(items('Pour_empreinte_ComptesRendus')?['PeriodeDebut'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), '\"')), ',\"PeriodeFin\":', if(empty(items('Pour_empreinte_ComptesRendus')?['PeriodeFin']), 'null', concat('\"', if(empty(items('Pour_empreinte_ComptesRendus')?['PeriodeFin']), '', formatDateTime(convertTimeZone(items('Pour_empreinte_ComptesRendus')?['PeriodeFin'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), '\"')), ',\"DateValidation\":', if(empty(items('Pour_empreinte_ComptesRendus')?['DateValidation']), 'null', concat('\"', formatDateTime(items('Pour_empreinte_ComptesRendus')?['DateValidation'], 'yyyy-MM-ddTHH:mm:ssZ'), '\"')), ',\"DateRemise\":', if(empty(items('Pour_empreinte_ComptesRendus')?['DateRemise']), 'null', concat('\"', formatDateTime(items('Pour_empreinte_ComptesRendus')?['DateRemise'], 'yyyy-MM-ddTHH:mm:ssZ'), '\"')), '}')",
+                              "runAfter": {}
+                            },
+                            "Initialiser_EmpreinteRevue_ComptesRendus": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PatchItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Comptes rendus de suivi",
+                                  "id": "@items('Pour_empreinte_ComptesRendus')?['ID']",
+                                  "item/EmpreinteRevue": "@{outputs('Empreinte_ComptesRendus')}",
+                                  "item/Affectation/Id": "@items('Pour_empreinte_ComptesRendus')?['Affectation']?['Id']",
+                                  "item/PeriodeDebut": "@items('Pour_empreinte_ComptesRendus')?['PeriodeDebut']",
+                                  "item/PeriodeFin": "@items('Pour_empreinte_ComptesRendus')?['PeriodeFin']",
+                                  "item/Echeance": "@items('Pour_empreinte_ComptesRendus')?['Echeance']",
+                                  "item/Statut/Value": "@{items('Pour_empreinte_ComptesRendus')?['Statut']?['Value']}"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {
+                                "Empreinte_ComptesRendus": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Compter_empreinte_ComptesRendus": {
+                              "type": "IncrementVariable",
+                              "inputs": {
+                                "name": "NbEmpreintes",
+                                "value": 1
+                              },
+                              "runAfter": {
+                                "Initialiser_EmpreinteRevue_ComptesRendus": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 1
+                            }
+                          },
+                          "runAfter": {
+                            "Empreintes_vides_ComptesRendus": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Liste_presente_emp_ComptesRendus": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Empreintes_Livrables": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Empreintes_ActionsIntegration": {
+                  "type": "Scope",
+                  "actions": {
+                    "Empreintes_vides_ActionsIntegration": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Actions d'intégration et checklists",
+                          "$filter": "EmpreinteAction eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_empreinte_ActionsIntegration": {
+                      "type": "Foreach",
+                      "foreach": "@body('Empreintes_vides_ActionsIntegration')?['value']",
+                      "actions": {
+                        "Initialiser_EmpreinteAction_ActionsIntegration": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Actions d'intégration et checklists",
+                              "id": "@items('Pour_empreinte_ActionsIntegration')?['ID']",
+                              "item/EmpreinteAction": "@{concat('{\"Bloquante\":', if(equals(items('Pour_empreinte_ActionsIntegration')?['Bloquante'], true), 'true', 'false'), ',\"Statut\":\"', coalesce(items('Pour_empreinte_ActionsIntegration')?['Statut']?['Value'], ''), '\"}')}",
+                              "item/Contexte/Value": "@{items('Pour_empreinte_ActionsIntegration')?['Contexte']?['Value']}",
+                              "item/Statut/Value": "@{items('Pour_empreinte_ActionsIntegration')?['Statut']?['Value']}",
+                              "item/Title": "@items('Pour_empreinte_ActionsIntegration')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_empreinte_ActionsIntegration": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbEmpreintes",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Initialiser_EmpreinteAction_ActionsIntegration": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Empreintes_vides_ActionsIntegration": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Empreintes_ComptesRendus": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Empreintes_Alternants": {
+                  "type": "Scope",
+                  "actions": {
+                    "Empreintes_vides_Alternants": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Alternants",
+                          "$filter": "EmpreinteReferent eq null and ReferentPrincipalId ne null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_empreinte_Alternants": {
+                      "type": "Foreach",
+                      "foreach": "@body('Empreintes_vides_Alternants')?['value']",
+                      "actions": {
+                        "Initialiser_EmpreinteReferent_Alternants": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Alternants",
+                              "id": "@items('Pour_empreinte_Alternants')?['ID']",
+                              "item/EmpreinteReferent": "@{string(items('Pour_empreinte_Alternants')?['ReferentPrincipal']?['Id'])}",
+                              "item/DateDebut": "@items('Pour_empreinte_Alternants')?['DateDebut']",
+                              "item/DateFin": "@items('Pour_empreinte_Alternants')?['DateFin']",
+                              "item/Etablissement/Id": "@items('Pour_empreinte_Alternants')?['Etablissement']?['Id']",
+                              "item/Pole/Id": "@items('Pour_empreinte_Alternants')?['Pole']?['Id']",
+                              "item/Statut/Value": "@{items('Pour_empreinte_Alternants')?['Statut']?['Value']}",
+                              "item/Title": "@items('Pour_empreinte_Alternants')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_empreinte_Alternants": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbEmpreintes",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Initialiser_EmpreinteReferent_Alternants": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Empreintes_vides_Alternants": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Empreintes_ActionsIntegration": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Empreintes_Conventions": {
+                  "type": "Scope",
+                  "actions": {
+                    "Liste_deployee_emp_Conventions": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "HttpRequest"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "parameters/method": "GET",
+                          "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/Conventions'), ''')?$select=Id')}",
+                          "parameters/headers": {
+                            "Accept": "application/json;odata=nometadata",
+                            "Content-Type": "application/json;odata=nometadata"
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Liste_presente_emp_Conventions": {
+                      "type": "Compose",
+                      "inputs": "@not(empty(body('Liste_deployee_emp_Conventions')?['Id']))",
+                      "runAfter": {
+                        "Liste_deployee_emp_Conventions": [
+                          "Succeeded",
+                          "Failed"
+                        ]
+                      }
+                    },
+                    "Si_liste_deployee_empreinte_Conventions": {
+                      "type": "If",
+                      "expression": "@equals(string(outputs('Liste_presente_emp_Conventions')), 'True')",
+                      "actions": {
+                        "Empreintes_vides_Conventions": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Conventions et partenariats",
+                              "$filter": "EmpreinteDecision eq null and DecideurPartenariatId ne null and DecisionPartenariat ne null",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Pour_empreinte_Conventions": {
+                          "type": "Foreach",
+                          "foreach": "@body('Empreintes_vides_Conventions')?['value']",
+                          "actions": {
+                            "Initialiser_EmpreinteDecision_Conventions": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PatchItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Conventions et partenariats",
+                                  "id": "@items('Pour_empreinte_Conventions')?['ID']",
+                                  "item/EmpreinteDecision": "@{items('Pour_empreinte_Conventions')?['DecisionPartenariat']?['Value']}",
+                                  "item/Etablissement/Id": "@items('Pour_empreinte_Conventions')?['Etablissement']?['Id']",
+                                  "item/TypeConvention/Value": "@{items('Pour_empreinte_Conventions')?['TypeConvention']?['Value']}",
+                                  "item/Statut/Value": "@{items('Pour_empreinte_Conventions')?['Statut']?['Value']}",
+                                  "item/Title": "@items('Pour_empreinte_Conventions')?['Title']"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "Compter_empreinte_Conventions": {
+                              "type": "IncrementVariable",
+                              "inputs": {
+                                "name": "NbEmpreintes",
+                                "value": 1
+                              },
+                              "runAfter": {
+                                "Initialiser_EmpreinteDecision_Conventions": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 1
+                            }
+                          },
+                          "runAfter": {
+                            "Empreintes_vides_Conventions": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Liste_presente_emp_Conventions": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Empreintes_Alternants": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Si_empreintes_initialisees": {
+                  "type": "If",
+                  "expression": "@greater(variables('NbEmpreintes'), 0)",
+                  "actions": {
+                    "Journaliser_empreintes": {
+                      "type": "Workflow",
+                      "inputs": {
+                        "host": {
+                          "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                        },
+                        "body": {
+                          "CodeFlux": "PA-00D",
+                          "Niveau": "Info",
+                          "Liste": "",
+                          "ItemId": "@{string(coalesce('', ''))}",
+                          "IdObjet": "@{coalesce('', '')}",
+                          "Message": "@{concat(string(variables('NbEmpreintes')), ' empreinte(s) initialisée(s) à partir des valeurs courantes (H-55)')}",
+                          "DetailErreur": "@{string(coalesce('', ''))}",
+                          "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Empreintes_Conventions": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Lot2_actif": [
+                  "Succeeded",
+                  "Failed"
+                ]
+              }
             }
           },
           "runAfter": {
-            "Initialiser_NbIdentifiants": [
+            "Initialiser_NbEmpreintes": [
               "Succeeded"
             ]
           }

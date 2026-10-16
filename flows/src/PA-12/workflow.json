@@ -83,10 +83,7 @@
               "expression": "@not(equals(toLower(triggerOutputs()?['body/Editor/Email']), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))))"
             },
             {
-              "expression": "@not(equals(coalesce(triggerOutputs()?['body/Statut/Value'], ''), coalesce(triggerOutputs()?['body/StatutPrecedent'], '')))"
-            },
-            {
-              "expression": "@contains(createArray('Idée', 'À préparer', 'En rédaction', 'En revue', 'Validée', 'Programmée', 'Publiée', 'Suspendue / refusée'), triggerOutputs()?['body/Statut/Value'])"
+              "expression": "@or(and(not(equals(coalesce(triggerOutputs()?['body/Statut/Value'], ''), coalesce(triggerOutputs()?['body/StatutPrecedent'], ''))), contains(createArray('Idée', 'À préparer', 'En rédaction', 'En revue', 'Validée', 'Programmée', 'Publiée', 'Suspendue / refusée'), triggerOutputs()?['body/Statut/Value'])), not(empty(triggerOutputs()?['body/Auteur/Email'])))"
             }
           ]
         }
@@ -410,9 +407,37 @@
                 ]
               }
             },
+            "Changements": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItemChanges"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Communications R&D",
+                  "id": "@body('Lire_element')?['ID']",
+                  "since": "@{triggerOutputs()?['body/{TriggerWindowStartToken}']}",
+                  "includeDrafts": false
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Statut_avant": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Si_auteur_alternant": {
               "type": "If",
-              "expression": "@and(not(empty(toLower(coalesce(body('Lire_element')?['Auteur']?['Email'], '')))), contains(split(join(body('Emails_G_ALT'), ';'), ';'), toLower(coalesce(body('Lire_element')?['Auteur']?['Email'], ''))))",
+              "expression": "@and(or(not(equals(string(coalesce(body('Changements')?['SinceVersionExisted'], true)), 'True')), equals(string(coalesce(body('Changements')?['ColumnHasChanged']?['Auteur'], false)), 'True')), not(empty(toLower(coalesce(body('Lire_element')?['Auteur']?['Email'], '')))), contains(split(join(body('Emails_G_ALT'), ';'), ';'), toLower(coalesce(body('Lire_element')?['Auteur']?['Email'], ''))))",
               "actions": {
                 "Rompre_heritage_auteur": {
                   "type": "OpenApiConnection",
@@ -516,7 +541,7 @@
                 "actions": {}
               },
               "runAfter": {
-                "Statut_avant": [
+                "Changements": [
                   "Succeeded"
                 ]
               }

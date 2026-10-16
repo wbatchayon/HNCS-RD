@@ -723,7 +723,7 @@ def pa04_alt():
 
 def pa04_act():
     f = Flow("PA-04-act", "PA-04", "HNCS-RD PA-04 — Intégration (actions d'intégration)", 2, "Automatisé", "SharePointItem", ACT)
-    sp_trigger(f, ACT, "GetOnUpdatedItems", [ANTI_LOOP, "@equals(triggerOutputs()?['body/Contexte/Value'], 'Formalités d''intégration')"])
+    sp_trigger(f, ACT, "GetOnUpdatedItems", [ANTI_LOOP])  # tous contextes (droits du responsable, § 7.4)
     f.use(ACT, "Contexte", "Candidature", "EmpreinteAction", "Bloquante", "Statut", "Responsable", "IdHNCS", "ID")
     acteur = "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))"
 
@@ -760,9 +760,10 @@ def pa04_act():
                 patch_item(w, "Mettre_a_jour_EmpreinteAction", ACT, ID, {"EmpreinteAction": ip(f"outputs('{cur}')")}, I)
             cond(y, "Si_modification_non_autorisee",
                  f"and(not(empty({emp})), or({v_bloq}, {v_na}, {v_term}))", violation, legit)
+        formalites = f"equals({I}?['Contexte']?['Value'], 'Formalités d''intégration')"
         cond(s, "Si_empreinte_differente",
-             f"or(empty({emp}), not(equals(json({emp})?['Bloquante'], equals({I}?['Bloquante'], true))), "
-             f"not(equals(string(json({emp})?['Statut']), string({I}?['Statut']?['Value']))))", differs)
+             f"and({formalites}, or(empty({emp}), not(equals(json({emp})?['Bloquante'], equals({I}?['Bloquante'], true))), "
+             f"not(equals(string(json({emp})?['Statut']), string({I}?['Statut']?['Value'])))))", differs)
         # Permissions du responsable (§ 7.4)
         grant_item(s, "responsable", ACT, ID, [("user", f"{I}?['Responsable']?['Email']", "CSS")])
         # 2. Formalités complètes → N-17 (une seule fois), sans changement de statut
@@ -784,7 +785,7 @@ def pa04_act():
                 notify(w, "N-17", [P("Destinataires.Administration")], {"IdHNCS": cidobj, "Lien": item_link(CAND, CID)})
                 log(w, "Marquer_N17", "Info", q("N-17 envoyée"), CAND, CID, cidobj)
             cond(y, "Si_formalites_completes", f"and(greater(length(body('{a}')?['value']), 0), equals(length(body('{bad}')), 0), equals(length(body('{sent}')), 0))", send)
-        cond(s, "Si_formalites_en_cours", f"and(not(empty({I}?['Candidature']?['Id'])), equals({C}?['Statut']?['Value'], 'Formalités en cours'))", check)
+        cond(s, "Si_formalites_en_cours", f"and({formalites}, not(empty({I}?['Candidature']?['Id'])), equals({C}?['Statut']?['Value'], 'Formalités en cours'))", check)
     standard_shell(f, body, ACT, "triggerOutputs()?['body/ID']", "triggerOutputs()?['body/IdHNCS']")
     f.doc = DOC["PA-04-act"]
     return f
@@ -963,9 +964,9 @@ DOC = {
                "Modification manuelle du référent principal → rétablie, N-91.", "Compte renseigné → l'alternant accède à son dossier de suivi mais pas à `_Evaluations`."]),
     "PA-04-act": dict(
         objectif="Protéger les formalités (caractère bloquant, clôture des actions), ouvrir l'action à son responsable et prévenir l'administration lorsque toutes les formalités bloquantes sont terminées, sans changer aucun statut de candidature.",
-        entrees="Élément `ActionsIntegration` de contexte « Formalités d'intégration » créé ou modifié.",
-        etapes=["`G_ACTION_FORMALITE` (P-09) : `Bloquante` modifiée par une personne hors G_ADM, action bloquante passée à « Non applicable » hors G_ADM, ou action passée à « Terminée » par une personne qui n'est ni membre de G_ADM ni le `Responsable` → valeurs de `EmpreinteAction` (`{\"Bloquante\":true,\"Statut\":\"À faire\"}`, § 6.5) rétablies, Avertissement, N-92, fin ; sinon empreinte mise à jour ; empreinte vide → initialisée sans rien rétablir.",
-                "CSS du `Responsable` sur l'action (§ 7.4, idempotent).",
+        entrees="Élément `ActionsIntegration` créé ou modifié, tous contextes (droits du responsable) ; `G_ACTION_FORMALITE` et N-17 pour le seul contexte « Formalités d'intégration ».",
+        etapes=["Contexte « Formalités d'intégration » — `G_ACTION_FORMALITE` (P-09) : `Bloquante` modifiée par une personne hors G_ADM, action bloquante passée à « Non applicable » hors G_ADM, ou action passée à « Terminée » par une personne qui n'est ni membre de G_ADM ni le `Responsable` → valeurs de `EmpreinteAction` (`{\"Bloquante\":true,\"Statut\":\"À faire\"}`, § 6.5) rétablies, Avertissement, N-92, fin ; sinon empreinte mise à jour ; empreinte vide → initialisée sans rien rétablir.",
+                "Tous contextes : CSS du `Responsable` sur l'action (§ 7.4, idempotent ; l'ancien responsable n'est pas retiré).",
                 "Candidature liée « Formalités en cours » : si au moins une action existe et que toutes les actions bloquantes sont « Terminée » avec preuve ou « Non applicable » avec commentaire → N-17 à l'administration, une seule fois (marqueur `JournalFlux` Info « N-17 envoyée »)."],
         sorties="Empreinte et permissions de l'action, N-17.", erreurs="Socle (PA-00C).",
         decision="**Aucun changement de statut automatique** : la confirmation de l'intégration reste une action de l'administration.",

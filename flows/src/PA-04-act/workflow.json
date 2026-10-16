@@ -81,9 +81,6 @@
           "conditions": [
             {
               "expression": "@not(equals(toLower(triggerOutputs()?['body/Editor/Email']), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))))"
-            },
-            {
-              "expression": "@equals(triggerOutputs()?['body/Contexte/Value'], 'Formalités d''intégration')"
             }
           ]
         }
@@ -303,7 +300,7 @@
             },
             "Si_empreinte_differente": {
               "type": "If",
-              "expression": "@or(empty(coalesce(body('Lire_element')?['EmpreinteAction'], '')), not(equals(json(coalesce(body('Lire_element')?['EmpreinteAction'], ''))?['Bloquante'], equals(body('Lire_element')?['Bloquante'], true))), not(equals(string(json(coalesce(body('Lire_element')?['EmpreinteAction'], ''))?['Statut']), string(body('Lire_element')?['Statut']?['Value']))))",
+              "expression": "@and(equals(body('Lire_element')?['Contexte']?['Value'], 'Formalités d''intégration'), or(empty(coalesce(body('Lire_element')?['EmpreinteAction'], '')), not(equals(json(coalesce(body('Lire_element')?['EmpreinteAction'], ''))?['Bloquante'], equals(body('Lire_element')?['Bloquante'], true))), not(equals(string(json(coalesce(body('Lire_element')?['EmpreinteAction'], ''))?['Statut']), string(body('Lire_element')?['Statut']?['Value'])))))",
               "actions": {
                 "Si_modification_non_autorisee": {
                   "type": "If",
@@ -710,7 +707,7 @@
             },
             "Si_formalites_en_cours": {
               "type": "If",
-              "expression": "@and(not(empty(body('Lire_element')?['Candidature']?['Id'])), equals(first(body('Candidature_liee')?['value'])?['Statut']?['Value'], 'Formalités en cours'))",
+              "expression": "@and(equals(body('Lire_element')?['Contexte']?['Value'], 'Formalités d''intégration'), not(empty(body('Lire_element')?['Candidature']?['Id'])), equals(first(body('Candidature_liee')?['value'])?['Statut']?['Value'], 'Formalités en cours'))",
               "actions": {
                 "Actions_formalites": {
                   "type": "OpenApiConnection",

@@ -1004,7 +1004,7 @@
             },
             "Si_premier_lundi_du_mois": {
               "type": "If",
-              "expression": "@lessOrEquals(int(formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'dd')), 7)",
+              "expression": "@and(lessOrEquals(int(formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'dd')), 7), not(contains(createArray(1, 4, 7, 10), int(formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'MM')))))",
               "actions": {
                 "Dest_N43": {
                   "type": "Select",

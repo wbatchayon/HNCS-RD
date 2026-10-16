@@ -250,10 +250,64 @@ def pa00c():
 # --------------------------------------------------------------------------------------------
 
 def pa00d():
-    f = Flow("PA-00D", "PA-00D", "HNCS-RD PA-00D — Attribuer les identifiants manquants", 2, "Planifié", "Recurrence",
+    f = Flow("PA-00D", "PA-00D", "HNCS-RD PA-00D — Attribuer les identifiants et initialiser les empreintes", 1, "Planifié", "Recurrence",
              recurrence="Toutes les heures (exécution manuelle possible par « Exécuter »)")
     recurrence_trigger(f, {"frequency": "Hour", "interval": 1})
     lists = [o for o in MODEL.data["objects"] if o["kind"] == "list" and o["prefix"]]
+
+    def empreintes(s):
+        """H-55 : à partir du lot 2, initialiser les empreintes vides (§ 6.5) à partir des valeurs courantes, sans rien rétablir.
+
+        Garde « lot 2 actif » : au moins une transition historisée par un flux (Origine = Flux, écrite par PA-00B).
+        Chaque liste est traitée dans sa propre portée ; une colonne ou une liste absente est ignorée sans erreur.
+        """
+        from gen_common import CR_FP, LIV_FP, emp_action, fp_compute
+        from defs_production import ev_item
+        g = get_items(s, "Lot2_actif", "HistoriqueStatuts", filter_="Origine eq 'Flux'", fields=("Origine",), top=1,
+                      after={s.last: ["Succeeded", "Skipped", "Failed"]})
+        specs = [
+            ("Affectations", "EmpreinteVerrou",
+             "EmpreinteVerrou eq null and (StatutPrecedent eq 'Active' or StatutPrecedent eq 'À risque' or StatutPrecedent eq 'Bloquée' "
+             "or StatutPrecedent eq 'Terminée' or StatutPrecedent eq 'Clôturée')",
+             lambda e, it: ip(ev_item(it)), ("Alternant", "Sujet", "Referent", "DateDebut", "StatutPrecedent")),
+            ("Livrables", "EmpreinteRevue", "EmpreinteRevue eq null", "LIV", ()),
+            ("ComptesRendus", "EmpreinteRevue", "EmpreinteRevue eq null", "CR", ()),
+            ("ActionsIntegration", "EmpreinteAction", "EmpreinteAction eq null", lambda e, it: ip(emp_action(it)), ("Bloquante", "Statut")),
+            ("Alternants", "EmpreinteReferent", "EmpreinteReferent eq null and ReferentPrincipalId ne null",
+             lambda e, it: ip(f"string({it}?['ReferentPrincipal']?['Id'])"), ("ReferentPrincipal",)),
+            ("Conventions", "EmpreinteDecision", "EmpreinteDecision eq null and DecideurPartenariatId ne null and DecisionPartenariat ne null",
+             lambda e, it: ip(f"{it}?['DecisionPartenariat']?['Value']"), ("DecideurPartenariat", "DecisionPartenariat")),
+        ]
+
+        def gated(y):
+            prevp = None
+            for lst, col, flt, value, fields in specs:
+                def per_list(ls, lst=lst, col=col, flt=flt, value=value, fields=fields):
+                    def work(w):
+                        items = get_items(w, f"Empreintes_vides_{lst}", lst, filter_=flt, fields=(col,) + tuple(fields))
+
+                        def each(e, loop):
+                            it = f"items('{loop}')"
+                            if value in ("LIV", "CR"):
+                                expr, _ = fp_compute(e, f, lst, it, LIV_FP if value == "LIV" else CR_FP, f"Empreinte_{lst}")
+                                v = ip(expr)
+                            else:
+                                v = value(e, it)
+                            patch_item(e, f"Initialiser_{col}_{lst}", lst, f"{it}?['ID']", {col: v}, it)
+                            e.add(f"Compter_empreinte_{lst}", {"type": "IncrementVariable", "inputs": {"name": "NbEmpreintes", "value": 1}})
+                        foreach(w, f"Pour_empreinte_{lst}", f"body('{items}')?['value']", each)
+                    if MODEL.obj(lst)["lot"] >= 3:
+                        cond(ls, f"Si_liste_deployee_empreinte_{lst}", list_exists(ls, f"emp_{lst}", lst), work)
+                    else:
+                        work(ls)
+                after = None if prevp is None else {prevp: ["Succeeded", "Failed", "TimedOut", "Skipped"]}
+                prevp = scope(y, f"Empreintes_{lst}", per_list, after=after)
+            cond(y, "Si_empreintes_initialisees", "greater(variables('NbEmpreintes'), 0)",
+                 lambda w: log(w, "Journaliser_empreintes", "Info",
+                               "concat(string(variables('NbEmpreintes')), ' empreinte(s) initialisée(s) à partir des valeurs courantes (H-55)')"),
+                 after={prevp: ["Succeeded", "Failed", "TimedOut", "Skipped"]})
+        cond(s, "Si_lot2_actif", f"greater(length(coalesce(body('{g}')?['value'], createArray())), 0)", gated,
+             after={g: ["Succeeded", "Failed"]})
 
     def body(s):
         prev = None
@@ -286,19 +340,22 @@ def pa00d():
         cond(s, "Si_identifiants_attribues", "greater(variables('NbIdentifiants'), 0)",
              lambda y: log(y, "Journaliser_nombre", "Info", "concat(string(variables('NbIdentifiants')), ' identifiant(s) IdHNCS attribué(s)')"),
              after={prev: ["Succeeded", "Skipped", "Failed"]})
-    standard_shell(f, body, variables=[("NbIdentifiants", "integer", 0)])
+        empreintes(s)
+    standard_shell(f, body, variables=[("NbIdentifiants", "integer", 0), ("NbEmpreintes", "integer", 0)])
     f.doc = dict(
-        objectif="Filet de sécurité : attribuer `IdHNCS` aux éléments qui n'en ont pas (listes sans flux de création, créations hors flux).",
+        objectif="Filet de sécurité : attribuer `IdHNCS` aux éléments qui n'en ont pas (listes sans flux de création, créations hors flux) et, à partir du lot 2, initialiser les empreintes vides (§ 6.5, H-55).",
         entrees="Toutes les listes ayant un préfixe d'identifiant (§ 4.3) ; les listes des lots ≥ 3 ne sont traitées que si elles sont déployées.",
         etapes=["Pour chaque liste : éléments dont `IdHNCS` est vide.",
                 "`IdHNCS` = `{PREFIXE}-{année de Created, heure de Paris}-{ID sur 4 chiffres}` ; Pôles : `POL-{CodePole}`.",
                 "Une portée par liste : l'échec d'une liste est journalisé (PA-00C, Erreur) sans bloquer les autres.",
-                "Nombre d'identifiants attribués → `JournalFlux` niveau Info."],
+                "Nombre d'identifiants attribués → `JournalFlux` niveau Info.",
+                "À partir du lot 2 (au moins une transition historisée par un flux, Origine = Flux) : empreintes vides initialisées à partir des valeurs courantes, sans rien rétablir — `EmpreinteVerrou` des affectations déjà validées (actives ou au-delà), `EmpreinteRevue` des livrables et comptes rendus, `EmpreinteAction`, `EmpreinteReferent` (référent renseigné), `EmpreinteDecision` (décideur déjà tracé, H-55) ; une portée par liste, liste ou colonne absente ignorée sans erreur ; nombre initialisé → `JournalFlux` Info."],
         sorties="`IdHNCS` renseigné.",
         erreurs="PA-00C par liste en échec ; rattrapage automatique au passage suivant.",
         decision="Sans objet.",
         tests=["Élément créé sans identifiant → identifiant au format attendu en moins d'une heure.", "Pôle P3 → `POL-P3`.",
-               "Liste de lot 3 absente : aucune erreur."])
+               "Liste de lot 3 absente : aucune erreur.", "Lot 1 seul (aucun historique Origine = Flux) : aucune empreinte écrite.",
+               "Livrable importé sans empreinte → `EmpreinteRevue` au format § 6.5 dans l'heure, aucune valeur rétablie."])
     return f
 
 

@@ -38,7 +38,7 @@ Aucune transition de statut.
 
 | Code | Destinataires | Canal | Objet | Modèle |
 | --- | --- | --- | --- | --- |
-| N-98 | Destinataires.Support, G_PROP | Mail | Erreurs de flux à reprendre ({n}) | `flows/templates/N-98.html` |
+| N-98 | `hncs_SupportEmail` (variable d'environnement), G_PROP | Mail | Erreurs de flux à reprendre ({n}) | `flows/templates/N-98.html` |
 
 ## Contrôles
 

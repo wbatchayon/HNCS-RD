@@ -135,7 +135,7 @@
     "id": "PA-00C",
     "code": "PA-00C",
     "displayName": "HNCS-RD PA-00C — Journaliser une erreur",
-    "lot": 2,
+    "lot": 1,
     "type": "Flux enfant",
     "trigger": {
       "kind": "ChildFlow",
@@ -179,8 +179,8 @@
   {
     "id": "PA-00D",
     "code": "PA-00D",
-    "displayName": "HNCS-RD PA-00D — Attribuer les identifiants manquants",
-    "lot": 2,
+    "displayName": "HNCS-RD PA-00D — Attribuer les identifiants et initialiser les empreintes",
+    "lot": 1,
     "type": "Planifié",
     "trigger": {
       "kind": "Recurrence",
@@ -200,6 +200,7 @@
       "DomainesCibles",
       "Entretiens",
       "Etablissements",
+      "HistoriqueStatuts",
       "InteractionsEcoles",
       "Livrables",
       "Mobilisations",
@@ -235,8 +236,10 @@
     ],
     "fieldsUsed": {
       "ActionsIntegration": [
+        "Bloquante",
         "Contexte",
         "Created",
+        "EmpreinteAction",
         "ID",
         "IdHNCS",
         "Statut",
@@ -247,19 +250,24 @@
         "CadenceCR",
         "Created",
         "DateDebut",
+        "EmpreinteVerrou",
         "ID",
         "IdHNCS",
+        "Referent",
         "Statut",
+        "StatutPrecedent",
         "Sujet"
       ],
       "Alternants": [
         "Created",
         "DateDebut",
         "DateFin",
+        "EmpreinteReferent",
         "Etablissement",
         "ID",
         "IdHNCS",
         "Pole",
+        "ReferentPrincipal",
         "Statut",
         "Title"
       ],
@@ -292,15 +300,22 @@
       "ComptesRendus": [
         "Affectation",
         "Created",
+        "DateRemise",
+        "DateValidation",
         "Echeance",
+        "EmpreinteRevue",
         "ID",
         "IdHNCS",
         "PeriodeDebut",
         "PeriodeFin",
-        "Statut"
+        "Statut",
+        "Valideur"
       ],
       "Conventions": [
         "Created",
+        "DecideurPartenariat",
+        "DecisionPartenariat",
+        "EmpreinteDecision",
         "Etablissement",
         "ID",
         "IdHNCS",
@@ -333,6 +348,9 @@
         "Statut",
         "Title"
       ],
+      "HistoriqueStatuts": [
+        "Origine"
+      ],
       "InteractionsEcoles": [
         "Created",
         "DateInteraction",
@@ -344,13 +362,28 @@
       "Livrables": [
         "Affectation",
         "Created",
+        "DateDepot",
+        "DatePremierDepot",
+        "DateRevue",
+        "DateValidation",
+        "DecisionRevue",
+        "DoD1Fonctionnel",
+        "DoD2FicheMethodo",
+        "DoD3Restitution",
+        "DoD4SupportCom",
+        "DoD5Enseignements",
         "Echeance",
+        "EmpreinteRevue",
         "ID",
         "IdHNCS",
+        "NbCorrections",
         "Proprietaire",
+        "Reviseur",
         "Statut",
         "Title",
-        "TypeLivrable"
+        "TypeLivrable",
+        "Valideur",
+        "VersionValidee"
       ],
       "Mobilisations": [
         "Created",

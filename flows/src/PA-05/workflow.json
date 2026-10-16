@@ -438,9 +438,18 @@
                 ]
               }
             },
+            "Verrou_viole": {
+              "type": "Compose",
+              "inputs": "@and(not(empty(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))), or(not(equals(string(coalesce(json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['AlternantId'], '')), string(coalesce(body('Lire_element')?['Alternant']?['Id'], '')))), not(equals(string(coalesce(json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['SujetId'], '')), string(coalesce(body('Lire_element')?['Sujet']?['Id'], '')))), not(equals(string(coalesce(json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['ReferentId'], '')), string(coalesce(body('Lire_element')?['Referent']?['Id'], '')))), not(equals(string(coalesce(json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['DateDebut'], '')), if(empty(body('Lire_element')?['DateDebut']), '', formatDateTime(convertTimeZone(body('Lire_element')?['DateDebut'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd'))))))",
+              "runAfter": {
+                "Si_titre_vide": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Si_champs_verrouilles_modifies": {
               "type": "If",
-              "expression": "@and(not(empty(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))), or(not(equals(string(coalesce(json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['AlternantId'], '')), string(coalesce(body('Lire_element')?['Alternant']?['Id'], '')))), not(equals(string(coalesce(json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['SujetId'], '')), string(coalesce(body('Lire_element')?['Sujet']?['Id'], '')))), not(equals(string(coalesce(json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['ReferentId'], '')), string(coalesce(body('Lire_element')?['Referent']?['Id'], '')))), not(equals(string(coalesce(json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['DateDebut'], '')), if(empty(body('Lire_element')?['DateDebut']), '', formatDateTime(convertTimeZone(body('Lire_element')?['DateDebut'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd'))))))",
+              "expression": "@equals(string(outputs('Verrou_viole')), 'True')",
               "actions": {
                 "Retablir_champs_verrouilles": {
                   "type": "OpenApiConnection",
@@ -659,25 +668,13 @@
                       "TimedOut"
                     ]
                   }
-                },
-                "Fin_verrou_retabli": {
-                  "type": "Terminate",
-                  "inputs": {
-                    "runStatus": "Succeeded"
-                  },
-                  "runAfter": {
-                    "Teams_echec_N91": [
-                      "Succeeded",
-                      "Skipped"
-                    ]
-                  }
                 }
               },
               "else": {
                 "actions": {}
               },
               "runAfter": {
-                "Si_titre_vide": [
+                "Verrou_viole": [
                   "Succeeded"
                 ]
               }
@@ -735,7 +732,7 @@
                 "parameters": {
                   "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
                   "table": "Alternants",
-                  "$filter": "ID eq @{coalesce(body('Lire_element')?['Alternant']?['Id'], 0)}",
+                  "$filter": "ID eq @{coalesce(if(equals(string(outputs('Verrou_viole')), 'True'), json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['AlternantId'], body('Lire_element')?['Alternant']?['Id']), 0)}",
                   "$top": 1
                 },
                 "authentication": "@parameters('$authentication')",
@@ -762,7 +759,7 @@
                 "parameters": {
                   "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
                   "table": "Référents",
-                  "$filter": "ID eq @{coalesce(body('Lire_element')?['Referent']?['Id'], 0)}",
+                  "$filter": "ID eq @{coalesce(if(equals(string(outputs('Verrou_viole')), 'True'), json(coalesce(body('Lire_element')?['EmpreinteVerrou'], ''))?['ReferentId'], body('Lire_element')?['Referent']?['Id']), 0)}",
                   "$top": 1
                 },
                 "authentication": "@parameters('$authentication')",

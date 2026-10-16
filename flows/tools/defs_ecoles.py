@@ -1,7 +1,7 @@
 """Fin d'alternance, écoles, gouvernance, communications, conservation et sujets : PA-09/09b, PA-10/10b, PA-11, PA-12, PA-13, PA-14."""
 from __future__ import annotations
 
-from flowlib import (MODEL, SITE, SVC, TZ, TODAY, ANTI_LOOP, Flow, P, arr, at, compose, cond, cond_targets, cond_transition,
+from flowlib import (item_changes, MODEL, SITE, SVC, TZ, TODAY, ANTI_LOOP, Flow, P, arr, at, compose, cond, cond_targets, cond_transition,
                      create_with_id, dfr, dloc, ensure_idhncs, filt, flux_transition, foreach, get_item, get_items, grant_item,
                      html_table, ip, item_link, list_link, log, notify, odata, patch_item, q, recurrence_trigger, select,
                      sp_trigger, standard_shell, switch, teams_channel, terminate, truthy)
@@ -335,11 +335,12 @@ def pa11():
         log(s, "Canal_comite_echec", "Avertissement", q("N-42 : publication dans le canal Teams du comité impossible"), after={tc: ["Failed", "TimedOut"]})
         jour = f"int(formatDateTime(convertTimeZone(utcNow(), 'UTC', '{TZ}'), 'dd'))"
         mois = f"int(formatDateTime(convertTimeZone(utcNow(), 'UTC', '{TZ}'), 'MM'))"
-        cond(s, "Si_premier_lundi_du_mois", f"lessOrEquals({jour}, 7)",
+        trimestre = f"contains(createArray(1, 4, 7, 10), {mois})"
+        cond(s, "Si_premier_lundi_du_mois", f"and(lessOrEquals({jour}, 7), not({trimestre}))",
              lambda y: notify(y, "N-43", [f.group_emails("G_DRD")], {"TypeSynthese": q("Point Direction"), "Date": date,
                                                                     "Synthese": f"outputs('{synth_dir}')", "LienRapport": P("Lien.RapportPowerBI")}),
              after={"Canal_comite_echec": ["Succeeded", "Skipped"]})
-        cond(s, "Si_premier_lundi_du_trimestre", f"and(lessOrEquals({jour}, 7), contains(createArray(1, 4, 7, 10), {mois}))",
+        cond(s, "Si_premier_lundi_du_trimestre", f"and(lessOrEquals({jour}, 7), {trimestre})",
              lambda y: notify(y, "N-43", [f.group_emails("G_DRD")], {"TypeSynthese": q("Revue trimestrielle"), "Date": date,
                                                                     "Synthese": f"outputs('{synth_dir}')", "LienRapport": P("Lien.RapportPowerBI")}))
         f.use(LIV, "IdHNCS", "Statut", "Echeance")
@@ -356,13 +357,20 @@ def pa11():
 def pa12():
     f = Flow("PA-12", "PA-12", "HNCS-RD PA-12 — Validation des communications", 3, "Automatisé", "SharePointItem", COM,
              targets=targets("PA-12", COM), objet="Communication")
-    sp_trigger(f, COM, "GetOnUpdatedItems", [ANTI_LOOP, cond_transition(), cond_targets(f.targets)])
+    t = "triggerOutputs()?['body/"
+    # statut cible ∈ partition, ou toute autre modification (changement d'Auteur détecté dans le flux, § 7.4)
+    sp_trigger(f, COM, "GetOnUpdatedItems", [ANTI_LOOP,
+               f"@or(and(not(equals(coalesce({t}Statut/Value'], ''), coalesce({t}StatutPrecedent'], ''))), contains({arr(f.targets)}, {t}Statut/Value'])), "
+               f"not(empty({t}Auteur/Email'])))"])
     f.use(COM, "Auteur", "ValidationInterne", "DateValidation", "Canal", "DatePrevue", "AutorisationsTiers", "IdHNCS")
 
     def body(s):
         def pre(z, env):
             au = f"toLower(coalesce({env.I}?['Auteur']?['Email'], ''))"
-            cond(z, "Si_auteur_alternant", f"and(not(empty({au})), contains(split({f.group_emails('G_ALT')}, ';'), {au}))",
+            ch = item_changes(z, "Changements", COM, env.ID)
+            changed = (f"or(not(equals(string(coalesce(body('{ch}')?['SinceVersionExisted'], true)), 'True')), "
+                       f"equals(string(coalesce(body('{ch}')?['ColumnHasChanged']?['Auteur'], false)), 'True'))")
+            cond(z, "Si_auteur_alternant", f"and({changed}, not(empty({au})), contains(split({f.group_emails('G_ALT')}, ';'), {au}))",
                  lambda y: grant_item(y, "auteur", COM, env.ID, [("user", au, "CSS")]))
 
         def n45(z, env, tag):
@@ -527,15 +535,16 @@ DOC = {
         entrees="Livrables, comptes rendus, affectations, sujets, conventions, établissements, communications, candidatures (en nombre).",
         etapes=["Synthèse HTML : livrables en retard escaladés (au-delà de `Delai.EscaladeComiteJours`), échéances à 14 jours, comptes rendus « Non remis », blocages signalés, affectations « À risque » / « Bloquée », sujets « Bloqué » / « À arbitrer », conventions « À renouveler », établissements « Partenariat à évaluer », communications « En revue », candidatures en attente **en nombre par statut** ; lien `Lien.RapportPowerBI`. Uniquement des identifiants et des statuts.",
                 "Comité : N-42 à G_DRD et publication dans le canal Teams `Lien.CanalComite` (groupe et canal lus dans le lien).",
-                "1er lundi du mois : N-43 « Point Direction » à G_DRD (version agrégée, à relire et transmettre) ; 1er lundi d'un trimestre : N-43 « Revue trimestrielle ».",
+                "1er lundi du mois : N-43 « Point Direction » à G_DRD (version agrégée, à relire et transmettre) ; le 1er lundi d'un trimestre, la N-43 « Revue trimestrielle » **remplace** l'envoi mensuel (une seule N-43).",
                 "`Gouvernance.ComiteJourHeure` ≠ « Lundi 08:00 » → Avertissement (la récurrence est statique, voir divergences)."],
         sorties="N-42, N-43.", erreurs="Socle (PA-00C) ; échec Teams journalisé sans bloquer les courriels.",
         decision="Aucune : synthèse d'information ; la Direction R&D relit et transmet à la Direction Générale.",
-        tests=["Lundi ordinaire → N-42 seule.", "Premier lundi d'avril → N-42 et deux N-43.", "Aucun nom de personne dans N-43."]),
+        tests=["Lundi ordinaire → N-42 seule.", "Premier lundi de mai → N-42 et N-43 « Point Direction ».",
+               "Premier lundi d'avril → N-42 et une seule N-43 « Revue trimestrielle ».", "Aucun nom de personne dans N-43."]),
     "PA-12": dict(
         objectif="Contrôler la validation des communications (réservée à DIRECTION_RD / DIRECTION) et notifier auteur et approbateur.",
-        entrees="Élément `CommunicationsRD` créé ou modifié vers un statut de la partition PA-12.",
-        etapes=["`IdHNCS` ; auteur membre de G_ALT → CSS sur l'élément (§ 7.4).",
+        entrees="Élément `CommunicationsRD` créé ou modifié : statut cible de la partition PA-12, ou changement d'`Auteur`.",
+        etapes=["`IdHNCS` ; à la création ou au changement d'`Auteur` (« Obtenir les modifications ») : auteur membre de G_ALT → CSS sur l'élément (§ 7.4) ; une modification sans changement de statut s'arrête là.",
                 "PA-00A (`ItemAuteurEmail` = `Auteur`, `ItemValideurEmail` = `ValidationInterne`) puis `G_AUTORISATIONS`, `G_PUBLICATION`.",
                 "**En revue** : N-44 à l'approbateur proposé s'il est membre de G_DRD ou G_DIR, sinon à G_DRD.",
                 "**Validée** : `DateValidation`, `ValidationInterne` = `Editor` si vide, N-45. **Suspendue / refusée** : N-45. **En rédaction** depuis « En revue » (renvoi, COM-T03) : N-45.", "PA-00B."],

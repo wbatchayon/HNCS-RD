@@ -4,7 +4,7 @@
 
 | Élément | Valeur |
 | --- | --- |
-| Lot | 2 |
+| Lot | 1 |
 | Type (spec) | Flux enfant |
 | Définitions techniques | `PA-00C` |
 | Activé par défaut | Oui |
@@ -39,7 +39,7 @@ Aucune transition de statut.
 
 | Code | Destinataires | Canal | Objet | Modèle |
 | --- | --- | --- | --- | --- |
-| N-99 | Destinataires.Support | Mail | Erreur du flux {code} | `flows/templates/N-99.html` |
+| N-99 | `hncs_SupportEmail` (variable d'environnement) | Mail | Erreur du flux {code} | `flows/templates/N-99.html` |
 
 ## Contrôles
 

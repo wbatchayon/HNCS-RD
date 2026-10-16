@@ -111,15 +111,19 @@ def pa05():
                     AFF, env.ID, env.IDOBJ)
                 notify(y, "N-91", [ACTEUR], {"IdHNCS": env.IDOBJ, "Champs": q("Alternant, Sujet, Référent, Date de début"), "Lien": env.LIEN},
                        teams_to=[ACTEUR])
-                terminate(y, "Fin_verrou_retabli")
-            cond(z, "Si_champs_verrouilles_modifies", f"and(not(empty({emp})), {verrou_differs(emp, I)})", restore)
+                # v1.5.0 : pas d'arrêt — un changement de statut fait dans la même modification est traité ensuite
+                # sur les valeurs rétablies (sinon la garde de transition termine l'exécution)
+            viole = compose(z, "Verrou_viole", at(f"and(not(empty({emp})), {verrou_differs(emp, I)})"))
+            vv = f"equals(string(outputs('{viole}')), 'True')"
+            cond(z, "Si_champs_verrouilles_modifies", vv, restore)
             # § 6.5 : empreinte vide sur une affectation déjà active (données importées) → initialisation, sans rien rétablir
             cond(z, "Si_verrou_a_initialiser",
                  f"and(empty({emp}), contains(createArray('Active', 'À risque', 'Bloquée', 'Terminée', 'Clôturée'), coalesce({I}?['StatutPrecedent'], '')))",
                  lambda y: patch_item(y, "Initialiser_EmpreinteVerrou", AFF, env.ID, {"EmpreinteVerrou": ip(ev_item(I))}, I))
-            env["ALT"] = lookup_first(z, "Alternant_affectation", "Alternants", f"{I}?['Alternant']?['Id']",
+            env["ALT"] = lookup_first(z, "Alternant_affectation", "Alternants", f"if({vv}, json({emp})?['AlternantId'], {I}?['Alternant']?['Id'])",
                                       fields=("CompteM365", "IdHNCS", "Statut", "ReferentPrincipal", "EmpreinteReferent", "Title"))
-            env["REF"] = lookup_first(z, "Referent_affectation", "Referents", f"{I}?['Referent']?['Id']", fields=("Compte", "IdHNCS", "Statut"))
+            env["REF"] = lookup_first(z, "Referent_affectation", "Referents", f"if({vv}, json({emp})?['ReferentId'], {I}?['Referent']?['Id'])",
+                                      fields=("Compte", "IdHNCS", "Statut"))
 
         def active(z, env):
             def activation(y):
@@ -640,7 +644,7 @@ DOC = {
         objectif="Exécuter les conséquences d'une affectation décidée par la R&D (accès, livrables proposés, premier compte rendu, référent principal), protéger l'affectation active (P-03) et terminer une affectation remplacée sans l'écraser.",
         entrees="Élément `Affectations` créé ou modifié (changement de statut, ou champs verrouillés différents de `EmpreinteVerrou`).",
         etapes=["`IdHNCS` ; `Title` = `{IdAlternant} – {IdSujet}` si vide.",
-                "Verrouillage (P-03) : `EmpreinteVerrou` (`{\"AlternantId\":12,\"SujetId\":3,\"ReferentId\":5,\"DateDebut\":\"2026-11-02\"}`, § 6.5) renseignée et `Alternant`, `Sujet`, `Referent` ou `DateDebut` différents (comparaison clé par clé) → valeurs rétablies, Avertissement, N-91 à l'auteur (« créez une nouvelle affectation »), fin ; empreinte vide sur une affectation déjà validée (données importées) → initialisée sans rien rétablir.",
+                "Verrouillage (P-03) : `EmpreinteVerrou` (`{\"AlternantId\":12,\"SujetId\":3,\"ReferentId\":5,\"DateDebut\":\"2026-11-02\"}`, § 6.5) renseignée et `Alternant`, `Sujet`, `Referent` ou `DateDebut` différents (comparaison clé par clé) → valeurs rétablies, Avertissement, N-91 à l'auteur (« créez une nouvelle affectation ») ; si la même modification change le statut, la transition est ensuite traitée sur les valeurs rétablies, sinon fin ; empreinte vide sur une affectation déjà validée (données importées) → initialisée sans rien rétablir.",
                 "Transition : PA-00A (`ItemAuteurEmail` = compte de l'alternant, `ItemValideurEmail` = compte du référent) puis `G_AFFECTATION_COMPLETE` (dont `CompteM365` de l'alternant renseigné), `G_DATE_FIN`, `G_LIVRABLES_CLOS`.",
                 "**Active** (depuis « À préparer ») : `EmpreinteVerrou` figée ; dossier `04 — Livrables R&D/{SUJ}` (alternant CSS) ; lecture de l'alternant sur l'affectation ; référent CSS sur `05 — Suivi des alternants/{ALT}` ; référent principal de l'alternant = référent de l'affectation (et `EmpreinteReferent`), changement historisé (Objet = Alternant, `CodeTransition` = `REF-PRINCIPAL`, `StatutAvant` / `StatutApres` = `IdHNCS` des référents) et lecture du référent sur la fiche ; livrables « À produire » proposés depuis `RegistreModeles` (`CreationAuto`, « Approuvé », `ApplicableA` contient le type du sujet ; `Proprietaire` = compte de l'alternant, `Reviseur` = compte du référent ; idempotent par affectation + modèle ; effets de création de PA-07 exécutés : propriétaire CSS, `EmpreinteRevue`, LIV-T01 FLUX) ; premier compte rendu « Attendu » si la liste du lot 3 existe et que la cadence n'est pas « Par jalon » (effets de création de PA-08, CR-T01 FLUX), `ProchaineEcheanceCR` ; N-20.",
                 "Remplacement (`AffectationRemplacee` active) : `DateFin` = max(début de l'ancienne, début de la nouvelle − 1 jour), `MotifFin` = « Remplacée par {IdHNCS} », AFF-T05 (FLUX, `G_DATE_FIN`) puis N-22 listant les livrables encore ouverts ; aucun autre champ de l'ancienne affectation n'est modifié ; aucun transfert automatique de livrable (H-51).",
