@@ -1,0 +1,616 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "hncs_SiteUrl (hncs_SiteUrl)": {
+          "defaultValue": "https://contoso.sharepoint.com/sites/HNCS-RD",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_SiteUrl",
+            "description": "URL du site SharePoint HNCS-R&D (sans barre finale)"
+          }
+        },
+        "hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)": {
+          "defaultValue": "svc-hncs-rd@contoso.com",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_ServiceAccountEmail",
+            "description": "Adresse du compte de service des flux (rôle FLUX)"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Button",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Objet": {
+                  "title": "Objet",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Objet de la transition (énumération OBJET_TRANSITION)",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "StatutAvant": {
+                  "title": "StatutAvant",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Statut de départ (∅ pour une création)",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "StatutApres": {
+                  "title": "StatutApres",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Statut demandé",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "ActeurEmail": {
+                  "title": "ActeurEmail",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Adresse de l'auteur de la modification (Editor)",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "ItemAuteurEmail": {
+                  "title": "ItemAuteurEmail",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Adresse de la personne ITEM_AUTEUR (facultatif)",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "ItemValideurEmail": {
+                  "title": "ItemValideurEmail",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Adresse de la personne ITEM_VALIDEUR (facultatif)",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "Objet",
+                "StatutAvant",
+                "StatutApres",
+                "ActeurEmail"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Initialiser_RolesSatisfaits": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "RolesSatisfaits",
+                "type": "array",
+                "value": []
+              }
+            ]
+          },
+          "runAfter": {}
+        },
+        "Controle": {
+          "type": "Scope",
+          "actions": {
+            "Groupes_par_role": {
+              "type": "Compose",
+              "inputs": {
+                "PROPRIETAIRE": "HNCS-RD-Proprietaires",
+                "DIRECTION_RD": "HNCS-RD-DirectionRD",
+                "RD": "HNCS-RD-EquipeRD",
+                "ADMIN": "HNCS-RD-Administration",
+                "REFERENT": "HNCS-RD-Referents",
+                "ALTERNANT": "HNCS-RD-Alternants",
+                "DIRECTION": "HNCS-RD-Direction",
+                "ECOLES": "HNCS-RD-RelationEcoles"
+              },
+              "runAfter": {}
+            },
+            "Lire_transitions": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Transitions de statuts",
+                  "$filter": "Objet eq '@{replace(string(triggerBody()?['Objet']), '''', '''''')}' and StatutDe eq '@{replace(string(triggerBody()?['StatutAvant']), '''', '''''')}' and StatutVers eq '@{replace(string(triggerBody()?['StatutApres']), '''', '''''')}' and Actif eq 1",
+                  "$top": 5
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Groupes_par_role": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_aucune_transition": {
+              "type": "If",
+              "expression": "@equals(length(body('Lire_transitions')?['value']), 0)",
+              "actions": {
+                "Repondre_transition_inexistante": {
+                  "type": "Response",
+                  "kind": "PowerApp",
+                  "inputs": {
+                    "statusCode": 200,
+                    "body": {
+                      "Autorise": false,
+                      "CodeTransition": "",
+                      "Controles": "",
+                      "Motif": "Transition non autorisée"
+                    },
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "Autorise": {
+                          "title": "Autorise",
+                          "x-ms-dynamically-added": true,
+                          "type": "boolean"
+                        },
+                        "CodeTransition": {
+                          "title": "CodeTransition",
+                          "x-ms-dynamically-added": true,
+                          "type": "string"
+                        },
+                        "Controles": {
+                          "title": "Controles",
+                          "x-ms-dynamically-added": true,
+                          "type": "string"
+                        },
+                        "Motif": {
+                          "title": "Motif",
+                          "x-ms-dynamically-added": true,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {
+                  "Transition": {
+                    "type": "Compose",
+                    "inputs": "@first(body('Lire_transitions')?['value'])",
+                    "runAfter": {}
+                  },
+                  "Roles_autorises": {
+                    "type": "Select",
+                    "inputs": {
+                      "from": "@outputs('Transition')?['Acteurs']",
+                      "select": "@item()?['Value']"
+                    },
+                    "runAfter": {
+                      "Transition": [
+                        "Succeeded"
+                      ]
+                    }
+                  },
+                  "Si_compte_service": {
+                    "type": "If",
+                    "expression": "@equals(toLower(trim(coalesce(triggerBody()?['ActeurEmail'], ''))), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')))",
+                    "actions": {
+                      "Si_FLUX_autorise": {
+                        "type": "If",
+                        "expression": "@contains(body('Roles_autorises'), 'FLUX')",
+                        "actions": {
+                          "Repondre_FLUX_autorise": {
+                            "type": "Response",
+                            "kind": "PowerApp",
+                            "inputs": {
+                              "statusCode": 200,
+                              "body": {
+                                "Autorise": true,
+                                "CodeTransition": "@{outputs('Transition')?['Title']}",
+                                "Controles": "@{coalesce(outputs('Transition')?['Controle'], '')}",
+                                "Motif": ""
+                              },
+                              "schema": {
+                                "type": "object",
+                                "properties": {
+                                  "Autorise": {
+                                    "title": "Autorise",
+                                    "x-ms-dynamically-added": true,
+                                    "type": "boolean"
+                                  },
+                                  "CodeTransition": {
+                                    "title": "CodeTransition",
+                                    "x-ms-dynamically-added": true,
+                                    "type": "string"
+                                  },
+                                  "Controles": {
+                                    "title": "Controles",
+                                    "x-ms-dynamically-added": true,
+                                    "type": "string"
+                                  },
+                                  "Motif": {
+                                    "title": "Motif",
+                                    "x-ms-dynamically-added": true,
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            },
+                            "runAfter": {}
+                          }
+                        },
+                        "else": {
+                          "actions": {
+                            "Repondre_FLUX_refuse": {
+                              "type": "Response",
+                              "kind": "PowerApp",
+                              "inputs": {
+                                "statusCode": 200,
+                                "body": {
+                                  "Autorise": false,
+                                  "CodeTransition": "@{outputs('Transition')?['Title']}",
+                                  "Controles": "@{coalesce(outputs('Transition')?['Controle'], '')}",
+                                  "Motif": "Rôle non autorisé"
+                                },
+                                "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                    "Autorise": {
+                                      "title": "Autorise",
+                                      "x-ms-dynamically-added": true,
+                                      "type": "boolean"
+                                    },
+                                    "CodeTransition": {
+                                      "title": "CodeTransition",
+                                      "x-ms-dynamically-added": true,
+                                      "type": "string"
+                                    },
+                                    "Controles": {
+                                      "title": "Controles",
+                                      "x-ms-dynamically-added": true,
+                                      "type": "string"
+                                    },
+                                    "Motif": {
+                                      "title": "Motif",
+                                      "x-ms-dynamically-added": true,
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              "runAfter": {}
+                            }
+                          }
+                        },
+                        "runAfter": {}
+                      }
+                    },
+                    "else": {
+                      "actions": {
+                        "Tester_roles": {
+                          "type": "Foreach",
+                          "foreach": "@body('Roles_autorises')",
+                          "actions": {
+                            "Si_role_de_groupe": {
+                              "type": "If",
+                              "expression": "@not(empty(outputs('Groupes_par_role')?[items('Tester_roles')]))",
+                              "actions": {
+                                "Membres_du_groupe": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                      "connectionName": "shared_sharepointonline",
+                                      "operationId": "HttpRequest"
+                                    },
+                                    "parameters": {
+                                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                      "parameters/method": "GET",
+                                      "parameters/uri": "@{concat('_api/web/sitegroups/getbyname(''', outputs('Groupes_par_role')?[items('Tester_roles')], ''')/users?$select=Email')}",
+                                      "parameters/headers": {
+                                        "Accept": "application/json;odata=nometadata",
+                                        "Content-Type": "application/json;odata=nometadata"
+                                      }
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                },
+                                "Emails_du_groupe": {
+                                  "type": "Select",
+                                  "inputs": {
+                                    "from": "@body('Membres_du_groupe')?['value']",
+                                    "select": "@toLower(coalesce(item()?['Email'], ''))"
+                                  },
+                                  "runAfter": {
+                                    "Membres_du_groupe": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Si_membre": {
+                                  "type": "If",
+                                  "expression": "@contains(body('Emails_du_groupe'), toLower(trim(coalesce(triggerBody()?['ActeurEmail'], ''))))",
+                                  "actions": {
+                                    "Ajouter_role_groupe": {
+                                      "type": "AppendToArrayVariable",
+                                      "inputs": {
+                                        "name": "RolesSatisfaits",
+                                        "value": "@items('Tester_roles')"
+                                      },
+                                      "runAfter": {}
+                                    }
+                                  },
+                                  "else": {
+                                    "actions": {}
+                                  },
+                                  "runAfter": {
+                                    "Emails_du_groupe": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                }
+                              },
+                              "else": {
+                                "actions": {
+                                  "Si_ITEM_AUTEUR": {
+                                    "type": "If",
+                                    "expression": "@and(equals(items('Tester_roles'), 'ITEM_AUTEUR'), not(empty(trim(coalesce(triggerBody()?['ItemAuteurEmail'], '')))), equals(toLower(trim(triggerBody()?['ItemAuteurEmail'])), toLower(trim(coalesce(triggerBody()?['ActeurEmail'], '')))))",
+                                    "actions": {
+                                      "Ajouter_ITEM_AUTEUR": {
+                                        "type": "AppendToArrayVariable",
+                                        "inputs": {
+                                          "name": "RolesSatisfaits",
+                                          "value": "ITEM_AUTEUR"
+                                        },
+                                        "runAfter": {}
+                                      }
+                                    },
+                                    "else": {
+                                      "actions": {}
+                                    },
+                                    "runAfter": {}
+                                  },
+                                  "Si_ITEM_VALIDEUR": {
+                                    "type": "If",
+                                    "expression": "@and(equals(items('Tester_roles'), 'ITEM_VALIDEUR'), not(empty(trim(coalesce(triggerBody()?['ItemValideurEmail'], '')))), equals(toLower(trim(triggerBody()?['ItemValideurEmail'])), toLower(trim(coalesce(triggerBody()?['ActeurEmail'], '')))))",
+                                    "actions": {
+                                      "Ajouter_ITEM_VALIDEUR": {
+                                        "type": "AppendToArrayVariable",
+                                        "inputs": {
+                                          "name": "RolesSatisfaits",
+                                          "value": "ITEM_VALIDEUR"
+                                        },
+                                        "runAfter": {}
+                                      }
+                                    },
+                                    "else": {
+                                      "actions": {}
+                                    },
+                                    "runAfter": {
+                                      "Si_ITEM_AUTEUR": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "runAfter": {}
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 1
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Si_role_satisfait": {
+                          "type": "If",
+                          "expression": "@greater(length(variables('RolesSatisfaits')), 0)",
+                          "actions": {
+                            "Repondre_autorise": {
+                              "type": "Response",
+                              "kind": "PowerApp",
+                              "inputs": {
+                                "statusCode": 200,
+                                "body": {
+                                  "Autorise": true,
+                                  "CodeTransition": "@{outputs('Transition')?['Title']}",
+                                  "Controles": "@{coalesce(outputs('Transition')?['Controle'], '')}",
+                                  "Motif": ""
+                                },
+                                "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                    "Autorise": {
+                                      "title": "Autorise",
+                                      "x-ms-dynamically-added": true,
+                                      "type": "boolean"
+                                    },
+                                    "CodeTransition": {
+                                      "title": "CodeTransition",
+                                      "x-ms-dynamically-added": true,
+                                      "type": "string"
+                                    },
+                                    "Controles": {
+                                      "title": "Controles",
+                                      "x-ms-dynamically-added": true,
+                                      "type": "string"
+                                    },
+                                    "Motif": {
+                                      "title": "Motif",
+                                      "x-ms-dynamically-added": true,
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              "runAfter": {}
+                            }
+                          },
+                          "else": {
+                            "actions": {
+                              "Repondre_role_refuse": {
+                                "type": "Response",
+                                "kind": "PowerApp",
+                                "inputs": {
+                                  "statusCode": 200,
+                                  "body": {
+                                    "Autorise": false,
+                                    "CodeTransition": "@{outputs('Transition')?['Title']}",
+                                    "Controles": "@{coalesce(outputs('Transition')?['Controle'], '')}",
+                                    "Motif": "Rôle non autorisé"
+                                  },
+                                  "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                      "Autorise": {
+                                        "title": "Autorise",
+                                        "x-ms-dynamically-added": true,
+                                        "type": "boolean"
+                                      },
+                                      "CodeTransition": {
+                                        "title": "CodeTransition",
+                                        "x-ms-dynamically-added": true,
+                                        "type": "string"
+                                      },
+                                      "Controles": {
+                                        "title": "Controles",
+                                        "x-ms-dynamically-added": true,
+                                        "type": "string"
+                                      },
+                                      "Motif": {
+                                        "title": "Motif",
+                                        "x-ms-dynamically-added": true,
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "runAfter": {}
+                              }
+                            }
+                          },
+                          "runAfter": {
+                            "Tester_roles": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "runAfter": {
+                      "Roles_autorises": [
+                        "Succeeded"
+                      ]
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Lire_transitions": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Initialiser_RolesSatisfaits": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Erreur_controle": {
+          "type": "Scope",
+          "actions": {
+            "Repondre_erreur_technique": {
+              "type": "Response",
+              "kind": "PowerApp",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "Autorise": false,
+                  "CodeTransition": "",
+                  "Controles": "",
+                  "Motif": "Erreur technique de contrôle"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Autorise": {
+                      "title": "Autorise",
+                      "x-ms-dynamically-added": true,
+                      "type": "boolean"
+                    },
+                    "CodeTransition": {
+                      "title": "CodeTransition",
+                      "x-ms-dynamically-added": true,
+                      "type": "string"
+                    },
+                    "Controles": {
+                      "title": "Controles",
+                      "x-ms-dynamically-added": true,
+                      "type": "string"
+                    },
+                    "Motif": {
+                      "title": "Motif",
+                      "x-ms-dynamically-added": true,
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "runAfter": {
+            "Controle": [
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,2857 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "hncs_SiteUrl (hncs_SiteUrl)": {
+          "defaultValue": "https://contoso.sharepoint.com/sites/HNCS-RD",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_SiteUrl",
+            "description": "URL du site SharePoint HNCS-R&D (sans barre finale)"
+          }
+        }
+      },
+      "triggers": {
+        "Recurrence": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Hour",
+            "interval": 1,
+            "timeZone": "Romance Standard Time"
+          }
+        }
+      },
+      "actions": {
+        "Initialiser_NbIdentifiants": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "NbIdentifiants",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          },
+          "runAfter": {}
+        },
+        "Principal": {
+          "type": "Scope",
+          "actions": {
+            "Lire_parametres": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Paramètres",
+                  "$filter": "Categorie eq 'Destinataires' or Categorie eq 'Délais' or Categorie eq 'Fonctionnalités' or Categorie eq 'Conservation' or Categorie eq 'Liens' or Categorie eq 'Gouvernance' or Categorie eq 'Canaux'",
+                  "$top": 500
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {}
+            },
+            "Parametres_cles_valeurs": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Lire_parametres')?['value']",
+                "select": "@concat('\"', replace(item()?['Title'], '\"', ''), '\":', if(empty(item()?['Valeur']), 'null', concat('\"', replace(replace(item()?['Valeur'], '\\', '\\\\'), '\"', '\\\"'), '\"')))"
+              },
+              "runAfter": {
+                "Lire_parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parametres": {
+              "type": "Compose",
+              "inputs": "@json(concat('{', join(body('Parametres_cles_valeurs'), ','), '}'))",
+              "runAfter": {
+                "Parametres_cles_valeurs": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Aujourdhui": {
+              "type": "Compose",
+              "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')",
+              "runAfter": {
+                "Parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Liste_Offres": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Offres": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Offres",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Offres": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Offres')?['value']",
+                  "actions": {
+                    "Attribuer_Offres": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Offres",
+                          "id": "@items('Pour_Offres')?['ID']",
+                          "item/IdHNCS": "@{concat('OFF-', formatDateTime(convertTimeZone(items('Pour_Offres')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Offres')?['ID']), '0000'))}",
+                          "item/TypeOffre/Value": "@{items('Pour_Offres')?['TypeOffre']?['Value']}",
+                          "item/Statut/Value": "@{items('Pour_Offres')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_Offres')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Offres": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Offres": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Offres": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Aujourdhui": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Erreur_liste_Offres": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Offres",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Offres)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Offres": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Candidatures": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Candidatures": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Candidatures",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Candidatures": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Candidatures')?['value']",
+                  "actions": {
+                    "Attribuer_Candidatures": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Candidatures",
+                          "id": "@items('Pour_Candidatures')?['ID']",
+                          "item/IdHNCS": "@{concat('CAND-', formatDateTime(convertTimeZone(items('Pour_Candidatures')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Candidatures')?['ID']), '0000'))}",
+                          "item/Canal/Value": "@{items('Pour_Candidatures')?['Canal']?['Value']}",
+                          "item/ModeReception/Value": "@{items('Pour_Candidatures')?['ModeReception']?['Value']}",
+                          "item/DateReception": "@items('Pour_Candidatures')?['DateReception']",
+                          "item/Statut/Value": "@{items('Pour_Candidatures')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_Candidatures')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Candidatures": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Candidatures": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Candidatures": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Offres": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Candidatures": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Candidatures",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Candidatures)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Candidatures": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Entretiens": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Entretiens": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Entretiens",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Entretiens": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Entretiens')?['value']",
+                  "actions": {
+                    "Attribuer_Entretiens": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Entretiens",
+                          "id": "@items('Pour_Entretiens')?['ID']",
+                          "item/IdHNCS": "@{concat('ENT-', formatDateTime(convertTimeZone(items('Pour_Entretiens')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Entretiens')?['ID']), '0000'))}",
+                          "item/Candidature/Id": "@items('Pour_Entretiens')?['Candidature']?['Id']",
+                          "item/DateHeure": "@items('Pour_Entretiens')?['DateHeure']",
+                          "item/TypeEntretien/Value": "@{items('Pour_Entretiens')?['TypeEntretien']?['Value']}",
+                          "item/Modalite/Value": "@{items('Pour_Entretiens')?['Modalite']?['Value']}",
+                          "item/Statut/Value": "@{items('Pour_Entretiens')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_Entretiens')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Entretiens": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Entretiens": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Entretiens": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Candidatures": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Entretiens": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Entretiens",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Entretiens)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Entretiens": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Etablissements": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Etablissements": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Écoles et établissements",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Etablissements": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Etablissements')?['value']",
+                  "actions": {
+                    "Attribuer_Etablissements": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Écoles et établissements",
+                          "id": "@items('Pour_Etablissements')?['ID']",
+                          "item/IdHNCS": "@{concat('ECO-', formatDateTime(convertTimeZone(items('Pour_Etablissements')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Etablissements')?['ID']), '0000'))}",
+                          "item/Statut/Value": "@{items('Pour_Etablissements')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_Etablissements')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Etablissements": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Etablissements": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Etablissements": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Entretiens": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Etablissements": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Etablissements",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Etablissements)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Etablissements": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Conventions": {
+              "type": "Scope",
+              "actions": {
+                "Liste_deployee_Conventions": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "parameters/method": "GET",
+                      "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/Conventions'), ''')?$select=Id')}",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=nometadata",
+                        "Content-Type": "application/json;odata=nometadata"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Liste_presente_Conventions": {
+                  "type": "Compose",
+                  "inputs": "@not(empty(body('Liste_deployee_Conventions')?['Id']))",
+                  "runAfter": {
+                    "Liste_deployee_Conventions": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  }
+                },
+                "Si_liste_deployee_Conventions": {
+                  "type": "If",
+                  "expression": "@equals(string(outputs('Liste_presente_Conventions')), 'True')",
+                  "actions": {
+                    "Sans_IdHNCS_Conventions": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Conventions et partenariats",
+                          "$filter": "IdHNCS eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_Conventions": {
+                      "type": "Foreach",
+                      "foreach": "@body('Sans_IdHNCS_Conventions')?['value']",
+                      "actions": {
+                        "Attribuer_Conventions": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Conventions et partenariats",
+                              "id": "@items('Pour_Conventions')?['ID']",
+                              "item/IdHNCS": "@{concat('CONV-', formatDateTime(convertTimeZone(items('Pour_Conventions')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Conventions')?['ID']), '0000'))}",
+                              "item/Etablissement/Id": "@items('Pour_Conventions')?['Etablissement']?['Id']",
+                              "item/TypeConvention/Value": "@{items('Pour_Conventions')?['TypeConvention']?['Value']}",
+                              "item/Statut/Value": "@{items('Pour_Conventions')?['Statut']?['Value']}",
+                              "item/Title": "@items('Pour_Conventions')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_Conventions": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbIdentifiants",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Attribuer_Conventions": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Sans_IdHNCS_Conventions": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Liste_presente_Conventions": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Etablissements": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Conventions": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Conventions",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Conventions)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Conventions": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_InteractionsEcoles": {
+              "type": "Scope",
+              "actions": {
+                "Liste_deployee_InteractionsEcoles": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "parameters/method": "GET",
+                      "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/InteractionsEcoles'), ''')?$select=Id')}",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=nometadata",
+                        "Content-Type": "application/json;odata=nometadata"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Liste_presente_InteractionsEcoles": {
+                  "type": "Compose",
+                  "inputs": "@not(empty(body('Liste_deployee_InteractionsEcoles')?['Id']))",
+                  "runAfter": {
+                    "Liste_deployee_InteractionsEcoles": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  }
+                },
+                "Si_liste_deployee_InteractionsEcoles": {
+                  "type": "If",
+                  "expression": "@equals(string(outputs('Liste_presente_InteractionsEcoles')), 'True')",
+                  "actions": {
+                    "Sans_IdHNCS_InteractionsEcoles": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Échanges avec les écoles",
+                          "$filter": "IdHNCS eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_InteractionsEcoles": {
+                      "type": "Foreach",
+                      "foreach": "@body('Sans_IdHNCS_InteractionsEcoles')?['value']",
+                      "actions": {
+                        "Attribuer_InteractionsEcoles": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Échanges avec les écoles",
+                              "id": "@items('Pour_InteractionsEcoles')?['ID']",
+                              "item/IdHNCS": "@{concat('INT-', formatDateTime(convertTimeZone(items('Pour_InteractionsEcoles')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_InteractionsEcoles')?['ID']), '0000'))}",
+                              "item/Etablissement/Id": "@items('Pour_InteractionsEcoles')?['Etablissement']?['Id']",
+                              "item/DateInteraction": "@items('Pour_InteractionsEcoles')?['DateInteraction']",
+                              "item/Title": "@items('Pour_InteractionsEcoles')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_InteractionsEcoles": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbIdentifiants",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Attribuer_InteractionsEcoles": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Sans_IdHNCS_InteractionsEcoles": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Liste_presente_InteractionsEcoles": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Conventions": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_InteractionsEcoles": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "InteractionsEcoles",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (InteractionsEcoles)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_InteractionsEcoles": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Alternants": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Alternants": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Alternants",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Alternants": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Alternants')?['value']",
+                  "actions": {
+                    "Attribuer_Alternants": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Alternants",
+                          "id": "@items('Pour_Alternants')?['ID']",
+                          "item/IdHNCS": "@{concat('ALT-', formatDateTime(convertTimeZone(items('Pour_Alternants')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Alternants')?['ID']), '0000'))}",
+                          "item/DateDebut": "@items('Pour_Alternants')?['DateDebut']",
+                          "item/DateFin": "@items('Pour_Alternants')?['DateFin']",
+                          "item/Etablissement/Id": "@items('Pour_Alternants')?['Etablissement']?['Id']",
+                          "item/Pole/Id": "@items('Pour_Alternants')?['Pole']?['Id']",
+                          "item/Statut/Value": "@{items('Pour_Alternants')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_Alternants')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Alternants": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Alternants": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Alternants": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_InteractionsEcoles": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Alternants": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Alternants",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Alternants)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Alternants": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Poles": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Poles": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Pôles R&D",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Poles": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Poles')?['value']",
+                  "actions": {
+                    "Attribuer_Poles": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Pôles R&D",
+                          "id": "@items('Pour_Poles')?['ID']",
+                          "item/IdHNCS": "@{concat('POL-', items('Pour_Poles')?['CodePole'])}",
+                          "item/CodePole": "@items('Pour_Poles')?['CodePole']",
+                          "item/Statut/Value": "@{items('Pour_Poles')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_Poles')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Poles": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Poles": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Poles": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Alternants": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Poles": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Poles",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Poles)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Poles": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Referents": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Referents": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Référents",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Referents": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Referents')?['value']",
+                  "actions": {
+                    "Attribuer_Referents": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Référents",
+                          "id": "@items('Pour_Referents')?['ID']",
+                          "item/IdHNCS": "@{concat('REF-', formatDateTime(convertTimeZone(items('Pour_Referents')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Referents')?['ID']), '0000'))}",
+                          "item/Compte/Claims": "@{items('Pour_Referents')?['Compte']?['Claims']}",
+                          "item/EmailPro": "@items('Pour_Referents')?['EmailPro']",
+                          "item/Statut/Value": "@{items('Pour_Referents')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_Referents')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Referents": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Referents": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Referents": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Poles": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Referents": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Referents",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Referents)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Referents": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_SujetsRD": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_SujetsRD": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Sujets R&D",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_SujetsRD": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_SujetsRD')?['value']",
+                  "actions": {
+                    "Attribuer_SujetsRD": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Sujets R&D",
+                          "id": "@items('Pour_SujetsRD')?['ID']",
+                          "item/IdHNCS": "@{concat('SUJ-', formatDateTime(convertTimeZone(items('Pour_SujetsRD')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_SujetsRD')?['ID']), '0000'))}",
+                          "item/TypeSujet/Value": "@{items('Pour_SujetsRD')?['TypeSujet']?['Value']}",
+                          "item/Pole/Id": "@items('Pour_SujetsRD')?['Pole']?['Id']",
+                          "item/Statut/Value": "@{items('Pour_SujetsRD')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_SujetsRD')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_SujetsRD": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_SujetsRD": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_SujetsRD": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Referents": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_SujetsRD": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "SujetsRD",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (SujetsRD)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_SujetsRD": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Affectations": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Affectations": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Affectations",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Affectations": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Affectations')?['value']",
+                  "actions": {
+                    "Attribuer_Affectations": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Affectations",
+                          "id": "@items('Pour_Affectations')?['ID']",
+                          "item/IdHNCS": "@{concat('AFF-', formatDateTime(convertTimeZone(items('Pour_Affectations')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Affectations')?['ID']), '0000'))}",
+                          "item/Alternant/Id": "@items('Pour_Affectations')?['Alternant']?['Id']",
+                          "item/Sujet/Id": "@items('Pour_Affectations')?['Sujet']?['Id']",
+                          "item/DateDebut": "@items('Pour_Affectations')?['DateDebut']",
+                          "item/CadenceCR/Value": "@{items('Pour_Affectations')?['CadenceCR']?['Value']}",
+                          "item/Statut/Value": "@{items('Pour_Affectations')?['Statut']?['Value']}"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Affectations": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Affectations": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Affectations": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_SujetsRD": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Affectations": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Affectations",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Affectations)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Affectations": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Livrables": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_Livrables": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Livrables",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_Livrables": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_Livrables')?['value']",
+                  "actions": {
+                    "Attribuer_Livrables": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Livrables",
+                          "id": "@items('Pour_Livrables')?['ID']",
+                          "item/IdHNCS": "@{concat('LIV-', formatDateTime(convertTimeZone(items('Pour_Livrables')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Livrables')?['ID']), '0000'))}",
+                          "item/Affectation/Id": "@items('Pour_Livrables')?['Affectation']?['Id']",
+                          "item/TypeLivrable/Value": "@{items('Pour_Livrables')?['TypeLivrable']?['Value']}",
+                          "item/Proprietaire/Claims": "@{items('Pour_Livrables')?['Proprietaire']?['Claims']}",
+                          "item/Echeance": "@items('Pour_Livrables')?['Echeance']",
+                          "item/Statut/Value": "@{items('Pour_Livrables')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_Livrables')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_Livrables": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_Livrables": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_Livrables": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Affectations": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Livrables": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Livrables",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Livrables)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Livrables": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_ComptesRendus": {
+              "type": "Scope",
+              "actions": {
+                "Liste_deployee_ComptesRendus": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "parameters/method": "GET",
+                      "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/ComptesRendus'), ''')?$select=Id')}",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=nometadata",
+                        "Content-Type": "application/json;odata=nometadata"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Liste_presente_ComptesRendus": {
+                  "type": "Compose",
+                  "inputs": "@not(empty(body('Liste_deployee_ComptesRendus')?['Id']))",
+                  "runAfter": {
+                    "Liste_deployee_ComptesRendus": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  }
+                },
+                "Si_liste_deployee_ComptesRendus": {
+                  "type": "If",
+                  "expression": "@equals(string(outputs('Liste_presente_ComptesRendus')), 'True')",
+                  "actions": {
+                    "Sans_IdHNCS_ComptesRendus": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Comptes rendus de suivi",
+                          "$filter": "IdHNCS eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_ComptesRendus": {
+                      "type": "Foreach",
+                      "foreach": "@body('Sans_IdHNCS_ComptesRendus')?['value']",
+                      "actions": {
+                        "Attribuer_ComptesRendus": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Comptes rendus de suivi",
+                              "id": "@items('Pour_ComptesRendus')?['ID']",
+                              "item/IdHNCS": "@{concat('CR-', formatDateTime(convertTimeZone(items('Pour_ComptesRendus')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_ComptesRendus')?['ID']), '0000'))}",
+                              "item/Affectation/Id": "@items('Pour_ComptesRendus')?['Affectation']?['Id']",
+                              "item/PeriodeDebut": "@items('Pour_ComptesRendus')?['PeriodeDebut']",
+                              "item/PeriodeFin": "@items('Pour_ComptesRendus')?['PeriodeFin']",
+                              "item/Echeance": "@items('Pour_ComptesRendus')?['Echeance']",
+                              "item/Statut/Value": "@{items('Pour_ComptesRendus')?['Statut']?['Value']}"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_ComptesRendus": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbIdentifiants",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Attribuer_ComptesRendus": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Sans_IdHNCS_ComptesRendus": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Liste_presente_ComptesRendus": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_Livrables": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_ComptesRendus": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "ComptesRendus",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (ComptesRendus)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_ComptesRendus": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_RegistreModeles": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_RegistreModeles": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Registre des modèles R&D",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_RegistreModeles": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_RegistreModeles')?['value']",
+                  "actions": {
+                    "Attribuer_RegistreModeles": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Registre des modèles R&D",
+                          "id": "@items('Pour_RegistreModeles')?['ID']",
+                          "item/IdHNCS": "@{concat('MOD-', formatDateTime(convertTimeZone(items('Pour_RegistreModeles')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_RegistreModeles')?['ID']), '0000'))}",
+                          "item/TypeModele/Value": "@{items('Pour_RegistreModeles')?['TypeModele']?['Value']}",
+                          "item/Version": "@items('Pour_RegistreModeles')?['Version']",
+                          "item/Proprietaire/Claims": "@{items('Pour_RegistreModeles')?['Proprietaire']?['Claims']}",
+                          "item/Statut/Value": "@{items('Pour_RegistreModeles')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_RegistreModeles')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_RegistreModeles": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_RegistreModeles": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_RegistreModeles": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_ComptesRendus": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_RegistreModeles": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "RegistreModeles",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (RegistreModeles)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_RegistreModeles": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_ActionsIntegration": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_ActionsIntegration": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Actions d'intégration et checklists",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_ActionsIntegration": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_ActionsIntegration')?['value']",
+                  "actions": {
+                    "Attribuer_ActionsIntegration": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Actions d'intégration et checklists",
+                          "id": "@items('Pour_ActionsIntegration')?['ID']",
+                          "item/IdHNCS": "@{concat('ACT-', formatDateTime(convertTimeZone(items('Pour_ActionsIntegration')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_ActionsIntegration')?['ID']), '0000'))}",
+                          "item/Contexte/Value": "@{items('Pour_ActionsIntegration')?['Contexte']?['Value']}",
+                          "item/Statut/Value": "@{items('Pour_ActionsIntegration')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_ActionsIntegration')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_ActionsIntegration": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_ActionsIntegration": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_ActionsIntegration": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_RegistreModeles": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_ActionsIntegration": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "ActionsIntegration",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (ActionsIntegration)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_ActionsIntegration": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_BilansAlternance": {
+              "type": "Scope",
+              "actions": {
+                "Liste_deployee_BilansAlternance": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "parameters/method": "GET",
+                      "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/BilansAlternance'), ''')?$select=Id')}",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=nometadata",
+                        "Content-Type": "application/json;odata=nometadata"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Liste_presente_BilansAlternance": {
+                  "type": "Compose",
+                  "inputs": "@not(empty(body('Liste_deployee_BilansAlternance')?['Id']))",
+                  "runAfter": {
+                    "Liste_deployee_BilansAlternance": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  }
+                },
+                "Si_liste_deployee_BilansAlternance": {
+                  "type": "If",
+                  "expression": "@equals(string(outputs('Liste_presente_BilansAlternance')), 'True')",
+                  "actions": {
+                    "Sans_IdHNCS_BilansAlternance": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Bilans d'alternance",
+                          "$filter": "IdHNCS eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_BilansAlternance": {
+                      "type": "Foreach",
+                      "foreach": "@body('Sans_IdHNCS_BilansAlternance')?['value']",
+                      "actions": {
+                        "Attribuer_BilansAlternance": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Bilans d'alternance",
+                              "id": "@items('Pour_BilansAlternance')?['ID']",
+                              "item/IdHNCS": "@{concat('BIL-', formatDateTime(convertTimeZone(items('Pour_BilansAlternance')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_BilansAlternance')?['ID']), '0000'))}",
+                              "item/Alternant/Id": "@items('Pour_BilansAlternance')?['Alternant']?['Id']",
+                              "item/Statut/Value": "@{items('Pour_BilansAlternance')?['Statut']?['Value']}"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_BilansAlternance": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbIdentifiants",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Attribuer_BilansAlternance": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Sans_IdHNCS_BilansAlternance": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Liste_presente_BilansAlternance": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_ActionsIntegration": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_BilansAlternance": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "BilansAlternance",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (BilansAlternance)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_BilansAlternance": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_CommunicationsRD": {
+              "type": "Scope",
+              "actions": {
+                "Liste_deployee_CommunicationsRD": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "parameters/method": "GET",
+                      "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/CommunicationsRD'), ''')?$select=Id')}",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=nometadata",
+                        "Content-Type": "application/json;odata=nometadata"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Liste_presente_CommunicationsRD": {
+                  "type": "Compose",
+                  "inputs": "@not(empty(body('Liste_deployee_CommunicationsRD')?['Id']))",
+                  "runAfter": {
+                    "Liste_deployee_CommunicationsRD": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  }
+                },
+                "Si_liste_deployee_CommunicationsRD": {
+                  "type": "If",
+                  "expression": "@equals(string(outputs('Liste_presente_CommunicationsRD')), 'True')",
+                  "actions": {
+                    "Sans_IdHNCS_CommunicationsRD": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Communications R&D",
+                          "$filter": "IdHNCS eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_CommunicationsRD": {
+                      "type": "Foreach",
+                      "foreach": "@body('Sans_IdHNCS_CommunicationsRD')?['value']",
+                      "actions": {
+                        "Attribuer_CommunicationsRD": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Communications R&D",
+                              "id": "@items('Pour_CommunicationsRD')?['ID']",
+                              "item/IdHNCS": "@{concat('COM-', formatDateTime(convertTimeZone(items('Pour_CommunicationsRD')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_CommunicationsRD')?['ID']), '0000'))}",
+                              "item/Canal/Value": "@{items('Pour_CommunicationsRD')?['Canal']?['Value']}",
+                              "item/Auteur/Claims": "@{items('Pour_CommunicationsRD')?['Auteur']?['Claims']}",
+                              "item/Statut/Value": "@{items('Pour_CommunicationsRD')?['Statut']?['Value']}",
+                              "item/Title": "@items('Pour_CommunicationsRD')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_CommunicationsRD": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbIdentifiants",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Attribuer_CommunicationsRD": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Sans_IdHNCS_CommunicationsRD": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Liste_presente_CommunicationsRD": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_BilansAlternance": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_CommunicationsRD": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "CommunicationsRD",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (CommunicationsRD)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_CommunicationsRD": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_DomainesCibles": {
+              "type": "Scope",
+              "actions": {
+                "Sans_IdHNCS_DomainesCibles": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Domaines cibles",
+                      "$filter": "IdHNCS eq null",
+                      "$top": 5000
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Pour_DomainesCibles": {
+                  "type": "Foreach",
+                  "foreach": "@body('Sans_IdHNCS_DomainesCibles')?['value']",
+                  "actions": {
+                    "Attribuer_DomainesCibles": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Domaines cibles",
+                          "id": "@items('Pour_DomainesCibles')?['ID']",
+                          "item/IdHNCS": "@{concat('DOM-', formatDateTime(convertTimeZone(items('Pour_DomainesCibles')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_DomainesCibles')?['ID']), '0000'))}",
+                          "item/Statut/Value": "@{items('Pour_DomainesCibles')?['Statut']?['Value']}",
+                          "item/Title": "@items('Pour_DomainesCibles')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Compter_DomainesCibles": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "NbIdentifiants",
+                        "value": 1
+                      },
+                      "runAfter": {
+                        "Attribuer_DomainesCibles": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "runAfter": {
+                    "Sans_IdHNCS_DomainesCibles": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_CommunicationsRD": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_DomainesCibles": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "DomainesCibles",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (DomainesCibles)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_DomainesCibles": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_RessourcesTechniques": {
+              "type": "Scope",
+              "actions": {
+                "Liste_deployee_RessourcesTechniques": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "parameters/method": "GET",
+                      "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/RessourcesTechniques'), ''')?$select=Id')}",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=nometadata",
+                        "Content-Type": "application/json;odata=nometadata"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Liste_presente_RessourcesTechniques": {
+                  "type": "Compose",
+                  "inputs": "@not(empty(body('Liste_deployee_RessourcesTechniques')?['Id']))",
+                  "runAfter": {
+                    "Liste_deployee_RessourcesTechniques": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  }
+                },
+                "Si_liste_deployee_RessourcesTechniques": {
+                  "type": "If",
+                  "expression": "@equals(string(outputs('Liste_presente_RessourcesTechniques')), 'True')",
+                  "actions": {
+                    "Sans_IdHNCS_RessourcesTechniques": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Ressources techniques",
+                          "$filter": "IdHNCS eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_RessourcesTechniques": {
+                      "type": "Foreach",
+                      "foreach": "@body('Sans_IdHNCS_RessourcesTechniques')?['value']",
+                      "actions": {
+                        "Attribuer_RessourcesTechniques": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Ressources techniques",
+                              "id": "@items('Pour_RessourcesTechniques')?['ID']",
+                              "item/IdHNCS": "@{concat('RES-', formatDateTime(convertTimeZone(items('Pour_RessourcesTechniques')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_RessourcesTechniques')?['ID']), '0000'))}",
+                              "item/TypeRessource/Value": "@{items('Pour_RessourcesTechniques')?['TypeRessource']?['Value']}",
+                              "item/Statut/Value": "@{items('Pour_RessourcesTechniques')?['Statut']?['Value']}",
+                              "item/Title": "@items('Pour_RessourcesTechniques')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_RessourcesTechniques": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbIdentifiants",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Attribuer_RessourcesTechniques": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Sans_IdHNCS_RessourcesTechniques": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Liste_presente_RessourcesTechniques": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_DomainesCibles": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_RessourcesTechniques": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "RessourcesTechniques",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (RessourcesTechniques)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_RessourcesTechniques": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Liste_Mobilisations": {
+              "type": "Scope",
+              "actions": {
+                "Liste_deployee_Mobilisations": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "parameters/method": "GET",
+                      "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/Mobilisations'), ''')?$select=Id')}",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=nometadata",
+                        "Content-Type": "application/json;odata=nometadata"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Liste_presente_Mobilisations": {
+                  "type": "Compose",
+                  "inputs": "@not(empty(body('Liste_deployee_Mobilisations')?['Id']))",
+                  "runAfter": {
+                    "Liste_deployee_Mobilisations": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  }
+                },
+                "Si_liste_deployee_Mobilisations": {
+                  "type": "If",
+                  "expression": "@equals(string(outputs('Liste_presente_Mobilisations')), 'True')",
+                  "actions": {
+                    "Sans_IdHNCS_Mobilisations": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Mobilisations commerciales",
+                          "$filter": "IdHNCS eq null",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Pour_Mobilisations": {
+                      "type": "Foreach",
+                      "foreach": "@body('Sans_IdHNCS_Mobilisations')?['value']",
+                      "actions": {
+                        "Attribuer_Mobilisations": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Mobilisations commerciales",
+                              "id": "@items('Pour_Mobilisations')?['ID']",
+                              "item/IdHNCS": "@{concat('MOB-', formatDateTime(convertTimeZone(items('Pour_Mobilisations')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(items('Pour_Mobilisations')?['ID']), '0000'))}",
+                              "item/Livrable/Id": "@items('Pour_Mobilisations')?['Livrable']?['Id']",
+                              "item/DateMobilisation": "@items('Pour_Mobilisations')?['DateMobilisation']",
+                              "item/Title": "@items('Pour_Mobilisations')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Compter_Mobilisations": {
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "NbIdentifiants",
+                            "value": 1
+                          },
+                          "runAfter": {
+                            "Attribuer_Mobilisations": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Sans_IdHNCS_Mobilisations": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Liste_presente_Mobilisations": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Erreur_liste_RessourcesTechniques": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            },
+            "Erreur_liste_Mobilisations": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "Mobilisations",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'PA-00D : échec de l''attribution des identifiants (Mobilisations)'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Liste_Mobilisations": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Si_identifiants_attribues": {
+              "type": "If",
+              "expression": "@greater(variables('NbIdentifiants'), 0)",
+              "actions": {
+                "Journaliser_nombre": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Info",
+                      "Liste": "",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{concat(string(variables('NbIdentifiants')), ' identifiant(s) IdHNCS attribué(s)')}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Erreur_liste_Mobilisations": [
+                  "Succeeded",
+                  "Skipped",
+                  "Failed"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Initialiser_NbIdentifiants": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Erreur": {
+          "type": "Scope",
+          "actions": {
+            "Detail_erreur": {
+              "type": "Compose",
+              "inputs": "@string(result('Principal'))",
+              "runAfter": {}
+            },
+            "Journaliser_erreur": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-00D",
+                  "Niveau": "Erreur",
+                  "Liste": "",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'Échec de l''exécution du flux PA-00D'}",
+                  "DetailErreur": "@{string(coalesce(substring(outputs('Detail_erreur'), 0, min(length(outputs('Detail_erreur')), 8000)), ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Detail_erreur": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Terminer_en_echec": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "HNCS_ECHEC",
+                  "message": "Échec du flux PA-00D : voir le journal des flux"
+                }
+              },
+              "runAfter": {
+                "Journaliser_erreur": [
+                  "Succeeded",
+                  "Failed",
+                  "TimedOut",
+                  "Skipped"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Principal": [
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        },
+        "Terminer": {
+          "type": "Terminate",
+          "inputs": {
+            "runStatus": "Succeeded"
+          },
+          "runAfter": {
+            "Erreur": [
+              "Skipped"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

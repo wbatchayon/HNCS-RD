@@ -1,0 +1,658 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_outlook"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      },
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_teams": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_teams"
+        },
+        "api": {
+          "name": "shared_teams"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "hncs_SiteUrl (hncs_SiteUrl)": {
+          "defaultValue": "https://contoso.sharepoint.com/sites/HNCS-RD",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_SiteUrl",
+            "description": "URL du site SharePoint HNCS-R&D (sans barre finale)"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Button",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Liste": {
+                  "title": "Liste",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Nom interne de la liste",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "ItemId": {
+                  "title": "ItemId",
+                  "type": "number",
+                  "x-ms-dynamically-added": true,
+                  "description": "ID SharePoint",
+                  "x-ms-content-hint": "NUMBER"
+                },
+                "IdObjet": {
+                  "title": "IdObjet",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "IdHNCS",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "Objet": {
+                  "title": "Objet",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Objet (OBJET_TRANSITION)",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "StatutAvant": {
+                  "title": "StatutAvant",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Statut avant (∅ pour une création)",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "StatutApres": {
+                  "title": "StatutApres",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Statut demandé",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "Accepte": {
+                  "title": "Accepte",
+                  "type": "boolean",
+                  "x-ms-dynamically-added": true,
+                  "description": "Transition acceptée ?",
+                  "x-ms-content-hint": "BOOLEAN"
+                },
+                "CodeTransition": {
+                  "title": "CodeTransition",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Code de transition",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "ActeurEmail": {
+                  "title": "ActeurEmail",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Adresse de l'acteur",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "Origine": {
+                  "title": "Origine",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Humain ou Flux",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "Motif": {
+                  "title": "Motif",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Motif du refus ou commentaire",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "RunId": {
+                  "title": "RunId",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Identifiant d'exécution du flux parent",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "Liste",
+                "ItemId",
+                "IdObjet",
+                "Objet",
+                "StatutAvant",
+                "StatutApres",
+                "Accepte",
+                "ActeurEmail",
+                "Origine"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Principal": {
+          "type": "Scope",
+          "actions": {
+            "Lire_parametres": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Paramètres",
+                  "$filter": "Categorie eq 'Destinataires' or Categorie eq 'Fonctionnalités'",
+                  "$top": 500
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {}
+            },
+            "Parametres_cles_valeurs": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Lire_parametres')?['value']",
+                "select": "@concat('\"', replace(item()?['Title'], '\"', ''), '\":', if(empty(item()?['Valeur']), 'null', concat('\"', replace(replace(item()?['Valeur'], '\\', '\\\\'), '\"', '\\\"'), '\"')))"
+              },
+              "runAfter": {
+                "Lire_parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parametres": {
+              "type": "Compose",
+              "inputs": "@json(concat('{', join(body('Parametres_cles_valeurs'), ','), '}'))",
+              "runAfter": {
+                "Parametres_cles_valeurs": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Aujourdhui": {
+              "type": "Compose",
+              "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')",
+              "runAfter": {
+                "Parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Type_entite": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "parameters/method": "GET",
+                  "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/', triggerBody()?['Liste']), '''), ''')?$select=ListItemEntityTypeFullName')}",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata",
+                    "Content-Type": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Aujourdhui": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Statut_retabli": {
+              "type": "Compose",
+              "inputs": "@if(equals(triggerBody()?['StatutAvant'], '∅'), 'création annulée : élément placé dans la corbeille du site', triggerBody()?['StatutAvant'])",
+              "runAfter": {
+                "Type_entite": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_acceptee": {
+              "type": "If",
+              "expression": "@equals(toLower(string(triggerBody()?['Accepte'])), 'true')",
+              "actions": {
+                "Corps_acceptation": {
+                  "type": "Compose",
+                  "inputs": {
+                    "__metadata": {
+                      "type": "@{body('Type_entite')?['ListItemEntityTypeFullName']}"
+                    },
+                    "StatutPrecedent": "@{triggerBody()?['StatutApres']}",
+                    "DateStatut": "@{utcNow()}"
+                  },
+                  "runAfter": {}
+                },
+                "Valider_StatutPrecedent": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "parameters/method": "POST",
+                      "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/', triggerBody()?['Liste']), '''), ''')/items(', string(triggerBody()?['ItemId']), ')')}",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=verbose",
+                        "Content-Type": "application/json;odata=verbose",
+                        "IF-MATCH": "*",
+                        "X-HTTP-Method": "MERGE"
+                      },
+                      "parameters/body": "@{outputs('Corps_acceptation')}"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {
+                    "Corps_acceptation": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Si_creation_refusee": {
+                    "type": "If",
+                    "expression": "@equals(triggerBody()?['StatutAvant'], '∅')",
+                    "actions": {
+                      "Envoyer_a_la_corbeille": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                            "connectionName": "shared_sharepointonline",
+                            "operationId": "HttpRequest"
+                          },
+                          "parameters": {
+                            "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                            "parameters/method": "POST",
+                            "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/', triggerBody()?['Liste']), '''), ''')/items(', string(triggerBody()?['ItemId']), ')/recycle()')}",
+                            "parameters/headers": {
+                              "Accept": "application/json;odata=nometadata",
+                              "Content-Type": "application/json;odata=nometadata"
+                            }
+                          },
+                          "authentication": "@parameters('$authentication')",
+                          "retryPolicy": {
+                            "type": "exponential",
+                            "count": 4,
+                            "interval": "PT10S"
+                          }
+                        },
+                        "runAfter": {}
+                      }
+                    },
+                    "else": {
+                      "actions": {
+                        "Corps_annulation": {
+                          "type": "Compose",
+                          "inputs": {
+                            "__metadata": {
+                              "type": "@{body('Type_entite')?['ListItemEntityTypeFullName']}"
+                            },
+                            "Statut": "@{triggerBody()?['StatutAvant']}"
+                          },
+                          "runAfter": {}
+                        },
+                        "Retablir_statut": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "HttpRequest"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "parameters/method": "POST",
+                              "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/', triggerBody()?['Liste']), '''), ''')/items(', string(triggerBody()?['ItemId']), ')')}",
+                              "parameters/headers": {
+                                "Accept": "application/json;odata=verbose",
+                                "Content-Type": "application/json;odata=verbose",
+                                "IF-MATCH": "*",
+                                "X-HTTP-Method": "MERGE"
+                              },
+                              "parameters/body": "@{outputs('Corps_annulation')}"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {
+                            "Corps_annulation": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "runAfter": {}
+                  },
+                  "Dest_N90": {
+                    "type": "Select",
+                    "inputs": {
+                      "from": "@split(concat(coalesce(triggerBody()?['ActeurEmail'], '')), ';')",
+                      "select": "@toLower(trim(item()))"
+                    },
+                    "runAfter": {
+                      "Si_creation_refusee": [
+                        "Succeeded"
+                      ]
+                    }
+                  },
+                  "DestOK_N90": {
+                    "type": "Query",
+                    "inputs": {
+                      "from": "@body('Dest_N90')",
+                      "where": "@not(empty(item()))"
+                    },
+                    "runAfter": {
+                      "Dest_N90": [
+                        "Succeeded"
+                      ]
+                    }
+                  },
+                  "Si_destinataires_N90": {
+                    "type": "If",
+                    "expression": "@greater(length(body('DestOK_N90')), 0)",
+                    "actions": {
+                      "Envoyer_N90": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                            "connectionName": "shared_office365",
+                            "operationId": "SharedMailboxSendEmailV2"
+                          },
+                          "parameters": {
+                            "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                            "body/To": "@{join(union(body('DestOK_N90'), body('DestOK_N90')), ';')}",
+                            "body/Subject": "[HNCS-R&D][N-90] Changement de statut refusé (@{triggerBody()?['IdObjet']})",
+                            "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-90] Changement de statut refusé (@{triggerBody()?['IdObjet']})</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre changement de statut sur <strong>@{triggerBody()?['IdObjet']}</strong> a été refusé et annulé.</p>\n<ul><li>Statut demandé : @{triggerBody()?['StatutApres']}</li><li>Motif du refus : @{coalesce(triggerBody()?['Motif'], '')}</li><li>Statut rétabli : @{outputs('Statut_retabli')}</li></ul>\n<p>Marche à suivre : complétez les éléments indiqués, ou demandez à la personne habilitée d'effectuer ce changement, puis réessayez.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/', triggerBody()?['Liste'], '/DispForm.aspx?ID=', string(triggerBody()?['ItemId']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                            "body/Importance": "Normal"
+                          },
+                          "authentication": "@parameters('$authentication')",
+                          "retryPolicy": {
+                            "type": "exponential",
+                            "count": 4,
+                            "interval": "PT10S"
+                          }
+                        },
+                        "runAfter": {}
+                      }
+                    },
+                    "else": {
+                      "actions": {
+                        "Sans_destinataire_N90": {
+                          "type": "Workflow",
+                          "inputs": {
+                            "host": {
+                              "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                            },
+                            "body": {
+                              "CodeFlux": "PA-00B",
+                              "Niveau": "Avertissement",
+                              "Liste": "",
+                              "ItemId": "@{string(coalesce('', ''))}",
+                              "IdObjet": "@{coalesce('', '')}",
+                              "Message": "@{'N-90 : aucun destinataire résolu, notification non envoyée'}",
+                              "DetailErreur": "@{string(coalesce('', ''))}",
+                              "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                            }
+                          },
+                          "runAfter": {}
+                        }
+                      }
+                    },
+                    "runAfter": {
+                      "DestOK_N90": [
+                        "Succeeded"
+                      ]
+                    }
+                  },
+                  "TeamsDest_N90": {
+                    "type": "Query",
+                    "inputs": {
+                      "from": "@split(concat(coalesce(triggerBody()?['ActeurEmail'], '')), ';')",
+                      "where": "@not(empty(trim(item())))"
+                    },
+                    "runAfter": {
+                      "Si_destinataires_N90": [
+                        "Succeeded"
+                      ]
+                    }
+                  },
+                  "Si_teams_N90": {
+                    "type": "If",
+                    "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N90')), 0))",
+                    "actions": {
+                      "Pour_teams_N90": {
+                        "type": "Foreach",
+                        "foreach": "@union(body('TeamsDest_N90'), body('TeamsDest_N90'))",
+                        "actions": {
+                          "Teams_N90": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                                "connectionName": "shared_teams",
+                                "operationId": "PostMessageToConversation"
+                              },
+                              "parameters": {
+                                "poster": "Flow bot",
+                                "location": "Chat with Flow bot",
+                                "body/recipient": "@{trim(items('Pour_teams_N90'))}",
+                                "body/messageBody": "<p><strong>[HNCS-R&D][N-90] Changement de statut refusé (@{triggerBody()?['IdObjet']})</strong></p><p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/', triggerBody()?['Liste'], '/DispForm.aspx?ID=', string(triggerBody()?['ItemId']))}\">Ouvrir dans SharePoint</a></p>"
+                              },
+                              "authentication": "@parameters('$authentication')",
+                              "retryPolicy": {
+                                "type": "exponential",
+                                "count": 4,
+                                "interval": "PT10S"
+                              }
+                            },
+                            "runAfter": {}
+                          }
+                        },
+                        "runtimeConfiguration": {
+                          "concurrency": {
+                            "repetitions": 1
+                          }
+                        },
+                        "runAfter": {}
+                      }
+                    },
+                    "else": {
+                      "actions": {}
+                    },
+                    "runAfter": {
+                      "TeamsDest_N90": [
+                        "Succeeded"
+                      ]
+                    }
+                  },
+                  "Teams_echec_N90": {
+                    "type": "Workflow",
+                    "inputs": {
+                      "host": {
+                        "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                      },
+                      "body": {
+                        "CodeFlux": "PA-00B",
+                        "Niveau": "Avertissement",
+                        "Liste": "",
+                        "ItemId": "@{string(coalesce('', ''))}",
+                        "IdObjet": "@{coalesce('', '')}",
+                        "Message": "@{'N-90 : échec de l''envoi Teams (le courriel est parti)'}",
+                        "DetailErreur": "@{string(coalesce('', ''))}",
+                        "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                      }
+                    },
+                    "runAfter": {
+                      "Si_teams_N90": [
+                        "Failed",
+                        "TimedOut"
+                      ]
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Statut_retabli": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Creer_historique": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PostItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Historique des statuts",
+                  "item/Title": "@{triggerBody()?['IdObjet']}",
+                  "item/Objet/Value": "@{triggerBody()?['Objet']}",
+                  "item/Liste": "@{triggerBody()?['Liste']}",
+                  "item/ItemId": "@triggerBody()?['ItemId']",
+                  "item/StatutAvant": "@{if(equals(triggerBody()?['StatutAvant'], '∅'), '', triggerBody()?['StatutAvant'])}",
+                  "item/StatutApres": "@{triggerBody()?['StatutApres']}",
+                  "item/CodeTransition": "@{coalesce(triggerBody()?['CodeTransition'], '')}",
+                  "item/Acteur/Claims": "@{triggerBody()?['ActeurEmail']}",
+                  "item/ActeurEmail": "@{triggerBody()?['ActeurEmail']}",
+                  "item/DateChangement": "@{utcNow()}",
+                  "item/Origine/Value": "@{triggerBody()?['Origine']}",
+                  "item/Resultat/Value": "@{if(equals(toLower(string(triggerBody()?['Accepte'])), 'true'), 'Acceptée', 'Refusée — annulée')}",
+                  "item/Motif": "@{coalesce(triggerBody()?['Motif'], '')}",
+                  "item/FluxRunId": "@{coalesce(triggerBody()?['RunId'], '')}"
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Si_acceptee": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Repondre": {
+              "type": "Response",
+              "kind": "PowerApp",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "Ok": true
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Ok": {
+                      "title": "Ok",
+                      "x-ms-dynamically-added": true,
+                      "type": "boolean"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Creer_historique": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Erreur": {
+          "type": "Scope",
+          "actions": {
+            "Echec_ecriture": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "HNCS_ECHEC",
+                  "message": "PA-00B : échec d'écriture (remonté à l'appelant)"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "runAfter": {
+            "Principal": [
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

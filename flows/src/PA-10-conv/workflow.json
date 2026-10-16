@@ -1,0 +1,1890 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_outlook"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      },
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_teams": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_teams"
+        },
+        "api": {
+          "name": "shared_teams"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "hncs_SiteUrl (hncs_SiteUrl)": {
+          "defaultValue": "https://contoso.sharepoint.com/sites/HNCS-RD",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_SiteUrl",
+            "description": "URL du site SharePoint HNCS-R&D (sans barre finale)"
+          }
+        },
+        "hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)": {
+          "defaultValue": "svc-hncs-rd@contoso.com",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_ServiceAccountEmail",
+            "description": "Adresse du compte de service des flux (rôle FLUX)"
+          }
+        }
+      },
+      "triggers": {
+        "Quand_un_element_est_cree_ou_modifie": {
+          "type": "OpenApiConnection",
+          "recurrence": {
+            "interval": 1,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetOnUpdatedItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+              "table": "Conventions et partenariats"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "conditions": [
+            {
+              "expression": "@not(equals(toLower(triggerOutputs()?['body/Editor/Email']), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))))"
+            }
+          ]
+        }
+      },
+      "actions": {
+        "Principal": {
+          "type": "Scope",
+          "actions": {
+            "Lire_parametres": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Paramètres",
+                  "$filter": "Categorie eq 'Destinataires' or Categorie eq 'Délais' or Categorie eq 'Fonctionnalités' or Categorie eq 'Conservation' or Categorie eq 'Liens' or Categorie eq 'Gouvernance' or Categorie eq 'Canaux'",
+                  "$top": 500
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {}
+            },
+            "Parametres_cles_valeurs": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Lire_parametres')?['value']",
+                "select": "@concat('\"', replace(item()?['Title'], '\"', ''), '\":', if(empty(item()?['Valeur']), 'null', concat('\"', replace(replace(item()?['Valeur'], '\\', '\\\\'), '\"', '\\\"'), '\"')))"
+              },
+              "runAfter": {
+                "Lire_parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parametres": {
+              "type": "Compose",
+              "inputs": "@json(concat('{', join(body('Parametres_cles_valeurs'), ','), '}'))",
+              "runAfter": {
+                "Parametres_cles_valeurs": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Aujourdhui": {
+              "type": "Compose",
+              "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')",
+              "runAfter": {
+                "Parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Membres_G_DIR": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "parameters/method": "GET",
+                  "parameters/uri": "_api/web/sitegroups/getbyname('HNCS-RD-Direction')/users?$select=Email",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata",
+                    "Content-Type": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Aujourdhui": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Membres_G_DRD": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "parameters/method": "GET",
+                  "parameters/uri": "_api/web/sitegroups/getbyname('HNCS-RD-DirectionRD')/users?$select=Email",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata",
+                    "Content-Type": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Membres_G_DIR": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Membres_G_ECO": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "parameters/method": "GET",
+                  "parameters/uri": "_api/web/sitegroups/getbyname('HNCS-RD-RelationEcoles')/users?$select=Email",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata",
+                    "Content-Type": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Membres_G_DRD": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Emails_G_DIR": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Membres_G_DIR')?['value']",
+                "select": "@toLower(coalesce(item()?['Email'], ''))"
+              },
+              "runAfter": {
+                "Membres_G_ECO": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Emails_G_DRD": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Membres_G_DRD')?['value']",
+                "select": "@toLower(coalesce(item()?['Email'], ''))"
+              },
+              "runAfter": {
+                "Emails_G_DIR": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Emails_G_ECO": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Membres_G_ECO')?['value']",
+                "select": "@toLower(coalesce(item()?['Email'], ''))"
+              },
+              "runAfter": {
+                "Emails_G_DRD": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_element": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Conventions et partenariats",
+                  "id": "@triggerOutputs()?['body/ID']"
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Emails_G_ECO": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_evenement_obsolete": {
+              "type": "If",
+              "expression": "@not(equals(body('Lire_element')?['Statut']?['Value'], triggerOutputs()?['body/Statut/Value']))",
+              "actions": {
+                "Fin_evenement_obsolete": {
+                  "type": "Terminate",
+                  "inputs": {
+                    "runStatus": "Succeeded"
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Lire_element": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "IdObjet_el": {
+              "type": "Compose",
+              "inputs": "@if(empty(body('Lire_element')?['IdHNCS']), concat('CONV-', formatDateTime(convertTimeZone(body('Lire_element')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(body('Lire_element')?['ID']), '0000')), body('Lire_element')?['IdHNCS'])",
+              "runAfter": {
+                "Si_evenement_obsolete": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_IdHNCS_vide_el": {
+              "type": "If",
+              "expression": "@empty(body('Lire_element')?['IdHNCS'])",
+              "actions": {
+                "Ecrire_IdHNCS_el": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PatchItem"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Conventions et partenariats",
+                      "id": "@body('Lire_element')?['ID']",
+                      "item/IdHNCS": "@{outputs('IdObjet_el')}",
+                      "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                      "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                      "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                      "item/Title": "@body('Lire_element')?['Title']"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "IdObjet_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Statut_avant": {
+              "type": "Compose",
+              "inputs": "@if(empty(body('Lire_element')?['StatutPrecedent']), '∅', body('Lire_element')?['StatutPrecedent'])",
+              "runAfter": {
+                "Si_IdHNCS_vide_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_aucune_transition_a_traiter": {
+              "type": "If",
+              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], coalesce(body('Lire_element')?['StatutPrecedent'], ''))), contains(createArray('À préparer', 'En discussion', 'En validation', 'À signer', 'Signée / active', 'À renouveler', 'Expirée', 'Clôturée'), body('Lire_element')?['Statut']?['Value'])))",
+              "actions": {
+                "Si_decision_modifiee_seule": {
+                  "type": "If",
+                  "expression": "@not(equals(coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], ''), coalesce(body('Lire_element')?['EmpreinteDecision'], '')))",
+                  "actions": {
+                    "Si_empreinte_decision_a_initialiser_seule": {
+                      "type": "If",
+                      "expression": "@and(empty(coalesce(body('Lire_element')?['EmpreinteDecision'], '')), not(empty(body('Lire_element')?['DecideurPartenariat']?['Email'])))",
+                      "actions": {
+                        "Initialiser_EmpreinteDecision_seule": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Conventions et partenariats",
+                              "id": "@body('Lire_element')?['ID']",
+                              "item/EmpreinteDecision": "@{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}",
+                              "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                              "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                              "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                              "item/Title": "@body('Lire_element')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "else": {
+                        "actions": {
+                          "Si_decideur_habilite_seule": {
+                            "type": "If",
+                            "expression": "@contains(split(concat(join(body('Emails_G_DRD'), ';'), ';', join(body('Emails_G_DIR'), ';')), ';'), toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')))",
+                            "actions": {
+                              "Tracer_decision_seule": {
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "host": {
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                    "connectionName": "shared_sharepointonline",
+                                    "operationId": "PatchItem"
+                                  },
+                                  "parameters": {
+                                    "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                    "table": "Conventions et partenariats",
+                                    "id": "@body('Lire_element')?['ID']",
+                                    "item/DecideurPartenariat/Claims": "@{triggerOutputs()?['body/Editor/Email']}",
+                                    "item/DateDecisionPartenariat": "@{outputs('Aujourdhui')}",
+                                    "item/EmpreinteDecision": "@{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}",
+                                    "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                                    "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                                    "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                                    "item/Title": "@body('Lire_element')?['Title']"
+                                  },
+                                  "authentication": "@parameters('$authentication')",
+                                  "retryPolicy": {
+                                    "type": "exponential",
+                                    "count": 4,
+                                    "interval": "PT10S"
+                                  }
+                                },
+                                "runAfter": {}
+                              },
+                              "Dest_N39": {
+                                "type": "Select",
+                                "inputs": {
+                                  "from": "@split(concat(coalesce(join(body('Emails_G_ECO'), ';'), ''), ';', coalesce(coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), ';', coalesce(join(body('Emails_G_DRD'), ';'), '')), ';')",
+                                  "select": "@toLower(trim(item()))"
+                                },
+                                "runAfter": {
+                                  "Tracer_decision_seule": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              },
+                              "DestOK_N39": {
+                                "type": "Query",
+                                "inputs": {
+                                  "from": "@body('Dest_N39')",
+                                  "where": "@not(empty(item()))"
+                                },
+                                "runAfter": {
+                                  "Dest_N39": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              },
+                              "Si_destinataires_N39": {
+                                "type": "If",
+                                "expression": "@greater(length(body('DestOK_N39')), 0)",
+                                "actions": {
+                                  "Envoyer_N39": {
+                                    "type": "OpenApiConnection",
+                                    "inputs": {
+                                      "host": {
+                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                        "connectionName": "shared_office365",
+                                        "operationId": "SharedMailboxSendEmailV2"
+                                      },
+                                      "parameters": {
+                                        "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                                        "body/To": "@{join(union(body('DestOK_N39'), body('DestOK_N39')), ';')}",
+                                        "body/Subject": "[HNCS-R&D][N-39] Décision de partenariat enregistrée (@{outputs('IdObjet_el')})",
+                                        "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-39] Décision de partenariat enregistrée (@{outputs('IdObjet_el')})</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Une décision de partenariat a été enregistrée sur <strong>@{outputs('IdObjet_el')}</strong>.</p>\n<ul><li>Décision : @{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}</li><li>Décideur : @{coalesce(triggerOutputs()?['body/Editor/DisplayName'], '')}</li><li>Date : @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</li></ul>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la convention</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                                        "body/Importance": "Normal"
+                                      },
+                                      "authentication": "@parameters('$authentication')",
+                                      "retryPolicy": {
+                                        "type": "exponential",
+                                        "count": 4,
+                                        "interval": "PT10S"
+                                      }
+                                    },
+                                    "runAfter": {}
+                                  }
+                                },
+                                "else": {
+                                  "actions": {
+                                    "Sans_destinataire_N39": {
+                                      "type": "Workflow",
+                                      "inputs": {
+                                        "host": {
+                                          "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                        },
+                                        "body": {
+                                          "CodeFlux": "PA-10",
+                                          "Niveau": "Avertissement",
+                                          "Liste": "",
+                                          "ItemId": "@{string(coalesce('', ''))}",
+                                          "IdObjet": "@{coalesce('', '')}",
+                                          "Message": "@{'N-39 : aucun destinataire résolu, notification non envoyée'}",
+                                          "DetailErreur": "@{string(coalesce('', ''))}",
+                                          "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                        }
+                                      },
+                                      "runAfter": {}
+                                    }
+                                  }
+                                },
+                                "runAfter": {
+                                  "DestOK_N39": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              }
+                            },
+                            "else": {
+                              "actions": {
+                                "Retablir_decision_seule": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                      "connectionName": "shared_sharepointonline",
+                                      "operationId": "PatchItem"
+                                    },
+                                    "parameters": {
+                                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                      "table": "Conventions et partenariats",
+                                      "id": "@body('Lire_element')?['ID']",
+                                      "item/DecisionPartenariat/Value": "@if(empty(coalesce(body('Lire_element')?['EmpreinteDecision'], '')), null, coalesce(body('Lire_element')?['EmpreinteDecision'], ''))",
+                                      "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                                      "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                                      "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                                      "item/Title": "@body('Lire_element')?['Title']"
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                },
+                                "Decision_retablie_seule": {
+                                  "type": "Workflow",
+                                  "inputs": {
+                                    "host": {
+                                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                    },
+                                    "body": {
+                                      "CodeFlux": "PA-10",
+                                      "Niveau": "Avertissement",
+                                      "Liste": "Conventions",
+                                      "ItemId": "@{string(coalesce(body('Lire_element')?['ID'], ''))}",
+                                      "IdObjet": "@{coalesce(outputs('IdObjet_el'), '')}",
+                                      "Message": "@{'P-09 : décision de partenariat modifiée sans habilitation, valeur rétablie'}",
+                                      "DetailErreur": "@{string(coalesce('', ''))}",
+                                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "Retablir_decision_seule": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Dest_N92": {
+                                  "type": "Select",
+                                  "inputs": {
+                                    "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
+                                    "select": "@toLower(trim(item()))"
+                                  },
+                                  "runAfter": {
+                                    "Decision_retablie_seule": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "DestOK_N92": {
+                                  "type": "Query",
+                                  "inputs": {
+                                    "from": "@body('Dest_N92')",
+                                    "where": "@not(empty(item()))"
+                                  },
+                                  "runAfter": {
+                                    "Dest_N92": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Si_destinataires_N92": {
+                                  "type": "If",
+                                  "expression": "@greater(length(body('DestOK_N92')), 0)",
+                                  "actions": {
+                                    "Envoyer_N92": {
+                                      "type": "OpenApiConnection",
+                                      "inputs": {
+                                        "host": {
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                          "connectionName": "shared_office365",
+                                          "operationId": "SharedMailboxSendEmailV2"
+                                        },
+                                        "parameters": {
+                                          "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                                          "body/To": "@{join(union(body('DestOK_N92'), body('DestOK_N92')), ';')}",
+                                          "body/Subject": "[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée",
+                                          "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre modification de <strong>@{outputs('IdObjet_el')}</strong> a été annulée : elle portait sur un champ protégé (P-09).</p>\n<ul><li>Champ(s) concerné(s) : @{'Décision de partenariat'}</li><li>Rôle habilité : @{'Direction R&D (DIRECTION_RD) ou Direction (DIRECTION)'}</li><li>Valeur rétablie : la dernière valeur validée</li></ul>\n<p>Si la modification est nécessaire, demandez-la à une personne habilitée.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                                          "body/Importance": "Normal"
+                                        },
+                                        "authentication": "@parameters('$authentication')",
+                                        "retryPolicy": {
+                                          "type": "exponential",
+                                          "count": 4,
+                                          "interval": "PT10S"
+                                        }
+                                      },
+                                      "runAfter": {}
+                                    }
+                                  },
+                                  "else": {
+                                    "actions": {
+                                      "Sans_destinataire_N92": {
+                                        "type": "Workflow",
+                                        "inputs": {
+                                          "host": {
+                                            "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                          },
+                                          "body": {
+                                            "CodeFlux": "PA-10",
+                                            "Niveau": "Avertissement",
+                                            "Liste": "",
+                                            "ItemId": "@{string(coalesce('', ''))}",
+                                            "IdObjet": "@{coalesce('', '')}",
+                                            "Message": "@{'N-92 : aucun destinataire résolu, notification non envoyée'}",
+                                            "DetailErreur": "@{string(coalesce('', ''))}",
+                                            "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                          }
+                                        },
+                                        "runAfter": {}
+                                      }
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "DestOK_N92": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "TeamsDest_N92": {
+                                  "type": "Query",
+                                  "inputs": {
+                                    "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
+                                    "where": "@not(empty(trim(item())))"
+                                  },
+                                  "runAfter": {
+                                    "Si_destinataires_N92": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Si_teams_N92": {
+                                  "type": "If",
+                                  "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N92')), 0))",
+                                  "actions": {
+                                    "Pour_teams_N92": {
+                                      "type": "Foreach",
+                                      "foreach": "@union(body('TeamsDest_N92'), body('TeamsDest_N92'))",
+                                      "actions": {
+                                        "Teams_N92": {
+                                          "type": "OpenApiConnection",
+                                          "inputs": {
+                                            "host": {
+                                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                                              "connectionName": "shared_teams",
+                                              "operationId": "PostMessageToConversation"
+                                            },
+                                            "parameters": {
+                                              "poster": "Flow bot",
+                                              "location": "Chat with Flow bot",
+                                              "body/recipient": "@{trim(items('Pour_teams_N92'))}",
+                                              "body/messageBody": "<p><strong>[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</strong></p><p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir dans SharePoint</a></p>"
+                                            },
+                                            "authentication": "@parameters('$authentication')",
+                                            "retryPolicy": {
+                                              "type": "exponential",
+                                              "count": 4,
+                                              "interval": "PT10S"
+                                            }
+                                          },
+                                          "runAfter": {}
+                                        }
+                                      },
+                                      "runtimeConfiguration": {
+                                        "concurrency": {
+                                          "repetitions": 1
+                                        }
+                                      },
+                                      "runAfter": {}
+                                    }
+                                  },
+                                  "else": {
+                                    "actions": {}
+                                  },
+                                  "runAfter": {
+                                    "TeamsDest_N92": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Teams_echec_N92": {
+                                  "type": "Workflow",
+                                  "inputs": {
+                                    "host": {
+                                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                    },
+                                    "body": {
+                                      "CodeFlux": "PA-10",
+                                      "Niveau": "Avertissement",
+                                      "Liste": "",
+                                      "ItemId": "@{string(coalesce('', ''))}",
+                                      "IdObjet": "@{coalesce('', '')}",
+                                      "Message": "@{'N-92 : échec de l''envoi Teams (le courriel est parti)'}",
+                                      "DetailErreur": "@{string(coalesce('', ''))}",
+                                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "Si_teams_N92": [
+                                      "Failed",
+                                      "TimedOut"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "runAfter": {}
+                          }
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {}
+                },
+                "Fin_sans_transition": {
+                  "type": "Terminate",
+                  "inputs": {
+                    "runStatus": "Succeeded"
+                  },
+                  "runAfter": {
+                    "Si_decision_modifiee_seule": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Statut_avant": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Verifier_transition": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "fa7991cb-62cf-5740-a458-f1a6db5ab0eb"
+                },
+                "body": {
+                  "Objet": "Convention",
+                  "StatutAvant": "@{outputs('Statut_avant')}",
+                  "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
+                  "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
+                  "ItemAuteurEmail": "@{coalesce('', '')}",
+                  "ItemValideurEmail": "@{coalesce('', '')}"
+                }
+              },
+              "runAfter": {
+                "Si_aucune_transition_a_traiter": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_erreur_controle_Verifier_transition": {
+              "type": "If",
+              "expression": "@equals(coalesce(body('Verifier_transition')?['Motif'], ''), 'Erreur technique de contrôle')",
+              "actions": {
+                "Journaliser_erreur_controle_Verifier_transition": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-10",
+                      "Niveau": "Erreur",
+                      "Liste": "Conventions",
+                      "ItemId": "@{string(coalesce(body('Lire_element')?['ID'], ''))}",
+                      "IdObjet": "@{coalesce(outputs('IdObjet_el'), '')}",
+                      "Message": "@{'PA-00A : erreur technique de contrôle, transition refusée par sécurité'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Verifier_transition": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Controles_el": {
+              "type": "Compose",
+              "inputs": "@split(replace(coalesce(body('Verifier_transition')?['Controles'], ''), ' ', ''), ';')",
+              "runAfter": {
+                "Si_erreur_controle_Verifier_transition": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Controles_inconnus_el": {
+              "type": "Query",
+              "inputs": {
+                "from": "@outputs('Controles_el')",
+                "where": "@and(not(empty(item())), not(contains(createArray('G_DATE_FIN_DEPASSEE', 'G_DECISION_PARTENARIAT', 'G_PREUVE_SIGNATURE'), item())))"
+              },
+              "runAfter": {
+                "Controles_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Controles_echec_el": {
+              "type": "Query",
+              "inputs": {
+                "from": "@createArray(if(and(contains(outputs('Controles_el'), 'G_DATE_FIN_DEPASSEE'), not(or(not(false), and(not(empty(body('Lire_element')?['DateFin'])), less(if(empty(body('Lire_element')?['DateFin']), '', formatDateTime(convertTimeZone(body('Lire_element')?['DateFin'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), outputs('Aujourdhui')))))), 'G_DATE_FIN_DEPASSEE (DateFin < aujourd''hui (non exigé pour une action humaine))', ''), if(and(contains(outputs('Controles_el'), 'G_DECISION_PARTENARIAT'), not(or(not(contains(createArray('Convention de partenariat', 'Sponsoring'), coalesce(body('Lire_element')?['TypeConvention']?['Value'], ''))), and(contains(createArray('Partenariat retenu', 'Sponsoring retenu'), coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')), equals(coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], ''), coalesce(body('Lire_element')?['EmpreinteDecision'], '')), not(empty(body('Lire_element')?['DecideurPartenariat']?['Email'])))))), 'G_DECISION_PARTENARIAT (Si TypeConvention ∈ {Convention de partenariat ; Sponsoring} : DecisionPartenariat ∈ {Partenariat retenu ; Sponsoring retenu} et DecideurPartenariat renseigné (décision humaine préalable))', ''), if(and(contains(outputs('Controles_el'), 'G_PREUVE_SIGNATURE'), not(and(not(empty(body('Lire_element')?['DateSignature'])), not(empty(body('Lire_element')?['PreuveSignature']))))), 'G_PREUVE_SIGNATURE (DateSignature et PreuveSignature renseignées (« aucun document n''est considéré signé sans preuve »))', ''))",
+                "where": "@not(empty(item()))"
+              },
+              "runAfter": {
+                "Controles_inconnus_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_transition_refusee": {
+              "type": "If",
+              "expression": "@not(and(equals(toLower(string(coalesce(body('Verifier_transition')?['Autorise'], false))), 'true'), and(empty(body('Controles_echec_el')), empty(body('Controles_inconnus_el')))))",
+              "actions": {
+                "Annuler_transition": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "d12115ea-8f45-524c-b8b1-f7a45e1e278d"
+                    },
+                    "body": {
+                      "Liste": "Conventions",
+                      "ItemId": "@int(body('Lire_element')?['ID'])",
+                      "IdObjet": "@{outputs('IdObjet_el')}",
+                      "Objet": "Convention",
+                      "StatutAvant": "@{outputs('Statut_avant')}",
+                      "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
+                      "Accepte": "@false",
+                      "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
+                      "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
+                      "Origine": "Humain",
+                      "Motif": "@{coalesce(if(equals(toLower(string(coalesce(body('Verifier_transition')?['Autorise'], false))), 'true'), concat('Contrôle(s) non satisfait(s) : ', join(union(body('Controles_echec_el'), body('Controles_inconnus_el')), ' ; ')), coalesce(body('Verifier_transition')?['Motif'], 'Transition non autorisée')), '')}",
+                      "RunId": "@{workflow()?['run']?['name']}"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Si_decision_modifiee_refus": {
+                  "type": "If",
+                  "expression": "@not(equals(coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], ''), coalesce(body('Lire_element')?['EmpreinteDecision'], '')))",
+                  "actions": {
+                    "Si_empreinte_decision_a_initialiser_refus": {
+                      "type": "If",
+                      "expression": "@and(empty(coalesce(body('Lire_element')?['EmpreinteDecision'], '')), not(empty(body('Lire_element')?['DecideurPartenariat']?['Email'])))",
+                      "actions": {
+                        "Initialiser_EmpreinteDecision_refus": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Conventions et partenariats",
+                              "id": "@body('Lire_element')?['ID']",
+                              "item/EmpreinteDecision": "@{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}",
+                              "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                              "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                              "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                              "item/Title": "@body('Lire_element')?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "else": {
+                        "actions": {
+                          "Si_decideur_habilite_refus": {
+                            "type": "If",
+                            "expression": "@contains(split(concat(join(body('Emails_G_DRD'), ';'), ';', join(body('Emails_G_DIR'), ';')), ';'), toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')))",
+                            "actions": {
+                              "Tracer_decision_refus": {
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "host": {
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                    "connectionName": "shared_sharepointonline",
+                                    "operationId": "PatchItem"
+                                  },
+                                  "parameters": {
+                                    "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                    "table": "Conventions et partenariats",
+                                    "id": "@body('Lire_element')?['ID']",
+                                    "item/DecideurPartenariat/Claims": "@{triggerOutputs()?['body/Editor/Email']}",
+                                    "item/DateDecisionPartenariat": "@{outputs('Aujourdhui')}",
+                                    "item/EmpreinteDecision": "@{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}",
+                                    "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                                    "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                                    "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                                    "item/Title": "@body('Lire_element')?['Title']"
+                                  },
+                                  "authentication": "@parameters('$authentication')",
+                                  "retryPolicy": {
+                                    "type": "exponential",
+                                    "count": 4,
+                                    "interval": "PT10S"
+                                  }
+                                },
+                                "runAfter": {}
+                              },
+                              "Dest_N39_2": {
+                                "type": "Select",
+                                "inputs": {
+                                  "from": "@split(concat(coalesce(join(body('Emails_G_ECO'), ';'), ''), ';', coalesce(coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), ';', coalesce(join(body('Emails_G_DRD'), ';'), '')), ';')",
+                                  "select": "@toLower(trim(item()))"
+                                },
+                                "runAfter": {
+                                  "Tracer_decision_refus": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              },
+                              "DestOK_N39_2": {
+                                "type": "Query",
+                                "inputs": {
+                                  "from": "@body('Dest_N39_2')",
+                                  "where": "@not(empty(item()))"
+                                },
+                                "runAfter": {
+                                  "Dest_N39_2": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              },
+                              "Si_destinataires_N39_2": {
+                                "type": "If",
+                                "expression": "@greater(length(body('DestOK_N39_2')), 0)",
+                                "actions": {
+                                  "Envoyer_N39_2": {
+                                    "type": "OpenApiConnection",
+                                    "inputs": {
+                                      "host": {
+                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                        "connectionName": "shared_office365",
+                                        "operationId": "SharedMailboxSendEmailV2"
+                                      },
+                                      "parameters": {
+                                        "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                                        "body/To": "@{join(union(body('DestOK_N39_2'), body('DestOK_N39_2')), ';')}",
+                                        "body/Subject": "[HNCS-R&D][N-39] Décision de partenariat enregistrée (@{outputs('IdObjet_el')})",
+                                        "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-39] Décision de partenariat enregistrée (@{outputs('IdObjet_el')})</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Une décision de partenariat a été enregistrée sur <strong>@{outputs('IdObjet_el')}</strong>.</p>\n<ul><li>Décision : @{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}</li><li>Décideur : @{coalesce(triggerOutputs()?['body/Editor/DisplayName'], '')}</li><li>Date : @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</li></ul>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la convention</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                                        "body/Importance": "Normal"
+                                      },
+                                      "authentication": "@parameters('$authentication')",
+                                      "retryPolicy": {
+                                        "type": "exponential",
+                                        "count": 4,
+                                        "interval": "PT10S"
+                                      }
+                                    },
+                                    "runAfter": {}
+                                  }
+                                },
+                                "else": {
+                                  "actions": {
+                                    "Sans_destinataire_N39_2": {
+                                      "type": "Workflow",
+                                      "inputs": {
+                                        "host": {
+                                          "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                        },
+                                        "body": {
+                                          "CodeFlux": "PA-10",
+                                          "Niveau": "Avertissement",
+                                          "Liste": "",
+                                          "ItemId": "@{string(coalesce('', ''))}",
+                                          "IdObjet": "@{coalesce('', '')}",
+                                          "Message": "@{'N-39 : aucun destinataire résolu, notification non envoyée'}",
+                                          "DetailErreur": "@{string(coalesce('', ''))}",
+                                          "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                        }
+                                      },
+                                      "runAfter": {}
+                                    }
+                                  }
+                                },
+                                "runAfter": {
+                                  "DestOK_N39_2": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              }
+                            },
+                            "else": {
+                              "actions": {
+                                "Retablir_decision_refus": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                      "connectionName": "shared_sharepointonline",
+                                      "operationId": "PatchItem"
+                                    },
+                                    "parameters": {
+                                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                      "table": "Conventions et partenariats",
+                                      "id": "@body('Lire_element')?['ID']",
+                                      "item/DecisionPartenariat/Value": "@if(empty(coalesce(body('Lire_element')?['EmpreinteDecision'], '')), null, coalesce(body('Lire_element')?['EmpreinteDecision'], ''))",
+                                      "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                                      "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                                      "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                                      "item/Title": "@body('Lire_element')?['Title']"
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                },
+                                "Decision_retablie_refus": {
+                                  "type": "Workflow",
+                                  "inputs": {
+                                    "host": {
+                                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                    },
+                                    "body": {
+                                      "CodeFlux": "PA-10",
+                                      "Niveau": "Avertissement",
+                                      "Liste": "Conventions",
+                                      "ItemId": "@{string(coalesce(body('Lire_element')?['ID'], ''))}",
+                                      "IdObjet": "@{coalesce(outputs('IdObjet_el'), '')}",
+                                      "Message": "@{'P-09 : décision de partenariat modifiée sans habilitation, valeur rétablie'}",
+                                      "DetailErreur": "@{string(coalesce('', ''))}",
+                                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "Retablir_decision_refus": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Dest_N92_2": {
+                                  "type": "Select",
+                                  "inputs": {
+                                    "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
+                                    "select": "@toLower(trim(item()))"
+                                  },
+                                  "runAfter": {
+                                    "Decision_retablie_refus": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "DestOK_N92_2": {
+                                  "type": "Query",
+                                  "inputs": {
+                                    "from": "@body('Dest_N92_2')",
+                                    "where": "@not(empty(item()))"
+                                  },
+                                  "runAfter": {
+                                    "Dest_N92_2": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Si_destinataires_N92_2": {
+                                  "type": "If",
+                                  "expression": "@greater(length(body('DestOK_N92_2')), 0)",
+                                  "actions": {
+                                    "Envoyer_N92_2": {
+                                      "type": "OpenApiConnection",
+                                      "inputs": {
+                                        "host": {
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                          "connectionName": "shared_office365",
+                                          "operationId": "SharedMailboxSendEmailV2"
+                                        },
+                                        "parameters": {
+                                          "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                                          "body/To": "@{join(union(body('DestOK_N92_2'), body('DestOK_N92_2')), ';')}",
+                                          "body/Subject": "[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée",
+                                          "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre modification de <strong>@{outputs('IdObjet_el')}</strong> a été annulée : elle portait sur un champ protégé (P-09).</p>\n<ul><li>Champ(s) concerné(s) : @{'Décision de partenariat'}</li><li>Rôle habilité : @{'Direction R&D (DIRECTION_RD) ou Direction (DIRECTION)'}</li><li>Valeur rétablie : la dernière valeur validée</li></ul>\n<p>Si la modification est nécessaire, demandez-la à une personne habilitée.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                                          "body/Importance": "Normal"
+                                        },
+                                        "authentication": "@parameters('$authentication')",
+                                        "retryPolicy": {
+                                          "type": "exponential",
+                                          "count": 4,
+                                          "interval": "PT10S"
+                                        }
+                                      },
+                                      "runAfter": {}
+                                    }
+                                  },
+                                  "else": {
+                                    "actions": {
+                                      "Sans_destinataire_N92_2": {
+                                        "type": "Workflow",
+                                        "inputs": {
+                                          "host": {
+                                            "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                          },
+                                          "body": {
+                                            "CodeFlux": "PA-10",
+                                            "Niveau": "Avertissement",
+                                            "Liste": "",
+                                            "ItemId": "@{string(coalesce('', ''))}",
+                                            "IdObjet": "@{coalesce('', '')}",
+                                            "Message": "@{'N-92 : aucun destinataire résolu, notification non envoyée'}",
+                                            "DetailErreur": "@{string(coalesce('', ''))}",
+                                            "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                          }
+                                        },
+                                        "runAfter": {}
+                                      }
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "DestOK_N92_2": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "TeamsDest_N92_2": {
+                                  "type": "Query",
+                                  "inputs": {
+                                    "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
+                                    "where": "@not(empty(trim(item())))"
+                                  },
+                                  "runAfter": {
+                                    "Si_destinataires_N92_2": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Si_teams_N92_2": {
+                                  "type": "If",
+                                  "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N92_2')), 0))",
+                                  "actions": {
+                                    "Pour_teams_N92_2": {
+                                      "type": "Foreach",
+                                      "foreach": "@union(body('TeamsDest_N92_2'), body('TeamsDest_N92_2'))",
+                                      "actions": {
+                                        "Teams_N92_2": {
+                                          "type": "OpenApiConnection",
+                                          "inputs": {
+                                            "host": {
+                                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                                              "connectionName": "shared_teams",
+                                              "operationId": "PostMessageToConversation"
+                                            },
+                                            "parameters": {
+                                              "poster": "Flow bot",
+                                              "location": "Chat with Flow bot",
+                                              "body/recipient": "@{trim(items('Pour_teams_N92_2'))}",
+                                              "body/messageBody": "<p><strong>[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</strong></p><p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir dans SharePoint</a></p>"
+                                            },
+                                            "authentication": "@parameters('$authentication')",
+                                            "retryPolicy": {
+                                              "type": "exponential",
+                                              "count": 4,
+                                              "interval": "PT10S"
+                                            }
+                                          },
+                                          "runAfter": {}
+                                        }
+                                      },
+                                      "runtimeConfiguration": {
+                                        "concurrency": {
+                                          "repetitions": 1
+                                        }
+                                      },
+                                      "runAfter": {}
+                                    }
+                                  },
+                                  "else": {
+                                    "actions": {}
+                                  },
+                                  "runAfter": {
+                                    "TeamsDest_N92_2": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Teams_echec_N92_2": {
+                                  "type": "Workflow",
+                                  "inputs": {
+                                    "host": {
+                                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                    },
+                                    "body": {
+                                      "CodeFlux": "PA-10",
+                                      "Niveau": "Avertissement",
+                                      "Liste": "",
+                                      "ItemId": "@{string(coalesce('', ''))}",
+                                      "IdObjet": "@{coalesce('', '')}",
+                                      "Message": "@{'N-92 : échec de l''envoi Teams (le courriel est parti)'}",
+                                      "DetailErreur": "@{string(coalesce('', ''))}",
+                                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "Si_teams_N92_2": [
+                                      "Failed",
+                                      "TimedOut"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "runAfter": {}
+                          }
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Annuler_transition": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Fin_transition_refusee": {
+                  "type": "Terminate",
+                  "inputs": {
+                    "runStatus": "Succeeded"
+                  },
+                  "runAfter": {
+                    "Si_decision_modifiee_refus": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Controles_echec_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Effets_par_statut": {
+              "type": "Switch",
+              "expression": "@body('Lire_element')?['Statut']?['Value']",
+              "cases": {
+                "Cas_1_Signee_active": {
+                  "case": "Signée / active",
+                  "actions": {
+                    "Etablissement_convention": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Écoles et établissements",
+                          "$filter": "ID eq @{coalesce(body('Lire_element')?['Etablissement']?['Id'], 0)}",
+                          "$top": 1
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Si_convention_de_partenariat": {
+                      "type": "If",
+                      "expression": "@and(contains(createArray('Convention de partenariat', 'Sponsoring'), coalesce(body('Lire_element')?['TypeConvention']?['Value'], '')), not(equals(coalesce(first(body('Etablissement_convention')?['value'])?['Statut']?['Value'], ''), 'Partenaire actif')))",
+                      "actions": {
+                        "Etablissement_partenaire_actif": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Écoles et établissements",
+                              "id": "@first(body('Etablissement_convention')?['value'])?['ID']",
+                              "item/Statut/Value": "Partenaire actif",
+                              "item/Title": "@first(body('Etablissement_convention')?['value'])?['Title']"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Etablissement_convention": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "default": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Si_transition_refusee": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Historiser_transition": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "d12115ea-8f45-524c-b8b1-f7a45e1e278d"
+                },
+                "body": {
+                  "Liste": "Conventions",
+                  "ItemId": "@int(body('Lire_element')?['ID'])",
+                  "IdObjet": "@{outputs('IdObjet_el')}",
+                  "Objet": "Convention",
+                  "StatutAvant": "@{outputs('Statut_avant')}",
+                  "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
+                  "Accepte": "@true",
+                  "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
+                  "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
+                  "Origine": "Humain",
+                  "Motif": "@{coalesce('', '')}",
+                  "RunId": "@{workflow()?['run']?['name']}"
+                }
+              },
+              "runAfter": {
+                "Effets_par_statut": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_decision_modifiee_post": {
+              "type": "If",
+              "expression": "@not(equals(coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], ''), coalesce(body('Lire_element')?['EmpreinteDecision'], '')))",
+              "actions": {
+                "Si_empreinte_decision_a_initialiser_post": {
+                  "type": "If",
+                  "expression": "@and(empty(coalesce(body('Lire_element')?['EmpreinteDecision'], '')), not(empty(body('Lire_element')?['DecideurPartenariat']?['Email'])))",
+                  "actions": {
+                    "Initialiser_EmpreinteDecision_post": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Conventions et partenariats",
+                          "id": "@body('Lire_element')?['ID']",
+                          "item/EmpreinteDecision": "@{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}",
+                          "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                          "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                          "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                          "item/Title": "@body('Lire_element')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Si_decideur_habilite_post": {
+                        "type": "If",
+                        "expression": "@contains(split(concat(join(body('Emails_G_DRD'), ';'), ';', join(body('Emails_G_DIR'), ';')), ';'), toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')))",
+                        "actions": {
+                          "Tracer_decision_post": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                "connectionName": "shared_sharepointonline",
+                                "operationId": "PatchItem"
+                              },
+                              "parameters": {
+                                "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                "table": "Conventions et partenariats",
+                                "id": "@body('Lire_element')?['ID']",
+                                "item/DecideurPartenariat/Claims": "@{triggerOutputs()?['body/Editor/Email']}",
+                                "item/DateDecisionPartenariat": "@{outputs('Aujourdhui')}",
+                                "item/EmpreinteDecision": "@{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}",
+                                "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                                "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                                "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                                "item/Title": "@body('Lire_element')?['Title']"
+                              },
+                              "authentication": "@parameters('$authentication')",
+                              "retryPolicy": {
+                                "type": "exponential",
+                                "count": 4,
+                                "interval": "PT10S"
+                              }
+                            },
+                            "runAfter": {}
+                          },
+                          "Dest_N39_3": {
+                            "type": "Select",
+                            "inputs": {
+                              "from": "@split(concat(coalesce(join(body('Emails_G_ECO'), ';'), ''), ';', coalesce(coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), ';', coalesce(join(body('Emails_G_DRD'), ';'), '')), ';')",
+                              "select": "@toLower(trim(item()))"
+                            },
+                            "runAfter": {
+                              "Tracer_decision_post": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "DestOK_N39_3": {
+                            "type": "Query",
+                            "inputs": {
+                              "from": "@body('Dest_N39_3')",
+                              "where": "@not(empty(item()))"
+                            },
+                            "runAfter": {
+                              "Dest_N39_3": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "Si_destinataires_N39_3": {
+                            "type": "If",
+                            "expression": "@greater(length(body('DestOK_N39_3')), 0)",
+                            "actions": {
+                              "Envoyer_N39_3": {
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "host": {
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                    "connectionName": "shared_office365",
+                                    "operationId": "SharedMailboxSendEmailV2"
+                                  },
+                                  "parameters": {
+                                    "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                                    "body/To": "@{join(union(body('DestOK_N39_3'), body('DestOK_N39_3')), ';')}",
+                                    "body/Subject": "[HNCS-R&D][N-39] Décision de partenariat enregistrée (@{outputs('IdObjet_el')})",
+                                    "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-39] Décision de partenariat enregistrée (@{outputs('IdObjet_el')})</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Une décision de partenariat a été enregistrée sur <strong>@{outputs('IdObjet_el')}</strong>.</p>\n<ul><li>Décision : @{coalesce(body('Lire_element')?['DecisionPartenariat']?['Value'], '')}</li><li>Décideur : @{coalesce(triggerOutputs()?['body/Editor/DisplayName'], '')}</li><li>Date : @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</li></ul>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la convention</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                                    "body/Importance": "Normal"
+                                  },
+                                  "authentication": "@parameters('$authentication')",
+                                  "retryPolicy": {
+                                    "type": "exponential",
+                                    "count": 4,
+                                    "interval": "PT10S"
+                                  }
+                                },
+                                "runAfter": {}
+                              }
+                            },
+                            "else": {
+                              "actions": {
+                                "Sans_destinataire_N39_3": {
+                                  "type": "Workflow",
+                                  "inputs": {
+                                    "host": {
+                                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                    },
+                                    "body": {
+                                      "CodeFlux": "PA-10",
+                                      "Niveau": "Avertissement",
+                                      "Liste": "",
+                                      "ItemId": "@{string(coalesce('', ''))}",
+                                      "IdObjet": "@{coalesce('', '')}",
+                                      "Message": "@{'N-39 : aucun destinataire résolu, notification non envoyée'}",
+                                      "DetailErreur": "@{string(coalesce('', ''))}",
+                                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                }
+                              }
+                            },
+                            "runAfter": {
+                              "DestOK_N39_3": [
+                                "Succeeded"
+                              ]
+                            }
+                          }
+                        },
+                        "else": {
+                          "actions": {
+                            "Retablir_decision_post": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PatchItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Conventions et partenariats",
+                                  "id": "@body('Lire_element')?['ID']",
+                                  "item/DecisionPartenariat/Value": "@if(empty(coalesce(body('Lire_element')?['EmpreinteDecision'], '')), null, coalesce(body('Lire_element')?['EmpreinteDecision'], ''))",
+                                  "item/Etablissement/Id": "@body('Lire_element')?['Etablissement']?['Id']",
+                                  "item/TypeConvention/Value": "@{body('Lire_element')?['TypeConvention']?['Value']}",
+                                  "item/Statut/Value": "@{body('Lire_element')?['Statut']?['Value']}",
+                                  "item/Title": "@body('Lire_element')?['Title']"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "Decision_retablie_post": {
+                              "type": "Workflow",
+                              "inputs": {
+                                "host": {
+                                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                },
+                                "body": {
+                                  "CodeFlux": "PA-10",
+                                  "Niveau": "Avertissement",
+                                  "Liste": "Conventions",
+                                  "ItemId": "@{string(coalesce(body('Lire_element')?['ID'], ''))}",
+                                  "IdObjet": "@{coalesce(outputs('IdObjet_el'), '')}",
+                                  "Message": "@{'P-09 : décision de partenariat modifiée sans habilitation, valeur rétablie'}",
+                                  "DetailErreur": "@{string(coalesce('', ''))}",
+                                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                }
+                              },
+                              "runAfter": {
+                                "Retablir_decision_post": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Dest_N92_3": {
+                              "type": "Select",
+                              "inputs": {
+                                "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
+                                "select": "@toLower(trim(item()))"
+                              },
+                              "runAfter": {
+                                "Decision_retablie_post": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "DestOK_N92_3": {
+                              "type": "Query",
+                              "inputs": {
+                                "from": "@body('Dest_N92_3')",
+                                "where": "@not(empty(item()))"
+                              },
+                              "runAfter": {
+                                "Dest_N92_3": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Si_destinataires_N92_3": {
+                              "type": "If",
+                              "expression": "@greater(length(body('DestOK_N92_3')), 0)",
+                              "actions": {
+                                "Envoyer_N92_3": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                      "connectionName": "shared_office365",
+                                      "operationId": "SharedMailboxSendEmailV2"
+                                    },
+                                    "parameters": {
+                                      "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                                      "body/To": "@{join(union(body('DestOK_N92_3'), body('DestOK_N92_3')), ';')}",
+                                      "body/Subject": "[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée",
+                                      "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre modification de <strong>@{outputs('IdObjet_el')}</strong> a été annulée : elle portait sur un champ protégé (P-09).</p>\n<ul><li>Champ(s) concerné(s) : @{'Décision de partenariat'}</li><li>Rôle habilité : @{'Direction R&D (DIRECTION_RD) ou Direction (DIRECTION)'}</li><li>Valeur rétablie : la dernière valeur validée</li></ul>\n<p>Si la modification est nécessaire, demandez-la à une personne habilitée.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                                      "body/Importance": "Normal"
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                }
+                              },
+                              "else": {
+                                "actions": {
+                                  "Sans_destinataire_N92_3": {
+                                    "type": "Workflow",
+                                    "inputs": {
+                                      "host": {
+                                        "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                      },
+                                      "body": {
+                                        "CodeFlux": "PA-10",
+                                        "Niveau": "Avertissement",
+                                        "Liste": "",
+                                        "ItemId": "@{string(coalesce('', ''))}",
+                                        "IdObjet": "@{coalesce('', '')}",
+                                        "Message": "@{'N-92 : aucun destinataire résolu, notification non envoyée'}",
+                                        "DetailErreur": "@{string(coalesce('', ''))}",
+                                        "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                      }
+                                    },
+                                    "runAfter": {}
+                                  }
+                                }
+                              },
+                              "runAfter": {
+                                "DestOK_N92_3": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "TeamsDest_N92_3": {
+                              "type": "Query",
+                              "inputs": {
+                                "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
+                                "where": "@not(empty(trim(item())))"
+                              },
+                              "runAfter": {
+                                "Si_destinataires_N92_3": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Si_teams_N92_3": {
+                              "type": "If",
+                              "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N92_3')), 0))",
+                              "actions": {
+                                "Pour_teams_N92_3": {
+                                  "type": "Foreach",
+                                  "foreach": "@union(body('TeamsDest_N92_3'), body('TeamsDest_N92_3'))",
+                                  "actions": {
+                                    "Teams_N92_3": {
+                                      "type": "OpenApiConnection",
+                                      "inputs": {
+                                        "host": {
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                                          "connectionName": "shared_teams",
+                                          "operationId": "PostMessageToConversation"
+                                        },
+                                        "parameters": {
+                                          "poster": "Flow bot",
+                                          "location": "Chat with Flow bot",
+                                          "body/recipient": "@{trim(items('Pour_teams_N92_3'))}",
+                                          "body/messageBody": "<p><strong>[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</strong></p><p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Conventions/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir dans SharePoint</a></p>"
+                                        },
+                                        "authentication": "@parameters('$authentication')",
+                                        "retryPolicy": {
+                                          "type": "exponential",
+                                          "count": 4,
+                                          "interval": "PT10S"
+                                        }
+                                      },
+                                      "runAfter": {}
+                                    }
+                                  },
+                                  "runtimeConfiguration": {
+                                    "concurrency": {
+                                      "repetitions": 1
+                                    }
+                                  },
+                                  "runAfter": {}
+                                }
+                              },
+                              "else": {
+                                "actions": {}
+                              },
+                              "runAfter": {
+                                "TeamsDest_N92_3": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Teams_echec_N92_3": {
+                              "type": "Workflow",
+                              "inputs": {
+                                "host": {
+                                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                                },
+                                "body": {
+                                  "CodeFlux": "PA-10",
+                                  "Niveau": "Avertissement",
+                                  "Liste": "",
+                                  "ItemId": "@{string(coalesce('', ''))}",
+                                  "IdObjet": "@{coalesce('', '')}",
+                                  "Message": "@{'N-92 : échec de l''envoi Teams (le courriel est parti)'}",
+                                  "DetailErreur": "@{string(coalesce('', ''))}",
+                                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                                }
+                              },
+                              "runAfter": {
+                                "Si_teams_N92_3": [
+                                  "Failed",
+                                  "TimedOut"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "runAfter": {}
+                      }
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Historiser_transition": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Erreur": {
+          "type": "Scope",
+          "actions": {
+            "Detail_erreur": {
+              "type": "Compose",
+              "inputs": "@string(result('Principal'))",
+              "runAfter": {}
+            },
+            "Journaliser_erreur": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-10",
+                  "Niveau": "Erreur",
+                  "Liste": "Conventions",
+                  "ItemId": "@{string(coalesce(triggerOutputs()?['body/ID'], ''))}",
+                  "IdObjet": "@{coalesce(triggerOutputs()?['body/IdHNCS'], '')}",
+                  "Message": "@{'Échec de l''exécution du flux PA-10-conv'}",
+                  "DetailErreur": "@{string(coalesce(substring(outputs('Detail_erreur'), 0, min(length(outputs('Detail_erreur')), 8000)), ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Detail_erreur": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Terminer_en_echec": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "HNCS_ECHEC",
+                  "message": "Échec du flux PA-10-conv : voir le journal des flux"
+                }
+              },
+              "runAfter": {
+                "Journaliser_erreur": [
+                  "Succeeded",
+                  "Failed",
+                  "TimedOut",
+                  "Skipped"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Principal": [
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        },
+        "Terminer": {
+          "type": "Terminate",
+          "inputs": {
+            "runStatus": "Succeeded"
+          },
+          "runAfter": {
+            "Erreur": [
+              "Skipped"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

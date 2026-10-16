@@ -1,0 +1,2970 @@
+[
+  {
+    "id": "PA-00A",
+    "code": "PA-00A",
+    "displayName": "HNCS-RD PA-00A — Vérifier une transition",
+    "lot": 2,
+    "type": "Flux enfant",
+    "trigger": {
+      "kind": "ChildFlow",
+      "list": null,
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "TransitionsStatuts"
+    ],
+    "listsWritten": [],
+    "fieldsUsed": {
+      "TransitionsStatuts": [
+        "Acteurs",
+        "Actif",
+        "Controle",
+        "Objet",
+        "StatutDe",
+        "StatutVers",
+        "Title"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [],
+    "childFlows": [],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-00B",
+    "code": "PA-00B",
+    "displayName": "HNCS-RD PA-00B — Appliquer ou annuler une transition",
+    "lot": 2,
+    "type": "Flux enfant",
+    "trigger": {
+      "kind": "ChildFlow",
+      "list": null,
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Affectations",
+      "Alternants",
+      "Candidatures",
+      "CommunicationsRD",
+      "ComptesRendus",
+      "Conventions",
+      "HistoriqueStatuts",
+      "Livrables",
+      "SujetsRD"
+    ],
+    "fieldsUsed": {
+      "Affectations": [
+        "DateStatut",
+        "Statut",
+        "StatutPrecedent"
+      ],
+      "Alternants": [
+        "DateStatut",
+        "Statut",
+        "StatutPrecedent"
+      ],
+      "Candidatures": [
+        "DateStatut",
+        "Statut",
+        "StatutPrecedent"
+      ],
+      "CommunicationsRD": [
+        "DateStatut",
+        "Statut",
+        "StatutPrecedent"
+      ],
+      "ComptesRendus": [
+        "DateStatut",
+        "Statut",
+        "StatutPrecedent"
+      ],
+      "Conventions": [
+        "DateStatut",
+        "Statut",
+        "StatutPrecedent"
+      ],
+      "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
+        "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
+        "ItemId",
+        "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
+        "Resultat",
+        "StatutApres",
+        "StatutAvant",
+        "Title"
+      ],
+      "Livrables": [
+        "DateStatut",
+        "Statut",
+        "StatutPrecedent"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "SujetsRD": [
+        "DateStatut",
+        "Statut",
+        "StatutPrecedent"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-90"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-00C",
+    "code": "PA-00C",
+    "displayName": "HNCS-RD PA-00C — Journaliser une erreur",
+    "lot": 2,
+    "type": "Flux enfant",
+    "trigger": {
+      "kind": "ChildFlow",
+      "list": null,
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Parametres"
+    ],
+    "listsWritten": [
+      "JournalFlux"
+    ],
+    "fieldsUsed": {
+      "JournalFlux": [
+        "DateEvenement",
+        "DetailErreur",
+        "IdObjet",
+        "ItemId",
+        "Liste",
+        "Message",
+        "Niveau",
+        "RunUrl",
+        "StatutReprise",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-99"
+    ],
+    "childFlows": [],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-00D",
+    "code": "PA-00D",
+    "displayName": "HNCS-RD PA-00D — Attribuer les identifiants manquants",
+    "lot": 2,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Toutes les heures (exécution manuelle possible par « Exécuter »)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "ActionsIntegration",
+      "Affectations",
+      "Alternants",
+      "BilansAlternance",
+      "Candidatures",
+      "CommunicationsRD",
+      "ComptesRendus",
+      "Conventions",
+      "DomainesCibles",
+      "Entretiens",
+      "Etablissements",
+      "InteractionsEcoles",
+      "Livrables",
+      "Mobilisations",
+      "Offres",
+      "Parametres",
+      "Poles",
+      "Referents",
+      "RegistreModeles",
+      "RessourcesTechniques",
+      "SujetsRD"
+    ],
+    "listsWritten": [
+      "ActionsIntegration",
+      "Affectations",
+      "Alternants",
+      "BilansAlternance",
+      "Candidatures",
+      "CommunicationsRD",
+      "ComptesRendus",
+      "Conventions",
+      "DomainesCibles",
+      "Entretiens",
+      "Etablissements",
+      "InteractionsEcoles",
+      "Livrables",
+      "Mobilisations",
+      "Offres",
+      "Poles",
+      "Referents",
+      "RegistreModeles",
+      "RessourcesTechniques",
+      "SujetsRD"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Contexte",
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Title"
+      ],
+      "Affectations": [
+        "Alternant",
+        "CadenceCR",
+        "Created",
+        "DateDebut",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Sujet"
+      ],
+      "Alternants": [
+        "Created",
+        "DateDebut",
+        "DateFin",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Pole",
+        "Statut",
+        "Title"
+      ],
+      "BilansAlternance": [
+        "Alternant",
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Statut"
+      ],
+      "Candidatures": [
+        "Canal",
+        "Created",
+        "DateReception",
+        "ID",
+        "IdHNCS",
+        "ModeReception",
+        "Statut",
+        "Title"
+      ],
+      "CommunicationsRD": [
+        "Auteur",
+        "Canal",
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Title"
+      ],
+      "ComptesRendus": [
+        "Affectation",
+        "Created",
+        "Echeance",
+        "ID",
+        "IdHNCS",
+        "PeriodeDebut",
+        "PeriodeFin",
+        "Statut"
+      ],
+      "Conventions": [
+        "Created",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Title",
+        "TypeConvention"
+      ],
+      "DomainesCibles": [
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Title"
+      ],
+      "Entretiens": [
+        "Candidature",
+        "Created",
+        "DateHeure",
+        "ID",
+        "IdHNCS",
+        "Modalite",
+        "Statut",
+        "Title",
+        "TypeEntretien"
+      ],
+      "Etablissements": [
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Title"
+      ],
+      "InteractionsEcoles": [
+        "Created",
+        "DateInteraction",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Title"
+      ],
+      "Livrables": [
+        "Affectation",
+        "Created",
+        "Echeance",
+        "ID",
+        "IdHNCS",
+        "Proprietaire",
+        "Statut",
+        "Title",
+        "TypeLivrable"
+      ],
+      "Mobilisations": [
+        "Created",
+        "DateMobilisation",
+        "ID",
+        "IdHNCS",
+        "Livrable",
+        "Title"
+      ],
+      "Offres": [
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Title",
+        "TypeOffre"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Poles": [
+        "CodePole",
+        "IdHNCS",
+        "Statut",
+        "Title"
+      ],
+      "Referents": [
+        "Compte",
+        "Created",
+        "EmailPro",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Title"
+      ],
+      "RegistreModeles": [
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Proprietaire",
+        "Statut",
+        "Title",
+        "TypeModele",
+        "Version"
+      ],
+      "RessourcesTechniques": [
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "Title",
+        "TypeRessource"
+      ],
+      "SujetsRD": [
+        "Created",
+        "ID",
+        "IdHNCS",
+        "Pole",
+        "Statut",
+        "Title",
+        "TypeSujet"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-00E",
+    "code": "PA-00E",
+    "displayName": "HNCS-RD PA-00E — Supervision quotidienne des flux",
+    "lot": 2,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Quotidien 07:30 (heure de Paris)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "JournalFlux",
+      "Parametres"
+    ],
+    "listsWritten": [],
+    "fieldsUsed": {
+      "JournalFlux": [
+        "DateEvenement",
+        "IdObjet",
+        "Liste",
+        "Message",
+        "Niveau",
+        "RunUrl",
+        "StatutReprise",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-98"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-00F",
+    "code": "PA-00F",
+    "displayName": "HNCS-RD PA-00F — Droits des propriétaires de modèles",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "RegistreModeles",
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "ModelesRD",
+      "Parametres",
+      "RegistreModeles"
+    ],
+    "listsWritten": [
+      "RegistreModeles"
+    ],
+    "fieldsUsed": {
+      "ModelesRD": [
+        "ID",
+        "Modele"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "RegistreModeles": [
+        "Created",
+        "ID",
+        "IdHNCS",
+        "LienFichier",
+        "Proprietaire",
+        "Statut",
+        "Title",
+        "TypeModele",
+        "Version"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-01a",
+    "code": "PA-01a",
+    "displayName": "HNCS-RD PA-01a — Nouvelle candidature — saisie ou formulaire",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Candidatures",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "Reçue"
+    ],
+    "listsRead": [
+      "Candidatures",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Candidatures",
+      "Recrutement"
+    ],
+    "fieldsUsed": {
+      "Candidatures": [
+        "AccuseReceptionEnvoye",
+        "AvisAnalyse",
+        "Canal",
+        "Created",
+        "DateDecisionFinale",
+        "DateDemarrageConfirmee",
+        "DateFinPrevue",
+        "DateReception",
+        "DecideurFinal",
+        "DoublonDe",
+        "DoublonPotentiel",
+        "Email",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "LienCV",
+        "ModeReception",
+        "PolePressenti",
+        "PosteVise",
+        "ResponsableAnalyse",
+        "Statut",
+        "StatutPrecedent",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {
+      "Candidatures": [
+        "À analyser"
+      ]
+    },
+    "transitions": [
+      "CAND-T01",
+      "CAND-T02"
+    ],
+    "notifications": [
+      "N-01",
+      "N-02",
+      "N-03"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-01b",
+    "code": "PA-01b",
+    "displayName": "HNCS-RD PA-01b — Nouvelle candidature — boîte mail R&D",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharedMailbox",
+      "list": null,
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Candidatures",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Candidatures",
+      "Recrutement"
+    ],
+    "fieldsUsed": {
+      "Candidatures": [
+        "AccuseReceptionEnvoye",
+        "AvisAnalyse",
+        "Canal",
+        "Created",
+        "DateDecisionFinale",
+        "DateDemarrageConfirmee",
+        "DateFinPrevue",
+        "DateReception",
+        "DecideurFinal",
+        "DoublonDe",
+        "DoublonPotentiel",
+        "Email",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "LienCV",
+        "ModeReception",
+        "PolePressenti",
+        "PosteVise",
+        "RefMessage",
+        "ResponsableAnalyse",
+        "Statut",
+        "StatutPrecedent",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Recrutement": [
+        "Candidature",
+        "IdObjet",
+        "TypeDocument"
+      ]
+    },
+    "statusesWritten": {
+      "Candidatures": [
+        "Reçue",
+        "À analyser"
+      ]
+    },
+    "transitions": [
+      "CAND-T01",
+      "CAND-T02"
+    ],
+    "notifications": [
+      "N-01",
+      "N-02",
+      "N-03"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-02",
+    "code": "PA-02",
+    "displayName": "HNCS-RD PA-02 — Présélection et suivi de l'analyse",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Candidatures",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "À analyser",
+      "En cours d'analyse",
+      "Présélectionnée",
+      "Transmise à l'administration",
+      "Non retenue",
+      "Clôturée"
+    ],
+    "listsRead": [
+      "Candidatures",
+      "Entretiens",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Administration",
+      "Candidatures",
+      "Recrutement"
+    ],
+    "fieldsUsed": {
+      "Candidatures": [
+        "AvisAnalyse",
+        "Canal",
+        "Created",
+        "DateAnalyse",
+        "DateCloture",
+        "DateDecisionFinale",
+        "DateDecisionPreselection",
+        "DateDemarrageConfirmee",
+        "DateFinPrevue",
+        "DateInformationCandidat",
+        "DateReception",
+        "DateTransmissionAdmin",
+        "DecideurFinal",
+        "DecisionPreselection",
+        "DestinataireAdmin",
+        "DoublonDe",
+        "DoublonPotentiel",
+        "Email",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "InformationCandidat",
+        "ModeReception",
+        "MotifCode",
+        "PolePressenti",
+        "ResponsableAnalyse",
+        "Statut",
+        "StatutPrecedent",
+        "Title"
+      ],
+      "Entretiens": [
+        "Candidature",
+        "Resultat",
+        "Statut"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {
+      "Candidatures": [
+        "Transmise à l'administration"
+      ]
+    },
+    "transitions": [
+      "CAND-T02",
+      "CAND-T03",
+      "CAND-T04",
+      "CAND-T05",
+      "CAND-T06",
+      "CAND-T08",
+      "CAND-T12",
+      "CAND-T15",
+      "CAND-T16",
+      "CAND-T17"
+    ],
+    "notifications": [
+      "N-03",
+      "N-04",
+      "N-05",
+      "N-06",
+      "N-07",
+      "N-08"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-02b",
+    "code": "PA-02b",
+    "displayName": "HNCS-RD PA-02b — Relance des candidatures sans traitement",
+    "lot": 2,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Quotidien 08:00 (heure de Paris)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Candidatures",
+      "Parametres"
+    ],
+    "listsWritten": [],
+    "fieldsUsed": {
+      "Candidatures": [
+        "DateReception",
+        "DateStatut",
+        "ID",
+        "IdHNCS",
+        "ResponsableAnalyse",
+        "Statut"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-09"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-03-ent",
+    "code": "PA-03",
+    "displayName": "HNCS-RD PA-03 — Entretien (entretiens)",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Entretiens",
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Candidatures",
+      "Entretiens",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Candidatures",
+      "Entretiens",
+      "HistoriqueStatuts"
+    ],
+    "fieldsUsed": {
+      "Candidatures": [
+        "AvisAnalyse",
+        "Canal",
+        "DateDecisionFinale",
+        "DateDemarrageConfirmee",
+        "DateFinPrevue",
+        "DateReception",
+        "DecideurFinal",
+        "Email",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "ModeReception",
+        "PolePressenti",
+        "ResponsableAnalyse",
+        "Statut",
+        "Title"
+      ],
+      "Entretiens": [
+        "Candidature",
+        "Created",
+        "DateHeure",
+        "DateSaisieResultat",
+        "DateStatut",
+        "ID",
+        "IdHNCS",
+        "LienReunion",
+        "Modalite",
+        "Participants",
+        "RappelEnvoye",
+        "Resultat",
+        "SaisiPar",
+        "Statut",
+        "StatutPrecedent",
+        "Title",
+        "TypeEntretien"
+      ],
+      "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
+        "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
+        "ItemId",
+        "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
+        "Resultat",
+        "StatutApres",
+        "StatutAvant",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {
+      "Candidatures": [
+        "Transmise à l'administration",
+        "Entretien planifié",
+        "Entretien réalisé"
+      ]
+    },
+    "transitions": [
+      "CAND-T07",
+      "CAND-T08",
+      "CAND-T09"
+    ],
+    "notifications": [
+      "N-04",
+      "N-11"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-03-cand",
+    "code": "PA-03",
+    "displayName": "HNCS-RD PA-03 — Entretien (candidatures)",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Candidatures",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "Entretien planifié",
+      "Entretien réalisé",
+      "En attente de décision",
+      "Retenue"
+    ],
+    "listsRead": [
+      "Candidatures",
+      "Entretiens",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Candidatures"
+    ],
+    "fieldsUsed": {
+      "Candidatures": [
+        "AvisAnalyse",
+        "Canal",
+        "Created",
+        "DateDecisionFinale",
+        "DateDemarrageConfirmee",
+        "DateFinPrevue",
+        "DateReception",
+        "DecideurFinal",
+        "Email",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "ModeReception",
+        "PolePressenti",
+        "ResponsableAnalyse",
+        "Statut",
+        "StatutPrecedent",
+        "Title"
+      ],
+      "Entretiens": [
+        "Candidature",
+        "Resultat",
+        "Statut"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [
+      "CAND-T07",
+      "CAND-T09",
+      "CAND-T10",
+      "CAND-T11"
+    ],
+    "notifications": [
+      "N-12",
+      "N-13"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-03b",
+    "code": "PA-03b",
+    "displayName": "HNCS-RD PA-03b — Rappels d'entretien et demande de résultat",
+    "lot": 2,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Toutes les heures de 07:00 à 20:00 (heure de Paris)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Candidatures",
+      "Entretiens",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Entretiens"
+    ],
+    "fieldsUsed": {
+      "Candidatures": [
+        "IdHNCS",
+        "Title"
+      ],
+      "Entretiens": [
+        "Candidature",
+        "DateHeure",
+        "DemandeResultatEnvoyee",
+        "ID",
+        "IdHNCS",
+        "LienReunion",
+        "Modalite",
+        "Participants",
+        "RappelEnvoye",
+        "Statut",
+        "Title",
+        "TypeEntretien"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-10",
+      "N-14"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-04-cand",
+    "code": "PA-04",
+    "displayName": "HNCS-RD PA-04 — Intégration (candidatures)",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Candidatures",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "Formalités en cours",
+      "Intégrée"
+    ],
+    "listsRead": [
+      "ActionsIntegration",
+      "Alternants",
+      "Candidatures",
+      "Etablissements",
+      "ModelesActions",
+      "Parametres",
+      "Referents"
+    ],
+    "listsWritten": [
+      "ActionsIntegration",
+      "Administration",
+      "Alternants",
+      "Candidatures",
+      "Etablissements",
+      "SuiviAlternants"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Alternant",
+        "Bloquante",
+        "Candidature",
+        "Categorie",
+        "CodeModeleAction",
+        "Commentaire",
+        "Contexte",
+        "Created",
+        "Description",
+        "Echeance",
+        "EmpreinteAction",
+        "ID",
+        "IdHNCS",
+        "Preuve",
+        "PreuveAttendue",
+        "Responsable",
+        "RoleResponsable",
+        "Statut",
+        "Title"
+      ],
+      "Alternants": [
+        "CandidatureSource",
+        "CompteM365",
+        "Created",
+        "DateDebut",
+        "DateFin",
+        "EmpreinteReferent",
+        "Etablissement",
+        "Formation",
+        "ID",
+        "IdHNCS",
+        "LienDossierAdministratif",
+        "LienDossierSuivi",
+        "Pole",
+        "ReferentPrincipal",
+        "Statut",
+        "Title"
+      ],
+      "Candidatures": [
+        "AvisAnalyse",
+        "Canal",
+        "Created",
+        "DateDecisionFinale",
+        "DateDemarrageConfirmee",
+        "DateFinPrevue",
+        "DateIntegration",
+        "DateReception",
+        "DecideurFinal",
+        "Email",
+        "Etablissement",
+        "Formation",
+        "ID",
+        "IdAlternant",
+        "IdHNCS",
+        "ModeReception",
+        "PolePressenti",
+        "ReferentPressenti",
+        "ResponsableAnalyse",
+        "Statut",
+        "StatutPrecedent",
+        "Title"
+      ],
+      "Etablissements": [
+        "ResponsableHNCS",
+        "Statut",
+        "Title"
+      ],
+      "ModelesActions": [
+        "Actif",
+        "Bloquante",
+        "Categorie",
+        "Code",
+        "Contexte",
+        "DelaiJours",
+        "Description",
+        "Ordre",
+        "PreuveAttendue",
+        "RoleResponsable",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte",
+        "Title"
+      ]
+    },
+    "statusesWritten": {
+      "ActionsIntegration": [
+        "À faire"
+      ],
+      "Alternants": [
+        "À intégrer"
+      ],
+      "Etablissements": [
+        "Établissement d'accueil"
+      ]
+    },
+    "transitions": [
+      "ALT-T01",
+      "CAND-T13",
+      "CAND-T14"
+    ],
+    "notifications": [
+      "N-15",
+      "N-16"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-04-alt",
+    "code": "PA-04",
+    "displayName": "HNCS-RD PA-04 — Intégration (alternants)",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Alternants",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "À intégrer",
+      "Actif"
+    ],
+    "listsRead": [
+      "ActionsIntegration",
+      "Affectations",
+      "Alternants",
+      "Candidatures",
+      "ComptesRendus",
+      "Etablissements",
+      "Livrables",
+      "ModelesActions",
+      "Parametres",
+      "Referents"
+    ],
+    "listsWritten": [
+      "ActionsIntegration",
+      "Administration",
+      "Alternants",
+      "SuiviAlternants"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Alternant",
+        "Bloquante",
+        "Categorie",
+        "CodeModeleAction",
+        "Contexte",
+        "Created",
+        "Description",
+        "Echeance",
+        "EmpreinteAction",
+        "ID",
+        "IdHNCS",
+        "PreuveAttendue",
+        "Responsable",
+        "RoleResponsable",
+        "Statut",
+        "Title"
+      ],
+      "Affectations": [
+        "Alternant",
+        "ID",
+        "Statut",
+        "Sujet"
+      ],
+      "Alternants": [
+        "CandidatureSource",
+        "CompteM365",
+        "Created",
+        "DateDebut",
+        "DateFin",
+        "EmpreinteReferent",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "LienDossierAdministratif",
+        "LienDossierSuivi",
+        "Pole",
+        "ReferentPrincipal",
+        "Statut",
+        "StatutPrecedent",
+        "Title"
+      ],
+      "Candidatures": [
+        "Statut"
+      ],
+      "ComptesRendus": [
+        "Affectation",
+        "Alternant",
+        "ID"
+      ],
+      "Etablissements": [
+        "ResponsableHNCS"
+      ],
+      "Livrables": [
+        "Affectation",
+        "ID",
+        "Proprietaire"
+      ],
+      "ModelesActions": [
+        "Actif",
+        "Bloquante",
+        "Categorie",
+        "Code",
+        "Contexte",
+        "DelaiJours",
+        "Description",
+        "Ordre",
+        "PreuveAttendue",
+        "RoleResponsable",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte"
+      ]
+    },
+    "statusesWritten": {
+      "ActionsIntegration": [
+        "À faire"
+      ]
+    },
+    "transitions": [
+      "ALT-T01",
+      "ALT-T02",
+      "ALT-T08"
+    ],
+    "notifications": [
+      "N-91"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-04-act",
+    "code": "PA-04",
+    "displayName": "HNCS-RD PA-04 — Intégration (actions d'intégration)",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "ActionsIntegration",
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "ActionsIntegration",
+      "Candidatures",
+      "JournalFlux",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "ActionsIntegration"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Bloquante",
+        "Candidature",
+        "Commentaire",
+        "Contexte",
+        "Created",
+        "EmpreinteAction",
+        "ID",
+        "IdHNCS",
+        "Preuve",
+        "Responsable",
+        "Statut",
+        "Title"
+      ],
+      "Candidatures": [
+        "ID",
+        "IdHNCS",
+        "Statut"
+      ],
+      "JournalFlux": [
+        "IdObjet",
+        "Message",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-17",
+      "N-92"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-04b",
+    "code": "PA-04b",
+    "displayName": "HNCS-RD PA-04b — Activation des alternants et rappels d'actions",
+    "lot": 2,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Quotidien 06:30 (heure de Paris)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "ActionsIntegration",
+      "Alternants",
+      "Parametres",
+      "Referents"
+    ],
+    "listsWritten": [
+      "ActionsIntegration",
+      "Alternants"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Contexte",
+        "DernierRappel",
+        "Description",
+        "Echeance",
+        "ID",
+        "IdHNCS",
+        "PreuveAttendue",
+        "Responsable",
+        "RoleResponsable",
+        "Statut",
+        "Title"
+      ],
+      "Alternants": [
+        "CandidatureSource",
+        "DateDebut",
+        "DateFin",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Pole",
+        "ReferentPrincipal",
+        "Statut",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte"
+      ]
+    },
+    "statusesWritten": {
+      "Alternants": [
+        "Actif"
+      ]
+    },
+    "transitions": [
+      "ALT-T02"
+    ],
+    "notifications": [
+      "N-18",
+      "N-19"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-05",
+    "code": "PA-05",
+    "displayName": "HNCS-RD PA-05 — Affectation",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Affectations",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "À préparer",
+      "Active",
+      "À risque",
+      "Bloquée",
+      "Terminée",
+      "Clôturée"
+    ],
+    "listsRead": [
+      "Affectations",
+      "Alternants",
+      "ComptesRendus",
+      "Livrables",
+      "Parametres",
+      "Referents",
+      "RegistreModeles",
+      "SujetsRD"
+    ],
+    "listsWritten": [
+      "Affectations",
+      "Alternants",
+      "ComptesRendus",
+      "HistoriqueStatuts",
+      "Livrables",
+      "LivrablesRD"
+    ],
+    "fieldsUsed": {
+      "Affectations": [
+        "AffectationRemplacee",
+        "Alternant",
+        "CadenceCR",
+        "Created",
+        "DateDebut",
+        "DateFin",
+        "EmpreinteVerrou",
+        "ID",
+        "IdHNCS",
+        "MotifFin",
+        "Objectifs",
+        "ProchaineEcheanceCR",
+        "Referent",
+        "Statut",
+        "StatutPrecedent",
+        "Sujet",
+        "Title"
+      ],
+      "Alternants": [
+        "CompteM365",
+        "DateDebut",
+        "DateFin",
+        "EmpreinteReferent",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Pole",
+        "ReferentPrincipal",
+        "Statut",
+        "Title"
+      ],
+      "ComptesRendus": [
+        "Affectation",
+        "Alternant",
+        "Created",
+        "DateRemise",
+        "DateValidation",
+        "Echeance",
+        "EmpreinteRevue",
+        "ID",
+        "IdHNCS",
+        "PeriodeDebut",
+        "PeriodeFin",
+        "Statut",
+        "Title",
+        "Valideur"
+      ],
+      "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
+        "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
+        "ItemId",
+        "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
+        "Resultat",
+        "StatutApres",
+        "StatutAvant",
+        "Title"
+      ],
+      "Livrables": [
+        "Affectation",
+        "Created",
+        "DateDepot",
+        "DatePremierDepot",
+        "DateRevue",
+        "DateValidation",
+        "DecisionRevue",
+        "DoD1Fonctionnel",
+        "DoD2FicheMethodo",
+        "DoD3Restitution",
+        "DoD4SupportCom",
+        "DoD5Enseignements",
+        "Echeance",
+        "EcheanceInitiale",
+        "EmpreinteRevue",
+        "ID",
+        "IdHNCS",
+        "Modele",
+        "NbCorrections",
+        "Proprietaire",
+        "Reviseur",
+        "Statut",
+        "Sujet",
+        "Title",
+        "TypeLivrable",
+        "Valideur",
+        "VersionModele",
+        "VersionValidee"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte",
+        "IdHNCS",
+        "Statut"
+      ],
+      "RegistreModeles": [
+        "ApplicableA",
+        "CreationAuto",
+        "DelaiStandardJours",
+        "ID",
+        "Statut",
+        "Title",
+        "TypeLivrableCible",
+        "Version"
+      ],
+      "SujetsRD": [
+        "GitlabProjetUrl",
+        "ID",
+        "IdHNCS",
+        "Title",
+        "TypeSujet"
+      ]
+    },
+    "statusesWritten": {
+      "Affectations": [
+        "Terminée"
+      ],
+      "ComptesRendus": [
+        "Attendu"
+      ],
+      "Livrables": [
+        "À produire"
+      ]
+    },
+    "transitions": [
+      "AFF-T01",
+      "AFF-T02",
+      "AFF-T03",
+      "AFF-T04",
+      "AFF-T05",
+      "AFF-T06",
+      "AFF-T07",
+      "CR-T01",
+      "LIV-T01"
+    ],
+    "notifications": [
+      "N-20",
+      "N-21",
+      "N-22",
+      "N-91"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-06",
+    "code": "PA-06",
+    "displayName": "HNCS-RD PA-06 — Échéance de livrable",
+    "lot": 2,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Quotidien 07:00 (heure de Paris)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Livrables",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Livrables"
+    ],
+    "fieldsUsed": {
+      "Livrables": [
+        "Affectation",
+        "DernierRappel",
+        "Echeance",
+        "EnRetard",
+        "ID",
+        "IdHNCS",
+        "Proprietaire",
+        "Reviseur",
+        "Statut",
+        "Title",
+        "TypeLivrable"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-23",
+      "N-24"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-07",
+    "code": "PA-07",
+    "displayName": "HNCS-RD PA-07 — Revue d'un livrable",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Livrables",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "À produire",
+      "En cours",
+      "Soumis à revue",
+      "En revue",
+      "Corrections demandées",
+      "Validé",
+      "Archivé / clôturé",
+      "Suspendu / abandonné"
+    ],
+    "listsRead": [
+      "ActionsIntegration",
+      "Affectations",
+      "Livrables",
+      "LivrablesRD",
+      "Parametres",
+      "Referents",
+      "RegistreModeles"
+    ],
+    "listsWritten": [
+      "ActionsIntegration",
+      "Livrables",
+      "LivrablesRD"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Bloquante",
+        "CodeModeleAction",
+        "Contexte",
+        "Created",
+        "Echeance",
+        "EmpreinteAction",
+        "ID",
+        "IdHNCS",
+        "Livrable",
+        "Responsable",
+        "RoleResponsable",
+        "Statut",
+        "Title"
+      ],
+      "Affectations": [
+        "ID",
+        "Referent",
+        "Sujet"
+      ],
+      "Livrables": [
+        "Affectation",
+        "CommentaireRevue",
+        "Created",
+        "DateArchivage",
+        "DateDepot",
+        "DatePremierDepot",
+        "DateRevue",
+        "DateValidation",
+        "DecisionRevue",
+        "DoD1Fonctionnel",
+        "DoD2FicheMethodo",
+        "DoD3Restitution",
+        "DoD4SupportCom",
+        "DoD5Enseignements",
+        "Echeance",
+        "EcheanceInitiale",
+        "EmpreinteCommentaire",
+        "EmpreinteRevue",
+        "ID",
+        "IdHNCS",
+        "LienDocument",
+        "Modele",
+        "Modified",
+        "MotifSuspension",
+        "NbCorrections",
+        "Proprietaire",
+        "Reviseur",
+        "Statut",
+        "StatutPrecedent",
+        "Sujet",
+        "Title",
+        "TypeLivrable",
+        "Valideur",
+        "VersionModele",
+        "VersionValidee"
+      ],
+      "LivrablesRD": [
+        "ID",
+        "Livrable",
+        "StatutDocument",
+        "Sujet",
+        "TypeDocument"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte"
+      ],
+      "RegistreModeles": [
+        "Version"
+      ]
+    },
+    "statusesWritten": {
+      "ActionsIntegration": [
+        "À faire",
+        "Terminée"
+      ],
+      "Livrables": [
+        "Archivé / clôturé"
+      ]
+    },
+    "transitions": [
+      "LIV-T01",
+      "LIV-T02",
+      "LIV-T03",
+      "LIV-T04",
+      "LIV-T05",
+      "LIV-T06",
+      "LIV-T07",
+      "LIV-T08",
+      "LIV-T09",
+      "LIV-T10"
+    ],
+    "notifications": [
+      "N-25",
+      "N-26",
+      "N-27",
+      "N-28",
+      "N-29",
+      "N-92"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-07b",
+    "code": "PA-07b",
+    "displayName": "HNCS-RD PA-07b — Dépôt d'une nouvelle version",
+    "lot": 2,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointFile",
+      "list": "LivrablesRD",
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Livrables",
+      "LivrablesRD",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Livrables",
+      "LivrablesRD"
+    ],
+    "fieldsUsed": {
+      "Livrables": [
+        "Affectation",
+        "Echeance",
+        "ID",
+        "IdHNCS",
+        "LienDocument",
+        "Proprietaire",
+        "Statut",
+        "Sujet",
+        "Title",
+        "TypeLivrable"
+      ],
+      "LivrablesRD": [
+        "ID",
+        "IdObjet",
+        "Livrable",
+        "Sujet"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-08",
+    "code": "PA-08",
+    "displayName": "HNCS-RD PA-08 — Compte rendu périodique",
+    "lot": 3,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "ComptesRendus",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "Attendu",
+      "En rédaction",
+      "Remis",
+      "À compléter",
+      "Validé",
+      "Non remis"
+    ],
+    "listsRead": [
+      "Affectations",
+      "Alternants",
+      "ComptesRendus",
+      "Parametres",
+      "Referents"
+    ],
+    "listsWritten": [
+      "ComptesRendus"
+    ],
+    "fieldsUsed": {
+      "Affectations": [
+        "Alternant",
+        "ID",
+        "IdHNCS",
+        "Referent"
+      ],
+      "Alternants": [
+        "CompteM365",
+        "Title"
+      ],
+      "ComptesRendus": [
+        "Affectation",
+        "Alternant",
+        "Avancement",
+        "BlocageSignale",
+        "CommentaireReferent",
+        "Created",
+        "DateRemise",
+        "DateValidation",
+        "Echeance",
+        "EmpreinteRevue",
+        "EtatGeneral",
+        "ID",
+        "IdHNCS",
+        "PeriodeDebut",
+        "PeriodeFin",
+        "ProchainesEtapes",
+        "Realisations",
+        "Statut",
+        "StatutPrecedent",
+        "Title",
+        "Valideur"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [
+      "CR-T01",
+      "CR-T02",
+      "CR-T03",
+      "CR-T04",
+      "CR-T05",
+      "CR-T06"
+    ],
+    "notifications": [
+      "N-32",
+      "N-33",
+      "N-34",
+      "N-92"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-08b",
+    "code": "PA-08b",
+    "displayName": "HNCS-RD PA-08b — Création et relance des comptes rendus",
+    "lot": 3,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Quotidien 06:45 (heure de Paris)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Affectations",
+      "Alternants",
+      "ComptesRendus",
+      "Parametres",
+      "Referents"
+    ],
+    "listsWritten": [
+      "Affectations",
+      "ComptesRendus"
+    ],
+    "fieldsUsed": {
+      "Affectations": [
+        "Alternant",
+        "CadenceCR",
+        "DateDebut",
+        "ID",
+        "IdHNCS",
+        "ProchaineEcheanceCR",
+        "Referent",
+        "Statut",
+        "Sujet"
+      ],
+      "Alternants": [
+        "CompteM365",
+        "Title"
+      ],
+      "ComptesRendus": [
+        "Affectation",
+        "Alternant",
+        "Avancement",
+        "CommentaireReferent",
+        "Created",
+        "DateRemise",
+        "DateValidation",
+        "DernierRappel",
+        "Echeance",
+        "EmpreinteRevue",
+        "ID",
+        "IdHNCS",
+        "PeriodeDebut",
+        "PeriodeFin",
+        "ProchainesEtapes",
+        "Realisations",
+        "Statut",
+        "Title",
+        "Valideur"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte"
+      ]
+    },
+    "statusesWritten": {
+      "ComptesRendus": [
+        "Attendu",
+        "Non remis"
+      ]
+    },
+    "transitions": [
+      "CR-T01",
+      "CR-T04"
+    ],
+    "notifications": [
+      "N-30",
+      "N-31"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-09-alt",
+    "code": "PA-09",
+    "displayName": "HNCS-RD PA-09 — Fin d'alternance (alternants)",
+    "lot": 3,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Alternants",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "Suspendu",
+      "Fin planifiée",
+      "Terminé",
+      "Clôturé"
+    ],
+    "listsRead": [
+      "ActionsIntegration",
+      "Affectations",
+      "Alternants",
+      "BilansAlternance",
+      "Etablissements",
+      "Livrables",
+      "ModelesActions",
+      "Parametres",
+      "Referents"
+    ],
+    "listsWritten": [
+      "ActionsIntegration",
+      "Affectations",
+      "Alternants",
+      "BilansAlternance"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Alternant",
+        "Bloquante",
+        "Categorie",
+        "CodeModeleAction",
+        "Commentaire",
+        "Contexte",
+        "Created",
+        "Description",
+        "Echeance",
+        "EmpreinteAction",
+        "ID",
+        "IdHNCS",
+        "Preuve",
+        "PreuveAttendue",
+        "Responsable",
+        "RoleResponsable",
+        "Statut",
+        "Title"
+      ],
+      "Affectations": [
+        "Alternant",
+        "CadenceCR",
+        "DateDebut",
+        "DateFin",
+        "ID",
+        "IdHNCS",
+        "MotifFin",
+        "Referent",
+        "Statut",
+        "Sujet"
+      ],
+      "Alternants": [
+        "CandidatureSource",
+        "CompteM365",
+        "Created",
+        "DateDebut",
+        "DateFin",
+        "DateFinReelle",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Pole",
+        "ReferentPrincipal",
+        "Statut",
+        "StatutPrecedent",
+        "Title"
+      ],
+      "BilansAlternance": [
+        "Alternant",
+        "Created",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Referent",
+        "Statut",
+        "Title"
+      ],
+      "Etablissements": [
+        "ResponsableHNCS"
+      ],
+      "Livrables": [
+        "Affectation",
+        "IdHNCS",
+        "Statut"
+      ],
+      "ModelesActions": [
+        "Actif",
+        "Bloquante",
+        "Categorie",
+        "Code",
+        "Contexte",
+        "DelaiJours",
+        "Description",
+        "Ordre",
+        "PreuveAttendue",
+        "RoleResponsable",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte",
+        "Statut"
+      ]
+    },
+    "statusesWritten": {
+      "ActionsIntegration": [
+        "À faire"
+      ],
+      "Affectations": [
+        "Terminée"
+      ],
+      "BilansAlternance": [
+        "À réaliser"
+      ]
+    },
+    "transitions": [
+      "AFF-T05",
+      "ALT-T03",
+      "ALT-T04",
+      "ALT-T05",
+      "ALT-T06",
+      "ALT-T07"
+    ],
+    "notifications": [
+      "N-22",
+      "N-35",
+      "N-36",
+      "N-37"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-09-bil",
+    "code": "PA-09",
+    "displayName": "HNCS-RD PA-09 — Fin d'alternance (bilans)",
+    "lot": 3,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "BilansAlternance",
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "ActionsIntegration",
+      "Alternants",
+      "BilansAlternance",
+      "Etablissements",
+      "ModelesActions",
+      "Parametres",
+      "Referents"
+    ],
+    "listsWritten": [
+      "ActionsIntegration",
+      "BilansAlternance",
+      "Etablissements"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Alternant",
+        "Bloquante",
+        "Categorie",
+        "CodeModeleAction",
+        "Contexte",
+        "Created",
+        "Description",
+        "Echeance",
+        "EmpreinteAction",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "PreuveAttendue",
+        "Responsable",
+        "RoleResponsable",
+        "Statut",
+        "Title"
+      ],
+      "Alternants": [
+        "Etablissement",
+        "IdHNCS"
+      ],
+      "BilansAlternance": [
+        "Alternant",
+        "Created",
+        "DateStatut",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "RecommandationPartenariat",
+        "Referent",
+        "Statut",
+        "StatutPrecedent"
+      ],
+      "Etablissements": [
+        "ID",
+        "IdHNCS",
+        "ResponsableHNCS",
+        "Statut",
+        "Title"
+      ],
+      "ModelesActions": [
+        "Actif",
+        "Bloquante",
+        "Categorie",
+        "Code",
+        "Contexte",
+        "DelaiJours",
+        "Description",
+        "Ordre",
+        "PreuveAttendue",
+        "RoleResponsable",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte"
+      ]
+    },
+    "statusesWritten": {
+      "ActionsIntegration": [
+        "À faire"
+      ],
+      "Etablissements": [
+        "Partenariat à évaluer"
+      ]
+    },
+    "transitions": [],
+    "notifications": [
+      "N-38"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-09b",
+    "code": "PA-09b",
+    "displayName": "HNCS-RD PA-09b — Détection des fins d'alternance",
+    "lot": 3,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Quotidien 06:50 (heure de Paris)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "ActionsIntegration",
+      "Alternants",
+      "BilansAlternance",
+      "Etablissements",
+      "ModelesActions",
+      "Parametres",
+      "Referents"
+    ],
+    "listsWritten": [
+      "ActionsIntegration",
+      "Alternants",
+      "BilansAlternance"
+    ],
+    "fieldsUsed": {
+      "ActionsIntegration": [
+        "Alternant",
+        "Bloquante",
+        "Categorie",
+        "CodeModeleAction",
+        "Contexte",
+        "Created",
+        "Description",
+        "Echeance",
+        "EmpreinteAction",
+        "ID",
+        "IdHNCS",
+        "PreuveAttendue",
+        "Responsable",
+        "RoleResponsable",
+        "Statut",
+        "Title"
+      ],
+      "Alternants": [
+        "CandidatureSource",
+        "DateDebut",
+        "DateFin",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Pole",
+        "ReferentPrincipal",
+        "Statut",
+        "Title"
+      ],
+      "BilansAlternance": [
+        "Alternant",
+        "Created",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "Referent",
+        "Statut",
+        "Title"
+      ],
+      "Etablissements": [
+        "ResponsableHNCS"
+      ],
+      "ModelesActions": [
+        "Actif",
+        "Bloquante",
+        "Categorie",
+        "Code",
+        "Contexte",
+        "DelaiJours",
+        "Description",
+        "Ordre",
+        "PreuveAttendue",
+        "RoleResponsable",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte"
+      ]
+    },
+    "statusesWritten": {
+      "ActionsIntegration": [
+        "À faire"
+      ],
+      "Alternants": [
+        "Fin planifiée"
+      ],
+      "BilansAlternance": [
+        "À réaliser"
+      ]
+    },
+    "transitions": [
+      "ALT-T04"
+    ],
+    "notifications": [
+      "N-35"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-10-conv",
+    "code": "PA-10",
+    "displayName": "HNCS-RD PA-10 — École et convention (conventions)",
+    "lot": 3,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "Conventions",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "À préparer",
+      "En discussion",
+      "En validation",
+      "À signer",
+      "Signée / active",
+      "À renouveler",
+      "Expirée",
+      "Clôturée"
+    ],
+    "listsRead": [
+      "Conventions",
+      "Etablissements",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Conventions",
+      "Etablissements"
+    ],
+    "fieldsUsed": {
+      "Conventions": [
+        "Created",
+        "DateDecisionPartenariat",
+        "DateFin",
+        "DateSignature",
+        "DecideurPartenariat",
+        "DecisionPartenariat",
+        "EmpreinteDecision",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "PreuveSignature",
+        "Statut",
+        "StatutPrecedent",
+        "Title",
+        "TypeConvention"
+      ],
+      "Etablissements": [
+        "ID",
+        "Statut",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {
+      "Etablissements": [
+        "Partenaire actif"
+      ]
+    },
+    "transitions": [
+      "CONV-T01",
+      "CONV-T02",
+      "CONV-T03",
+      "CONV-T04",
+      "CONV-T05"
+    ],
+    "notifications": [
+      "N-39",
+      "N-92"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-10-int",
+    "code": "PA-10",
+    "displayName": "HNCS-RD PA-10 — École et convention (échanges)",
+    "lot": 3,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "InteractionsEcoles",
+      "recurrence": null
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Etablissements",
+      "InteractionsEcoles",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Etablissements",
+      "InteractionsEcoles"
+    ],
+    "fieldsUsed": {
+      "Etablissements": [
+        "DateDerniereInteraction",
+        "DateProchaineAction",
+        "ProchaineAction",
+        "Statut",
+        "Title"
+      ],
+      "InteractionsEcoles": [
+        "Created",
+        "DateInteraction",
+        "DateProchaineAction",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "ProchaineAction",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-10b",
+    "code": "PA-10b",
+    "displayName": "HNCS-RD PA-10b — Échéances des conventions et des écoles",
+    "lot": 3,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Quotidien 07:10 (heure de Paris)"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Conventions",
+      "Etablissements",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Conventions"
+    ],
+    "fieldsUsed": {
+      "Conventions": [
+        "DateFin",
+        "DateSignature",
+        "DecideurPartenariat",
+        "DecisionPartenariat",
+        "EmpreinteDecision",
+        "Etablissement",
+        "ID",
+        "IdHNCS",
+        "PreuveSignature",
+        "Renouvellement",
+        "Responsable",
+        "Statut",
+        "Title",
+        "TypeConvention"
+      ],
+      "Etablissements": [
+        "DateProchaineAction",
+        "ID",
+        "IdHNCS",
+        "ProchaineAction",
+        "ResponsableHNCS"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {
+      "Conventions": [
+        "À renouveler",
+        "Expirée"
+      ]
+    },
+    "transitions": [
+      "CONV-T04",
+      "CONV-T05"
+    ],
+    "notifications": [
+      "N-40",
+      "N-41"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-11",
+    "code": "PA-11",
+    "displayName": "HNCS-RD PA-11 — Préparation de la gouvernance",
+    "lot": 3,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Hebdomadaire lundi 08:00 (heure de Paris) ; Point Direction le 1er lundi du mois ; Revue trimestrielle le 1er lundi du trimestre"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Affectations",
+      "Candidatures",
+      "CommunicationsRD",
+      "ComptesRendus",
+      "Conventions",
+      "Etablissements",
+      "Livrables",
+      "Parametres",
+      "SujetsRD"
+    ],
+    "listsWritten": [],
+    "fieldsUsed": {
+      "Affectations": [
+        "IdHNCS",
+        "Statut"
+      ],
+      "Candidatures": [
+        "Statut"
+      ],
+      "CommunicationsRD": [
+        "IdHNCS",
+        "Statut"
+      ],
+      "ComptesRendus": [
+        "BlocageSignale",
+        "Echeance",
+        "IdHNCS",
+        "Statut"
+      ],
+      "Conventions": [
+        "IdHNCS",
+        "Statut"
+      ],
+      "Etablissements": [
+        "IdHNCS",
+        "Statut"
+      ],
+      "Livrables": [
+        "Echeance",
+        "EnRetard",
+        "IdHNCS",
+        "Statut"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "SujetsRD": [
+        "IdHNCS",
+        "Statut"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-42",
+      "N-43"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-12",
+    "code": "PA-12",
+    "displayName": "HNCS-RD PA-12 — Validation des communications",
+    "lot": 3,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "CommunicationsRD",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "Idée",
+      "À préparer",
+      "En rédaction",
+      "En revue",
+      "Validée",
+      "Programmée",
+      "Publiée",
+      "Suspendue / refusée"
+    ],
+    "listsRead": [
+      "CommunicationsRD",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "CommunicationsRD"
+    ],
+    "fieldsUsed": {
+      "CommunicationsRD": [
+        "Auteur",
+        "AutorisationsTiers",
+        "Canal",
+        "Created",
+        "DateEffective",
+        "DatePrevue",
+        "DateValidation",
+        "Externe",
+        "ID",
+        "IdHNCS",
+        "Statut",
+        "StatutPrecedent",
+        "Title",
+        "UrlPublication",
+        "ValidationInterne"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [
+      "COM-T01",
+      "COM-T02",
+      "COM-T03",
+      "COM-T04",
+      "COM-T05",
+      "COM-T06",
+      "COM-T07",
+      "COM-T08"
+    ],
+    "notifications": [
+      "N-44",
+      "N-45"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  },
+  {
+    "id": "PA-13",
+    "code": "PA-13",
+    "displayName": "HNCS-RD PA-13 — Conservation des candidatures",
+    "lot": 5,
+    "type": "Planifié",
+    "trigger": {
+      "kind": "Recurrence",
+      "list": null,
+      "recurrence": "Mensuel (le 1er à 06:00, heure de Paris) — désactivé par défaut"
+    },
+    "targetStatuses": [],
+    "listsRead": [
+      "Candidatures",
+      "Parametres"
+    ],
+    "listsWritten": [
+      "Candidatures"
+    ],
+    "fieldsUsed": {
+      "Candidatures": [
+        "Canal",
+        "DateCloture",
+        "DateFinConservation",
+        "DateReception",
+        "ID",
+        "IdHNCS",
+        "ModeReception",
+        "Statut",
+        "Title"
+      ],
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [],
+    "notifications": [
+      "N-46"
+    ],
+    "childFlows": [
+      "PA-00C"
+    ],
+    "enabledByDefault": false
+  },
+  {
+    "id": "PA-14",
+    "code": "PA-14",
+    "displayName": "HNCS-RD PA-14 — Arbitrage du portefeuille de sujets",
+    "lot": 3,
+    "type": "Automatisé",
+    "trigger": {
+      "kind": "SharePointItem",
+      "list": "SujetsRD",
+      "recurrence": null
+    },
+    "targetStatuses": [
+      "Proposé",
+      "À arbitrer",
+      "Priorisé",
+      "En cours",
+      "Bloqué",
+      "Suspendu",
+      "Terminé",
+      "Abandonné"
+    ],
+    "listsRead": [
+      "Parametres",
+      "Referents",
+      "SujetsRD"
+    ],
+    "listsWritten": [
+      "SujetsRD"
+    ],
+    "fieldsUsed": {
+      "Parametres": [
+        "Categorie",
+        "Title",
+        "Valeur"
+      ],
+      "Referents": [
+        "Compte"
+      ],
+      "SujetsRD": [
+        "Created",
+        "ID",
+        "IdHNCS",
+        "MotifDecision",
+        "Pole",
+        "Referent",
+        "Statut",
+        "StatutPrecedent",
+        "Title",
+        "TypeSujet"
+      ]
+    },
+    "statusesWritten": {},
+    "transitions": [
+      "SUJ-T01",
+      "SUJ-T02",
+      "SUJ-T03",
+      "SUJ-T04",
+      "SUJ-T05",
+      "SUJ-T06",
+      "SUJ-T07",
+      "SUJ-T08",
+      "SUJ-T09"
+    ],
+    "notifications": [
+      "N-47"
+    ],
+    "childFlows": [
+      "PA-00A",
+      "PA-00B",
+      "PA-00C"
+    ],
+    "enabledByDefault": true
+  }
+]
