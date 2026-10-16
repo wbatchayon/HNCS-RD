@@ -2,7 +2,7 @@
 
 > Public : membres de l'équipe R&D (groupe SharePoint `HNCS-RD-EquipeRD`). La Direction R&D, souvent membre de ce groupe,
 > lit aussi le guide [Direction](direction.md). Règles communes (statuts refusés, champs protégés, validations,
-> notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence : `spec.md` 1.3.0.
+> notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence : `spec.md` 1.6.0.
 
 ## 1. Votre rôle dans le processus
 
@@ -406,8 +406,9 @@ Rôle Power BI **PilotageRD** (Direction R&D et équipe R&D) : aucune restrictio
 | 7. Comité R&D | Échéances à 14 jours, blocages, affectations à risque, sujets bloqués, actions en retard |
 | 8. Qualité des données | Affectations incomplètes, livrables sans modèle, doublons signalés, transitions refusées |
 
-Aucune donnée personnelle ni confidentielle n'est importée (pas de CV, d'avis, de commentaire) et aucun visuel n'affiche de
-nom : les tableaux montrent des identifiants (`ALT-…`, `AFF-…`). Pour les noms, utilisez les vues SharePoint. Actualisation
+Le rapport n'importe aucune donnée personnelle, hormis le nom de l'alternant, absent de tous les visuels et masqué pour les publics sans
+accès SharePoint aux fiches alternants (Direction, Relation écoles), ni aucune donnée confidentielle (pas de CV, d'avis, de
+commentaire) ; aucun visuel n'affiche de nom : les tableaux montrent des identifiants (`ALT-…`, `AFF-…`). Pour les noms, utilisez les vues SharePoint. Actualisation
 quotidienne à 06:00.
 
 ## 7. Rituels de gouvernance

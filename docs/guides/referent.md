@@ -2,7 +2,7 @@
 
 > Public : experts référents des pôles (groupe SharePoint `HNCS-RD-Referents`). Règles communes (statuts refusés, champs
 > protégés, validations, notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence :
-> `spec.md` 1.3.0.
+> `spec.md` 1.6.0.
 
 ## 1. Votre rôle dans le processus
 
@@ -219,7 +219,8 @@ l'école passe en **« Partenariat à évaluer »** (signal de revue) ; **N-38**
 
 ### 3.11 Communications
 
-Vous pouvez créer une communication (`COM-T01`) et la porter jusqu'à « En revue ». Si vous êtes désigné **« Approbateur
+Vous pouvez créer une communication (`COM-T01`). Vous ne la portez vous-même jusqu'à « En revue » que si vous en êtes
+l'**auteur** ; sinon, c'est l'auteur ou l'équipe R&D qui la fait avancer (`COM-T03`, `COM-T04`). Si vous êtes désigné **« Approbateur
 proposé »**, vous pouvez la renvoyer « En rédaction » (`COM-T03`) ; la **validation** d'une communication externe reste réservée
 à la Direction R&D et à la Direction Générale (H-11), qui reçoivent la demande N-44.
 
@@ -276,14 +277,15 @@ résultat) et chaque élément est versionné.
 ## 6. Vos vues Power BI
 
 Rôle Power BI **Referent** : les données sont **limitées aux affectations et aux alternants que vous encadrez** ; aucune donnée
-de recrutement (candidatures, entretiens, actions d'intégration) n'est visible. Pages de votre audience dans l'application
+de recrutement (candidatures, entretiens) n'est visible. Vous voyez en revanche les **actions d'intégration et de clôture de vos
+alternants** (page 7, actions en retard). Pages de votre audience dans l'application
 (spec § 9.7) :
 
 | Page | Usage pour vous |
 | --- | --- |
 | 3. Effectifs et encadrement | Vos alternants (par identifiant), vos affectations, votre charge |
 | 4. Projets et livrables | Livrables par statut, retards, remise à l'heure, validation au premier passage, capitalisation, comptes rendus manquants, avancement par sujet, écarts GitLab, lien vers les documents |
-| 7. Comité R&D | Échéances à 14 jours, livrables en retard, affectations à risque, blocages, comptes rendus manquants |
+| 7. Comité R&D | Échéances à 14 jours, livrables en retard, affectations à risque, blocages, comptes rendus manquants, actions en retard de vos alternants |
 
 Aucun visuel n'affiche de nom de personne. Actualisation quotidienne à 06:00.
 

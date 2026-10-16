@@ -10,7 +10,7 @@ Ces guides expliquent, rôle par rôle, comment utiliser le système de suivi R&
 - **GitLab** reste la référence du code, des issues, des merge requests et des jalons ;
 - **Power BI** sert au pilotage, en lecture seule.
 
-> Les guides décrivent le comportement défini par la spécification [`spec.md`](../../spec.md) (version **1.3.0**), qui fait
+> Les guides décrivent le comportement défini par la spécification [`spec.md`](../../spec.md) (version **1.6.0**), qui fait
 > foi en cas d'écart. Les codes cités entre parenthèses (`CAND-T04`, `N-05`, `PA-02`, `G_INTEGRATION`, `H-09`…) permettent
 > au support de retrouver la règle exacte dans la spec.
 
@@ -174,6 +174,13 @@ Certaines règles sont vérifiées par SharePoint **au moment de l'enregistremen
 s'affiche en haut du formulaire. Exemples : « Motif obligatoire pour « Non retenue » ou « Clôturée » ; dates de démarrage et de
 fin (cohérentes) obligatoires pour « Intégrée ». » Complétez le champ indiqué et enregistrez à nouveau.
 
+### Colonnes techniques : ne jamais les modifier
+
+Ne modifiez jamais les colonnes techniques remplies par les flux (« statut précédent », empreintes, dates et décideurs
+tracés…), ni par le formulaire, ni par la vue grille, ni par l'API. Toute modification humaine est rétablie à la valeur de la
+version précédente et signalée par **N-92** ; elles ne sont jamais une source de confiance : le statut de référence est la
+dernière transition acceptée de « Historique des statuts », que seul le compte de service écrit (P-09, H-17).
+
 ### Pas de suppression, un historique complet
 
 Les utilisateurs métier ont le niveau « HNCS - Contribution sans suppression » : on ne supprime ni élément ni version (P-07).
@@ -202,8 +209,10 @@ non plus la référence (H-44).
 ### Données personnelles
 
 Les CV, les avis d'analyse, les commentaires d'entretien et les évaluations sont cloisonnés (P-04) : chacun ne voit que ce que
-son rôle exige. La Direction Générale n'a accès à aucune liste nominative dans SharePoint. Power BI n'importe aucune donnée
-personnelle ni confidentielle et **aucun visuel n'affiche de nom de personne**. Aucune durée de conservation n'est appliquée
+son rôle exige. La Direction Générale n'a accès à aucune liste nominative dans SharePoint. Power BI n'importe
+aucune donnée personnelle, hormis le nom de l'alternant, absent de tous les visuels et masqué pour les publics sans
+accès SharePoint aux fiches alternants (Direction, Relation écoles), ni aucune donnée confidentielle : **aucun visuel n'affiche de nom de
+personne**. Aucune durée de conservation n'est appliquée
 automatiquement tant qu'elle n'est pas validée (H-10).
 
 ### Power BI

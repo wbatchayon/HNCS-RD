@@ -3,7 +3,7 @@
 > Public : **Direction Générale** (groupe SharePoint `HNCS-RD-Direction`) et **Direction R&D** (groupe
 > `HNCS-RD-DirectionRD`). Les deux rôles sont distincts : chaque section les traite séparément. La Direction R&D, souvent
 > membre aussi de l'équipe R&D, lit également le guide [Équipe R&D](equipe-rd.md). Règles communes : voir
-> l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence : `spec.md` 1.3.0.
+> l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence : `spec.md` 1.6.0.
 
 ## Les deux rôles en bref
 
@@ -51,7 +51,9 @@
 
 **Absence volontaire de données nominatives** (P-04, § 7.5) : la Direction Générale n'accède à aucune liste nominative dans
 SharePoint (candidatures, entretiens, alternants, livrables, établissements, bilans). Son accès aux indicateurs passe par
-Power BI, qui n'importe aucune donnée personnelle ou confidentielle et n'affiche aucun nom ; les synthèses qui lui sont
+Power BI, qui n'importe aucune donnée personnelle, hormis le nom de l'alternant, absent de tous les visuels et masqué pour les publics sans
+accès SharePoint aux fiches alternants (Direction, Relation écoles), ni aucune
+donnée confidentielle, et n'affiche aucun nom ; les synthèses qui lui sont
 transmises ne contiennent que des identifiants, des statuts et des agrégats. Vous voyez donc **des nombres** (candidatures
 reçues, alternants actifs…), jamais un CV, un avis d'analyse ni un commentaire d'entretien. La lecture de « 04 — Livrables R&D »
 est volontaire : ce sont des travaux, sans donnée personnelle, dont les colonnes de recherche affichent des identifiants (H-54).

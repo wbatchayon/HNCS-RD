@@ -2,7 +2,7 @@
 
 > Public : équipe administrative habilitée, par exemple **Karine** (groupe SharePoint `HNCS-RD-Administration`). Règles communes
 > (statuts refusés, champs protégés, validations, notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides).
-> Référence : `spec.md` 1.3.0.
+> Référence : `spec.md` 1.6.0.
 
 ## 1. Votre rôle dans le processus
 
@@ -280,8 +280,9 @@ Rôle Power BI **Administration** : pages 2, 3 et 5 (audience de l'application, 
 | 3. Effectifs et encadrement | Alternants actifs, présents sur la période, répartition par pôle et par école (identifiants, sans nom) |
 | 5. Établissements et partenariats | Écoles collaborantes, conventions à renouveler, partenariats à évaluer, bilans réalisés, prochaines actions école |
 
-Aucune donnée personnelle ni confidentielle n'est importée dans le rapport (pas de CV, de commentaire, de grille) et aucun
-visuel n'affiche de nom. Actualisation quotidienne à 06:00.
+Le rapport n'importe aucune donnée personnelle, hormis le nom de l'alternant, absent de tous les visuels et masqué pour les publics sans
+accès SharePoint aux fiches alternants (Direction, Relation écoles), ni aucune donnée confidentielle (pas de CV, de commentaire, de
+grille) ; aucun visuel n'affiche de nom. Actualisation quotidienne à 06:00.
 
 ## 7. Rituels de gouvernance
 
