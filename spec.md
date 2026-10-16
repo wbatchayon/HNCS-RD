@@ -2,7 +2,7 @@
 
 | Propriété | Valeur |
 | --- | --- |
-| Version de la spec | 1.5.0 |
+| Version de la spec | 1.6.0 |
 | Date | 2026-10-14 |
 | Statut | Lot 0 — à valider en atelier (voir § 13) ; v1.1.0 intègre la revue de conformité RC-01 à RC-39 et les retours des agents (§ 14.3) |
 | Sources fonctionnelles | `Processus.md` ; `Cadrage_Fonctionnel_Automatisation_R&D_HNCS.docx` (v0.1) ; schéma « Architecture cible — Système de suivi R&D HNCS » |
@@ -43,7 +43,7 @@
 | P-05 | SharePoint est le **référentiel central** ; GitLab reste la référence du code, des issues et des jalons. | SharePoint ne stocke que des liens et métadonnées GitLab (§ 10). |
 | P-06 | Aucune API LinkedIn ou France Travail n'est présumée. | V1 : saisie manuelle, formulaire du site HNCS acheminé vers la boîte R&D, ou traitement contrôlé de la boîte mail R&D (PA-01b). Toute intégration directe = étude de faisabilité séparée (H-04). |
 | P-07 | Historique jamais écrasé. | Versioning activé sur toutes les listes et bibliothèques ; liste `HistoriqueStatuts` alimentée à chaque transition des objets à statut contrôlé (§ 6) et à chaque changement de statut ou de résultat d'entretien ; versioning pour les autres objets ; niveau d'autorisation « Contribution sans suppression » pour les utilisateurs métier. |
-| P-09 | **Champs de décision protégés.** | Les champs qui portent ou qualifient une décision (réviseur, valideur, critères de la Definition of Done, décision de partenariat, référent principal, caractère bloquant d'une formalité…) ne sont modifiables que par les rôles habilités ; toute autre modification est rétablie par le flux responsable à partir d'une empreinte (`Empreinte*`) et notifiée (N-92). |
+| P-09 | **Champs de décision protégés.** | Les champs qui portent ou qualifient une décision (réviseur, valideur, critères de la Definition of Done, décision de partenariat, référent principal, caractère bloquant d'une formalité…) ne sont modifiables que par les rôles habilités ; toute autre modification est rétablie par le flux responsable à partir d'une empreinte (`Empreinte*`) et notifiée (N-92). Les **colonnes techniques** (`flux` : `StatutPrecedent`, `DateStatut`, `Empreinte*`, dates et décideurs tracés…) ne sont jamais une source de confiance : une modification humaine de l'une d'elles est rétablie depuis la version précédente de l'élément ; le statut validé de référence est la dernière transition acceptée de `HistoriqueStatuts`, que seul le compte de service écrit (§ 8.1). |
 | P-08 | Connecteurs **standard** uniquement en V1. | SharePoint, Office 365 Outlook, Office 365 Users, Microsoft Teams. Aucun connecteur premium (HTTP, Dataverse premium, API tierces) sans validation budgétaire (H-15). |
 
 ---
@@ -78,7 +78,7 @@ flowchart LR
 | Liste / bibliothèque (nom interne = URL) | PascalCase ASCII, sans accent ni espace ; URL `<site>/Lists/<NomInterne>` pour une liste, `<site>/<NomInterne>` pour une bibliothèque | `Candidatures`, `LivrablesRD` |
 | Titre affiché | Français accentué | « Candidatures », « 04 — Livrables R&D » |
 | Colonne (nom interne) | PascalCase ASCII, sans accent, ≤ 32 caractères, jamais renommée après création | `DateTransmissionAdmin` |
-| Identifiant métier | Colonne `IdHNCS` (indexée, **sans** contrainte d'unicité SharePoint : l'unicité est garantie par construction à partir de l'ID SharePoint et vérifiée par `tests/offline` et `Test-HNCSRDDeploiement.ps1`), format `{PREFIXE}-{AAAA}-{NNNN}` (AAAA = année de création, NNNN = ID SharePoint sur 4 chiffres minimum) ; exception `Poles` : `POL-{CodePole}` | `CAND-2026-0042`, `POL-P1` |
+| Identifiant métier | Exception : les éléments des **référentiels initiaux** (`specs/referentiels-initiaux.md`) portent des identifiants **réservés** fixés par la spec (plage `0001`–`0099` de 2026, `POL-Px`) ; le provisionnement les recherche par `Title` ou `Code`, renseigne l'identifiant réservé s'il est vide et s'arrête en erreur si l'identifiant réservé est déjà porté par un autre élément. Règle générale : colonne `IdHNCS` (indexée, **sans** contrainte d'unicité SharePoint : l'unicité est garantie par construction à partir de l'ID SharePoint et vérifiée par `tests/offline` et `Test-HNCSRDDeploiement.ps1`), format `{PREFIXE}-{AAAA}-{NNNN}` (AAAA = année de création, NNNN = ID SharePoint sur 4 chiffres minimum) ; exception `Poles` : `POL-{CodePole}` | `CAND-2026-0042`, `POL-P1` |
 | Colonnes de recherche (lookup) | Affichent toujours `IdHNCS` de la cible (jamais un nom de personne) | `Candidature` → `CAND-2026-0042` |
 | Groupes SharePoint | `HNCS-RD-<Rôle>` sans accent ni `&` | `HNCS-RD-Administration` |
 | Flux | `HNCS-RD PA-xx[lettre] — <Libellé>` | `HNCS-RD PA-01b — Candidature reçue par la boîte R&D` |
@@ -651,8 +651,8 @@ Règle : une colonne `Lookup` ne peut cibler qu'une liste d'un lot inférieur ou
 | LivrableOrigine | Livrable d'origine | Lookup | Non | lookup=Livrables | Livrable repris d'une affectation remplacée (P-03) |
 | EnRetard | En retard | Boolean | Non | flux; default=Non | Recalculé chaque jour par PA-06 |
 | DernierRappel | Dernier rappel envoyé | Text | Non | hidden; flux | Palier et échéance concernée, ex. `J-7:2026-12-01` ou `J+1:2026-12-01` (date = échéance, pas date d'envoi) : un palier n'est envoyé qu'une fois par échéance |
-| EmpreinteRevue | Empreinte des champs protégés | Text | Non | hidden; flux | JSON des champs protégés validés : `Affectation`, `Proprietaire`, `Reviseur`, `Echeance`, `DoD1..5`, `NbCorrections`, `DecisionRevue`, `Valideur`, `DateValidation`, `VersionValidee`, dates de dépôt et de revue (P-09). Habilités : RD et DIRECTION_RD pour tous ces champs ; le réviseur légitime pour `Echeance` et `DoD1..5` ; un `Reviseur` qui n'est ni le référent de l'affectation ni un membre de DIRECTION_RD est refusé dès sa désignation |
-| EmpreinteCommentaire | Empreinte du commentaire de revue | Text | Non | hidden; flux | Valeur de `CommentaireRevue` lors de la décision précédente (`G_COMMENTAIRE_REVUE`) |
+| EmpreinteRevue | Empreinte des champs protégés | Note | Non | hidden; flux | JSON des champs protégés validés (colonne `Note` : environ 460 caractères après une revue, au-delà des 255 d'une colonne `Text`) : `Affectation`, `Proprietaire`, `Reviseur`, `Echeance`, `DoD1..5`, `NbCorrections`, `DecisionRevue`, `Valideur`, `DateValidation`, `VersionValidee`, dates de dépôt et de revue (P-09). Habilités : RD et DIRECTION_RD pour tous ces champs ; le réviseur légitime pour `Echeance` et `DoD1..5` ; un `Reviseur` qui n'est ni le référent de l'affectation ni un membre de DIRECTION_RD est refusé dès sa désignation |
+| EmpreinteCommentaire | Empreinte du commentaire de revue | Note | Non | hidden; flux | Valeur de `CommentaireRevue` lors de la décision précédente (`G_COMMENTAIRE_REVUE`) |
 
 ### LST: ComptesRendus
 
@@ -692,7 +692,7 @@ Règle : une colonne `Lookup` ne peut cibler qu'une liste d'un lot inférieur ou
 | DateValidation | Date de validation | DateTime | Non | flux |  |
 | CommentaireReferent | Commentaire du référent | Note | Non | appendonly | Obligatoire pour « À compléter » ; historique conservé |
 | DernierRappel | Dernier rappel envoyé | Text | Non | hidden; flux |  |
-| EmpreinteRevue | Empreinte des champs protégés | Text | Non | hidden; flux | JSON : `Affectation`, `Valideur`, `Echeance`, `PeriodeDebut`, `PeriodeFin`, `DateValidation`, `DateRemise` (P-09). Habilités : RD et DIRECTION_RD ; l'alternant ne modifie que les champs de contenu ; le référent (valideur légitime) que `CommentaireReferent` |
+| EmpreinteRevue | Empreinte des champs protégés | Note | Non | hidden; flux | JSON : `Affectation`, `Valideur`, `Echeance`, `PeriodeDebut`, `PeriodeFin`, `DateValidation`, `DateRemise` (P-09). Habilités : RD et DIRECTION_RD ; l'alternant ne modifie que les champs de contenu ; le référent (valideur légitime) que `CommentaireReferent` |
 
 ### LST: RegistreModeles
 
@@ -1038,6 +1038,7 @@ Règle : une colonne `Lookup` ne peut cibler qu'une liste d'un lot inférieur ou
 | IdLivrable | Livrable rattaché | Text | Non |  | `LIV-…` trouvé dans le titre du jalon |
 | EcartEcheance | Écart d'échéance avec le livrable | Boolean | Non | default=Non |  |
 | DateSynchro | Date de synchronisation | DateTime | Oui |  | Date de la dernière **écriture** de la ligne (aucune écriture si rien ne change) |
+| Orpheline | Ligne orpheline | Boolean | Non | default=Non | Jalon supprimé ou sujet détaché : ligne conservée mais exclue des indicateurs (§ 10.3) |
 
 ---
 
@@ -1348,7 +1349,7 @@ Note : l'issue d'un GO/NO-GO négatif est « Suspendu » (report ou reformulatio
 
 ### 6.5 Formats des empreintes (P-09)
 
-Les empreintes sont des colonnes `Text` masquées écrites **uniquement** par les flux. Format JSON compact, clés dans l'ordre ci-dessous, dates `AAAA-MM-JJ`, identifiants de recherche = ID SharePoint (entier), personnes = adresse e-mail en minuscules, valeur absente = `null`. Une empreinte **vide** signifie « non encore initialisée » : le flux l'initialise à partir des valeurs courantes **sans rien rétablir** (cas des données importées ou créées avant l'activation des flux).
+Les empreintes sont des colonnes masquées (`Text` pour les empreintes courtes, `Note` en texte brut pour `EmpreinteRevue` et `EmpreinteCommentaire`, dont la longueur dépasse 255 caractères) écrites **uniquement** par les flux, et elles-mêmes protégées (P-09, § 8.1). Format JSON compact, clés dans l'ordre ci-dessous, dates `AAAA-MM-JJ`, identifiants de recherche = ID SharePoint (entier), personnes = adresse e-mail en minuscules, valeur absente = `null`. Une empreinte **vide** signifie « non encore initialisée » : le flux l'initialise à partir des valeurs courantes **sans rien rétablir** (cas des données importées ou créées avant l'activation des flux).
 
 | Colonne | Liste | Format |
 | --- | --- | --- |
@@ -1551,7 +1552,8 @@ R = réalise ; A = responsable final / approbateur ; C = consulté ; I = inform�
 | Conditionnement | Une **solution** Power Platform `HNCSRDSuivi` (non gérée en recette, gérée en production) contenant les flux, les références de connexion `hncs_sharepoint`, `hncs_outlook`, `hncs_teams`, `hncs_o365users` et les variables d'environnement `hncs_SiteUrl`, `hncs_ServiceAccountEmail`, `hncs_SupportEmail`, `hncs_BoiteRDEmail` et `hncs_BoiteRDDossierCandidatures` (le déclencheur de boîte partagée exige une adresse et un dossier fixés au déploiement ; `Destinataires.BoiteRD` doit avoir la même valeur). |
 | Identité d'exécution | Toutes les connexions utilisent le **compte de service** (H-13), membre de G_PROP. |
 | Anti-boucle | Toute écriture du compte de service ne redéclenche aucun flux : condition de déclenchement `@not(equals(toLower(triggerOutputs()?['body/Editor/Email']), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))))`. Le flux qui écrit est donc responsable de journaliser ce qu'il fait. |
-| Détection d'une transition | Condition de déclenchement : `Statut` ≠ `StatutPrecedent` **et** statut cible dans l'ensemble traité par le flux (§ 8.2). |
+| Détection d'une transition | Sur les listes à statut contrôlé, la condition de déclenchement est **uniquement** l'anti-boucle (toute modification humaine déclenche le flux de la liste ; pour une liste servie par plusieurs flux, chacun filtre ensuite sur ses statuts cibles, § 8.2). Le flux détermine s'il y a transition en comparant `Statut` au **dernier `StatutApres` accepté** pour l'élément dans `HistoriqueStatuts` (à défaut d'historique : création, `∅`). `StatutPrecedent` n'est qu'une copie de commodité pour les vues : il n'est jamais utilisé pour décider ni pour rétablir ; PA-00B rétablit le statut à partir de l'historique. |
+| Colonnes techniques | À chaque déclenchement humain, le flux de la liste vérifie (« Obtenir les modifications d'un élément » depuis la version précédente) si une colonne `flux` a été modifiée ; si oui, il la rétablit à sa valeur de la version précédente (API des versions), journalise (Avertissement) et notifie N-92, puis poursuit sur les valeurs rétablies. |
 | Structure | Portées `Principal` → `Erreur` (exécutée si `Principal` est en échec ou expiré) → `Terminer`. La portée `Erreur` appelle **PA-00C**, puis termine l'exécution en échec (pour permettre la reprise par « Resoumettre »). |
 | Nouvelle tentative | Stratégie exponentielle par défaut (4 tentatives) sur les actions SharePoint, Outlook et Teams. |
 | Idempotence | Chaque effet vérifie d'abord s'il a déjà été produit (date déjà renseignée, élément existant avec le même `CodeModeleAction`, dossier existant, `DernierRappel` identique, `RefMessage` connu). Une exécution resoumise ne produit donc jamais de doublon. |
@@ -1559,7 +1561,7 @@ R = réalise ; A = responsable final / approbateur ; C = consulté ; I = inform�
 | Gestion d'erreur | En cas d'échec : élément `JournalFlux` (Niveau Erreur, `StatutReprise` = À reprendre, `RunUrl`), courriel N-99 au support (`hncs_SupportEmail`), exécution marquée en échec. |
 | Reprise | (1) Corriger la cause ; (2) « Resoumettre » l'exécution depuis `RunUrl` ; (3) passer `StatutReprise` à « Reprise effectuée ». Les flux planifiés se rattrapent seuls au passage suivant. PA-00E rappelle chaque jour les erreurs non reprises. |
 | Effets d'une transition par un flux | Règle § 6.1-8 : le flux qui réalise une transition `FLUX` exécute lui-même les effets du statut cible (ex. PA-01 envoie N-03 après CAND-T02 ; PA-03 envoie N-04 après CAND-T08 ; PA-05 et PA-09 envoient N-22 après AFF-T05). |
-| Champs protégés (P-09) | Les flux PA-04 (ActionsIntegration, Alternants), PA-05 (Affectations), PA-07 (Livrables), PA-08 (ComptesRendus) et PA-10 (Conventions) se déclenchent sur **toute** modification humaine (pas seulement un changement de statut) et comparent d'abord les champs protégés à leur empreinte ; une modification par un acteur non habilité est rétablie, journalisée (Avertissement) et notifiée (N-92), puis le traitement s'arrête. |
+| Champs protégés (P-09) | Les flux PA-04 (ActionsIntegration, Alternants), PA-05 (Affectations), PA-07 (Livrables), PA-08 (ComptesRendus) et PA-10 (Conventions) se déclenchent sur **toute** modification humaine (pas seulement un changement de statut), rétablissent d'abord les colonnes techniques (ligne précédente), puis comparent les champs protégés à leur empreinte ; une modification par un acteur non habilité est rétablie, journalisée (Avertissement) et notifiée (N-92), puis le traitement s'arrête. |
 | Résolution des responsables | `RoleResponsable` d'une action → personne : ADMIN → `Destinataires.Administration` ; RD → responsable d'analyse de la candidature, sinon `Destinataires.DirectionRD` ; DIRECTION_RD → `Destinataires.DirectionRD` ; REFERENT → compte du référent principal de l'alternant (ou référent pressenti de la candidature) ; ECOLES → `ResponsableHNCS` de l'établissement ; à défaut, `Responsable` reste vide et les rappels N-19 sont adressés aux membres de G_ECO ; PROPRIETAIRE → `Destinataires.Support`. Le responsable reçoit CSS sur l'action (§ 7.4). |
 | Notifications | Catalogue `specs/notifications.md` (codes N-xx). Courriel depuis la boîte partagée R&D (`Destinataires.BoiteRD`) et, si `Fonction.NotificationsTeams` = Oui, message Teams du bot Flow aux personnes nommées. Toujours un lien vers l'élément SharePoint source. |
 | Paramètres | Lus dans la liste `Parametres` au début de chaque exécution (action « Obtenir des éléments » filtrée par catégorie). |
@@ -1672,7 +1674,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | Élément | Contrat |
 | --- | --- |
 | Déclencheur | Quotidien 07:30 |
-| Traitement | Lister `JournalFlux` Niveau Erreur avec `StatutReprise` = À reprendre ; si non vide, envoyer N-98 (synthèse) au support et à G_PROP. |
+| Traitement | 1. **Rapprochement des statuts** (filet de sécurité) : pour chaque élément des listes à statut contrôlé dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` sans exécution en cours, rétablir le statut via PA-00B (Refusée — annulée, motif « Rapprochement quotidien ») et journaliser (Avertissement). 2. Lister `JournalFlux` Niveau Erreur avec `StatutReprise` = À reprendre ; si non vide (ou si l'étape 1 a rétabli des statuts), envoyer N-98 (synthèse) au support et à G_PROP. |
 | Sorties | Courriel de synthèse |
 
 #### PA-00F — Droits des propriétaires de modèles
@@ -1689,7 +1691,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | Élément | Contrat |
 | --- | --- |
 | Déclencheur fonctionnel | Réception d'une candidature (site HNCS, LinkedIn, France Travail, spontanée) |
-| PA-01a — déclencheur | Élément créé dans `Candidatures` (saisie manuelle par la R&D ou l'administration) |
+| PA-01a — déclencheur | Élément créé dans `Candidatures` (saisie manuelle par la R&D) |
 | PA-01b — déclencheur | Courriel dans le dossier `Candidatures` de la boîte partagée `Destinataires.BoiteRD` (les règles Outlook qui y déposent les courriels sont définies par la R&D) |
 | Entrées | 01a : élément créé. 01b : expéditeur, objet, corps, `Internet-Message-Id`, pièces jointes |
 | Traitement 01b | 1. Si `RefMessage` existe déjà : fin si `LienCV` est renseigné (traitement complet), sinon reprise sur l'élément existant (exécution partielle). 2. Canal déduit par les règles `Canal.Regles` (domaine de l'expéditeur ou balise d'objet, ex. `[CANDIDATURE-SITE]` → Site HNCS) ; sinon « À qualifier ». 3. Créer l'élément (`ModeReception` = Boîte mail R&D, `Statut` = Reçue) : si le canal provient d'une règle de **domaine de plateforme** (LinkedIn, France Travail), l'expéditeur n'est pas le candidat → `Title` = « À qualifier – {RefMessage} », `Email` vide (la R&D qualifie l'identité à partir du message, contrôle `G_IDENTITE`) ; sinon `Title` = partie locale de l'adresse de l'expéditeur (le déclencheur standard ne fournit pas le nom affiché ; la R&D corrige) et `Email` = adresse de l'expéditeur. 4. Continuer comme 01a (y compris PA-00A sur CAND-T01 : un refus envoie l'élément à la corbeille, § 6.1-3 bis). |
@@ -1884,7 +1886,7 @@ Les valeurs initiales sont des **propositions** à valider (§ 13) ; le jeu comp
 
 ### 9.2 Tables importées
 
-Règle : aucune colonne `perso` ou `confidentiel` n'est importée, **sauf** `Alternants.Title` importée sous le nom `NomAffichage`, masquée par OLS au rôle `Direction` et **absente de tous les visuels** (les vues nominatives restent dans SharePoint) : défense en profondeur. Colonnes de recherche importées sous la forme `<Nom>Id` (ID SharePoint), colonnes personne sous la forme `<Nom>Email` uniquement lorsque c'est nécessaire à la RLS.
+Règle : aucune colonne `perso` ou `confidentiel` n'est importée, **sauf** `Alternants.Title` importée sous le nom `NomAffichage`, masquée par OLS pour **tout rôle dont le groupe n'a pas d'accès SharePoint à `Alternants`** (`Direction`, `RelationEcoles`) et **absente de tous les visuels** (les vues nominatives restent dans SharePoint) : défense en profondeur. Colonnes de recherche importées sous la forme `<Nom>Id` (ID SharePoint), colonnes personne sous la forme `<Nom>Email` uniquement lorsque c'est nécessaire à la RLS.
 
 ### PBI_TABLES
 
@@ -1910,7 +1912,7 @@ Règle : aucune colonne `perso` ou `confidentiel` n'est importée, **sauf** `Alt
 | CommunicationsRD | CommunicationsRD | Id ; IdHNCS ; Title ; LivrableSourceId ; SujetId ; Canal ; Externe ; DatePrevue ; DateEffective ; AutorisationsTiers ; UrlPublication ; Statut |
 | Mobilisations | Mobilisations | Id ; IdHNCS ; LivrableId ; DateMobilisation ; TypeMobilisation |
 | HistoriqueStatuts | HistoriqueStatuts | Id ; Title ; Objet ; StatutAvant ; StatutApres ; DateChangement ; Origine ; Resultat |
-| GitlabSync | GitlabSync | Id ; SujetId ; GitlabProjetId ; Milestone ; MilestoneEcheance ; MilestoneEtat ; IssuesOuvertes ; IssuesFermees ; MRsOuvertes ; EcartEcheance ; DateSynchro |
+| GitlabSync | GitlabSync | Id ; SujetId ; GitlabProjetId ; Milestone ; MilestoneEcheance ; MilestoneEtat ; IssuesOuvertes ; IssuesFermees ; MRsOuvertes ; EcartEcheance ; Orpheline ; DateSynchro |
 | Parametres | Parametres | Title (→ Cle) ; Valeur |
 | Calendrier | DAX | Date ; Annee ; Mois ; NumMois ; Trimestre ; Semaine ; AnneeMois |
 | Objectifs | DAX (DATATABLE) | Indicateur ; Cible |
@@ -2087,7 +2089,7 @@ Livrables valorisés = CALCULATE ( DISTINCTCOUNTNOBLANK ( CommunicationsRD[Livra
 // ---------- Actions et qualité des données ----------
 Actions en retard = COUNTROWS ( FILTER ( ActionsIntegration, ActionsIntegration[Statut] IN { "À faire", "En cours", "Bloquée" } && ActionsIntegration[Echeance] < TODAY () ) )
 Transitions refusées = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = "Refusée — annulée" )
-Écarts d'échéance GitLab = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE () )
+Écarts d'échéance GitLab = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE (), GitlabSync[Orpheline] = FALSE () )
 
 // ---------- Objectifs indicatifs (cadrage § 2.4) ----------
 // Cible : à utiliser dans un visuel filtré sur Objectifs[Indicateur]
@@ -2105,11 +2107,11 @@ La table `Objectifs` contient : POC réalisés = 5 ; Plans de stratégie formali
 
 | Rôle | Membres (groupes Entra / personnes) | Filtres (DAX) | OLS |
 | --- | --- | --- | --- |
-| Direction | Direction Générale | aucun | `Alternants[NomAffichage]` : aucun accès |
+| Direction | Direction Générale | `Parametres` : `Parametres[Cle] = "Delai.SeuilAttenteCandidatureJours"` ; `HistoriqueStatuts` : `FALSE ()` | `Alternants[NomAffichage]` : aucun accès |
 | PilotageRD | Direction R&D, équipe R&D | aucun | aucune |
 | Administration | Équipe administrative | `Candidatures` : `NOT ISBLANK ( Candidatures[DateTransmissionAdmin] )` ; `Livrables` : `FALSE ()` ; `ComptesRendus` : `FALSE ()` ; `Mobilisations` : `FALSE ()` ; `GitlabSync` : `FALSE ()` | aucune |
-| RelationEcoles | Responsables de la relation école (G_ECO) | `Candidatures` : `FALSE ()` ; `Entretiens` : `FALSE ()` ; `ActionsIntegration` : `FALSE ()` ; `Livrables` : `FALSE ()` ; `ComptesRendus` : `FALSE ()` ; `Mobilisations` : `FALSE ()` ; `GitlabSync` : `FALSE ()` | aucune |
-| Referent | Référents | `Referents` : `Referents[CompteEmail] = USERPRINCIPALNAME ()` ; `Alternants` : `Alternants[Id] IN CALCULATETABLE ( VALUES ( Affectations[AlternantId] ), FILTER ( ALL ( Affectations ), Affectations[ReferentId] IN CALCULATETABLE ( VALUES ( Referents[Id] ), Referents[CompteEmail] = USERPRINCIPALNAME () ) ) )` ; `Candidatures` : `FALSE ()` ; `Entretiens` : `FALSE ()` ; `ActionsIntegration` : `FALSE ()` | aucune |
+| RelationEcoles | Responsables de la relation école (G_ECO) | `Candidatures` : `FALSE ()` ; `Entretiens` : `FALSE ()` ; `ActionsIntegration` : `FALSE ()` ; `Livrables` : `FALSE ()` ; `ComptesRendus` : `FALSE ()` ; `Mobilisations` : `FALSE ()` ; `GitlabSync` : `FALSE ()` ; `Parametres` : `Parametres[Cle] = "Delai.SeuilAttenteCandidatureJours"` ; `HistoriqueStatuts` : `FALSE ()` | `Alternants[NomAffichage]` : aucun accès |
+| Referent | Référents | `Referents` : `Referents[CompteEmail] = USERPRINCIPALNAME ()` ; `Alternants` : `Alternants[Id] IN CALCULATETABLE ( VALUES ( Affectations[AlternantId] ), FILTER ( ALL ( Affectations ), Affectations[ReferentId] IN CALCULATETABLE ( VALUES ( Referents[Id] ), Referents[CompteEmail] = USERPRINCIPALNAME () ) ) )` ; `ActionsIntegration` : `NOT ISBLANK ( ActionsIntegration[AlternantId] ) && ActionsIntegration[AlternantId] IN CALCULATETABLE ( VALUES ( Affectations[AlternantId] ), FILTER ( ALL ( Affectations ), Affectations[ReferentId] IN CALCULATETABLE ( VALUES ( Referents[Id] ), Referents[CompteEmail] = USERPRINCIPALNAME () ) ) )` ; `Candidatures` : `FALSE ()` ; `Entretiens` : `FALSE ()` ; `Parametres` : `Parametres[Cle] = "Delai.SeuilAttenteCandidatureJours"` ; `HistoriqueStatuts` : `FALSE ()` | aucune |
 
 Les alternants n'ont pas accès au rapport (H-19). L'affectation des membres aux rôles se fait dans le service Power BI (H-16) ; les membres doivent être **Lecteurs** de l'espace de travail pour que la RLS s'applique. Power BI interdit qu'une même personne cumule un rôle avec OLS (`Direction`) et un rôle avec RLS : une personne relève d'un seul rôle. Aucun rôle « Communication » ou « Avant-vente » n'est créé (H-52).
 
@@ -2155,7 +2157,7 @@ Détail des visuels : `specs/powerbi-rapport.md`. La RLS et l'OLS protègent les
 | --- | --- | --- |
 | `gitlab/scripts/New-GitlabProjetSujet.ps1` | Création **à la demande d'un humain** (un membre de l'équipe R&D propriétaire du groupe GitLab `hncs-rd`, à la demande du référent du sujet) d'un projet GitLab à partir d'un sujet SharePoint (projet, labels, jalons des livrables), puis report de l'URL et de l'ID dans le sujet | 3 |
 | `gitlab/templates/` | Modèles d'issues, de MR et de README de projet R&D | 3 |
-| `gitlab/sync/sync_gitlab_sharepoint.py` | Synchronisation **lecture GitLab → liste `GitlabSync`** : pour chaque sujet ayant un `GitlabProjetId`, lire les jalons (échéance, état), compter les issues et MR, détecter un écart entre échéance du jalon et échéance du livrable (`IdLivrable` = premier `LIV-…` du titre du jalon ; jalon sans échéance face à un livrable daté = écart ; livrable introuvable = pas d'écart, avertissement). `DerniereActivite` = dernière activité du projet. Idempotente (clé `CleSynchro`, aucune écriture si rien ne change). Les lignes orphelines (jalon supprimé, sujet détaché) sont conservées et signalées, jamais supprimées. | 5 |
+| `gitlab/sync/sync_gitlab_sharepoint.py` | Synchronisation **lecture GitLab → liste `GitlabSync`** : pour chaque sujet ayant un `GitlabProjetId`, lire les jalons (échéance, état), compter les issues et MR, détecter un écart entre échéance du jalon et échéance du livrable (`IdLivrable` = premier `LIV-…` du titre du jalon ; jalon sans échéance face à un livrable daté = écart ; livrable introuvable = pas d'écart, avertissement). `DerniereActivite` = dernière activité du projet. Idempotente (clé `CleSynchro`, aucune écriture si rien ne change). Les lignes orphelines (jalon supprimé, sujet détaché) sont conservées, marquées `Orpheline` = Oui (exclues des indicateurs) et signalées, jamais supprimées ; une ligne qui redevient valide repasse à Non. | 5 |
 | `gitlab/ci/.gitlab-ci.yml` | Pipeline planifié (quotidien 05:30) exécutant la synchronisation | 5 |
 | Authentification | Synchronisation : jeton d'accès de groupe GitLab de portée `read_api` en variable CI masquée et protégée. Microsoft Graph : application Entra avec, de préférence, la permission `Lists.SelectedOperations.Selected` limitée à `GitlabSync` (écriture) et à `SujetsRD` / `Livrables` (lecture) ; à défaut, `Sites.Selected` en écriture sur le site, la restriction à `GitlabSync` étant alors assurée par le code (risque accepté, H-31). Secret en variable masquée, ou identité fédérée GitLab OIDC (`HNCS_CLIENT_ASSERTION`) recommandée. Script de création de projet : jeton **personnel** de portée `api` de la personne qui l'exécute, jamais stocké | 3 / 5 |
 
@@ -2239,7 +2241,7 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | H-14 | Appartenance aux groupes | Membres ajoutés **directement** dans les groupes SharePoint (pas de groupe Entra imbriqué), pour que PA-00A vérifie les rôles par l'API REST standard | Si groupes Entra : ajouter le connecteur Office 365 Groups ou Entra ID (à valider licence) | DSI |
 | H-15 | Licences et connecteurs | Connecteurs standard uniquement ; Power BI Pro pour les publics du rapport ; Dataverse de l'environnement par défaut pour la solution | Mode « import de package hérité » si pas de Dataverse (voir `docs/installation.md`) | DSI + finance |
 | H-16 | Power BI service | Espace « HNCS-R&D Pilotage », actualisation quotidienne, membres des rôles RLS affectés manuellement dans le service | — | DSI |
-| H-17 | Contrôle des transitions a posteriori | SharePoint n'offre pas de machine à états : un statut non autorisé est rétabli par le flux en quelques secondes, avec historique et notification. Amélioration possible au lot 5 : formulaires Power Apps (licence à étudier) | — | Direction R&D |
+| H-17 | Contrôle des transitions a posteriori | SharePoint n'offre pas de machine à états : un statut non autorisé est rétabli par le flux en quelques secondes (ou au plus tard par le rapprochement quotidien de PA-00E), avec historique et notification. Les colonnes techniques modifiables par l'interface ou l'API (niveau Contribution) ne sont jamais une source de confiance (P-09). Amélioration possible au lot 5 : formulaires Power Apps (licence à étudier) | — | Direction R&D |
 | H-18 | Retrait des accès en fin d'alternance | Action humaine de la checklist de clôture (catégorie « Accès et matériel »), pas de retrait automatique | Ajouter une étape au PA-09 | DSI |
 | H-19 | Accès des alternants à Power BI | Aucun accès au rapport | Ajouter un rôle | Direction R&D |
 | H-20 | Objectifs à un an | Valeurs indicatives du cadrage § 2.4 dans la table `Objectifs` | Mettre à jour la table | Direction Générale |
@@ -2304,6 +2306,7 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | Version | Date | Auteur | Modification |
 | --- | --- | --- | --- |
 | 1.0.0 | 2026-10-14 | Équipe projet | Première version complète (lot 0) |
+| 1.6.0 | 2026-10-16 | Équipe projet | Revue croisée RX-01 à RX-09 : empreintes longues en colonnes `Note` ; colonnes techniques jamais source de confiance (statut de référence = dernière transition acceptée de l'historique, rétablissement des colonnes `flux`, rapprochement quotidien PA-00E, déclenchement sur toute modification humaine) ; OLS `NomAffichage` pour RelationEcoles ; tables techniques filtrées dans Power BI ; actions visibles des référents ; identifiants réservés des référentiels ; lignes GitLab orphelines ; saisie des candidatures par la R&D |
 | 1.5.0 | 2026-10-16 | Équipe projet | Retours des flux (20 points) : variables d'environnement de la boîte R&D, PA-01b repris sur exécution partielle, PA-00C/PA-00D au lot 1 et initialisation des empreintes, envoi trimestriel unique, décision de partenariat avant signature, droits du responsable dans tous les contextes (PA-04 c), changement d'auteur (PA-12), verrou d'affectation suivi du traitement de la transition (PA-05), format de `DernierRappel`, exception de permission sur les fichiers de modèles, destinataires des notifications alignés, H-55, H-56 |
 | 1.4.0 | 2026-10-16 | Équipe projet | Retours du jeu de test : formats des empreintes et historisations hors statut (§ 6.5), contrôles évalués au moment de la transition, accès nominatifs sous la matrice, cadence « Par jalon », import des données de test flux désactivés, H-42 précisé |
 | 1.3.0 | 2026-10-15 | Équipe projet | Retours des guides (18 points) et de Power BI (E-01–E-05) : doublon vérifié, échéance et réviseur protégés, champs protégés des comptes rendus, compte Microsoft 365 requis pour activer une affectation, `G_ACTION_FORMALITE` renforcé, arbitrage des sujets par la Direction Générale, prolongation d'alternance, dossier administratif dès la transmission, notifications complétées, audiences Power BI, H-53 et H-54 |

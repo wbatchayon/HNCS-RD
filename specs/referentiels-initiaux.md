@@ -66,7 +66,7 @@ Les valeurs `<…>` sont des marqueurs remplacés au déploiement à partir de `
 | DOM-2026-0006 | Démonstrateurs d'infrastructure | POL-P1 | Oui | Actif |
 | DOM-2026-0007 | Valorisation et communication technique | POL-P3 | Non | Actif |
 
-La colonne `Pole` contient l'`IdHNCS` du pôle ; le provisioning le résout en ID SharePoint.
+La colonne `Pole` contient l'`IdHNCS` du pôle ; le provisioning le résout en ID SharePoint. Les `IdHNCS` des référentiels sont **réservés** (spec § 2.2) : recherche par `Title`, identifiant renseigné s'il est vide, erreur s'il est déjà porté par un autre élément.
 
 ## Modèles de checklists (proposition, H-23)
 
