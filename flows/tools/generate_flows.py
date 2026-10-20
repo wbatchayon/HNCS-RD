@@ -55,10 +55,10 @@ def manifest_entry(f):
 
 
 TRIGGER_TEXT = {
-    "SharePointItem": "SharePoint — élément de la liste « {title} » ({op})",
-    "SharePointFile": "SharePoint — fichier de la bibliothèque « {title} » créé ou modifié (propriétés uniquement)",
-    "SharedMailbox": "Office 365 Outlook — nouveau courriel dans une boîte partagée (V2), dossier « Candidatures »",
-    "Recurrence": "Récurrence — {rec}",
+    "SharePointItem": "SharePoint : élément de la liste « {title} » ({op})",
+    "SharePointFile": "SharePoint : fichier de la bibliothèque « {title} » créé ou modifié (propriétés uniquement)",
+    "SharedMailbox": "Office 365 Outlook : nouveau courriel dans une boîte partagée (V2), dossier « Candidatures »",
+    "Recurrence": "Récurrence : {rec}",
     "ChildFlow": "Déclenchement manuel par un flux parent (action « Exécuter un flux enfant »)",
 }
 
@@ -73,11 +73,56 @@ def trigger_text(f, entry):
     return text, [c["expression"] for c in conds]
 
 
+SPEC = ROOT / "spec.md"
+
+
+def _slug(title: str) -> str:
+    """Ancre de titre Markdown (GitHub) : minuscules, ponctuation retirée (lettres accentuées conservées), espaces → « - »."""
+    t = title.strip().lower()
+    t = re.sub(r"[^\w\- ]", "", t)
+    return t.replace(" ", "-")
+
+
+def spec_anchors():
+    """Numéro de section (« 8.1 ») → ancre du titre correspondant dans spec.md."""
+    anchors, seen = {}, {}
+    for line in SPEC.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^(#{1,6})\s+(.*?)\s*$", line)
+        if not m:
+            continue
+        slug = _slug(m.group(2))
+        n = seen.get(slug, 0)
+        seen[slug] = n + 1
+        if n:
+            slug = f"{slug}-{n}"
+        num = re.match(r"^(\d+(?:\.\d+)*)\.?\s", m.group(2))
+        if num and num.group(1) not in anchors:
+            anchors[num.group(1)] = slug
+    return anchors
+
+
+_ANCHORS = {}
+
+
+def linkify(text: str, spec_path: str) -> str:
+    """Renvois « § 8.1 », « § 6.1-8 », « § 6.1-3 bis » → liens Markdown vers les sections de spec.md."""
+    if not _ANCHORS:
+        _ANCHORS.update(spec_anchors())
+
+    def rep(m):
+        num, rule = m.group(1), m.group(2)
+        if num not in _ANCHORS:
+            raise SystemExit(f"Section de spec introuvable pour le renvoi § {num}")
+        link = f"[{num}]({spec_path}#{_ANCHORS[num]})"
+        return link + (f", règle {rule}" if rule else "")
+    return re.sub(r"§\s?(\d+(?:\.\d+)?)(?:-(\d+(?: bis)?))?", rep, text)
+
+
 def doc_for_code(code, flows, entries):
     first = flows[0]
     name = MODEL.flows[code]["name"]
-    out = [f"# {code} — {name}", "",
-           f"> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.", "",
+    out = [f"# {code} : {name}", "",
+           f"> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) : ne pas modifier à la main.", "",
            "| Élément | Valeur |", "| --- | --- |",
            f"| Lot | {MODEL.flows[code]['lot']} |",
            f"| Type (spec) | {MODEL.flows[code]['type'].replace('**', '')} |",
@@ -113,7 +158,7 @@ def doc_for_code(code, flows, entries):
         for t in MODEL.transitions:
             if t["baseCode"] in trans and t["code"] not in seen:
                 seen.add(t["code"])
-                out.append(f"| {t['code']} | {t['from']} | {t['to']} | {', '.join(t['actors'])} | {', '.join(t['controls']) or '—'} |")
+                out.append(f"| {t['code']} | {t['from']} | {t['to']} | {', '.join(t['actors'])} | {', '.join(t['controls']) or '-'} |")
     else:
         out.append("Aucune transition de statut.")
     written = {}
@@ -149,9 +194,9 @@ def doc_for_code(code, flows, entries):
             out.append(f"- {t}")
     out += ["", "## Données lues et écrites", ""]
     for f, e in zip(flows, entries):
-        out.append(f"- `{f.id}` : lit {', '.join('`' + x + '`' for x in e['listsRead']) or '—'} ; écrit {', '.join('`' + x + '`' for x in e['listsWritten']) or '—'} ; "
-                   f"flux enfants {', '.join(e['childFlows']) or '—'}.")
-    return "\n".join(out).rstrip() + "\n"
+        out.append(f"- `{f.id}` : lit {', '.join('`' + x + '`' for x in e['listsRead']) or '-'} ; écrit {', '.join('`' + x + '`' for x in e['listsWritten']) or '-'} ; "
+                   f"flux enfants {', '.join(e['childFlows']) or '-'}.")
+    return linkify("\n".join(out).rstrip() + "\n", "../../spec.md")
 
 
 def build():

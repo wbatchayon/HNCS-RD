@@ -1,6 +1,6 @@
-# Flux Power Automate — HNCS-RD
+# Flux Power Automate : HNCS-RD
 
-Flux du système de suivi R&D (spec § 8), livrés comme définitions exportables d'une solution Power Platform **non gérée** `HNCSRDSuivi` (éditeur `hncs`, préfixe `hncs`). La source de vérité reste [`spec.md`](../spec.md) ; ce dossier en est l'implémentation.
+Flux du système de suivi R&D ([8](../spec.md#8-flux-power-automate--contrats)), livrés comme définitions exportables d'une solution Power Platform **non gérée** `HNCSRDSuivi` (éditeur `hncs`, préfixe `hncs`). La source de vérité reste [`spec.md`](../spec.md) ; ce dossier en est l'implémentation.
 
 ## Contenu
 
@@ -28,26 +28,28 @@ python flows/build/build_solution.py            # produit flows/dist/HNCSRDSuivi
 ## Architecture
 
 - **Socle** : PA-00A (vérifier une transition), PA-00B (appliquer ou annuler, historiser), PA-00C (journaliser, N-99) sont des flux enfants (« Déclencher manuellement un flux » + « Répondre à une application ou à un flux »), appelés par l'action « Exécuter un flux enfant » via leur `WorkflowId`. PA-00D attribue les `IdHNCS` manquants, PA-00E rappelle les erreurs non reprises, PA-00F pose les droits des propriétaires de modèles.
-- **Flux métier** : une définition par liste écoutée (§ 8.3) — `PA-03-ent` / `PA-03-cand`, `PA-04-cand` / `PA-04-alt` / `PA-04-act`, `PA-09-alt` / `PA-09-bil`, `PA-10-conv` / `PA-10-int` partagent le code PA et le contrat. Les flux planifiés portent le suffixe `b` du catalogue.
+- **Flux métier** : une définition par liste écoutée ([8.3](../spec.md#83-catalogue-des-flux)) : `PA-03-ent` / `PA-03-cand`, `PA-04-cand` / `PA-04-alt` / `PA-04-act`, `PA-09-alt` / `PA-09-bil`, `PA-10-conv` / `PA-10-int` partagent le code PA et le contrat. Les flux planifiés portent le suffixe `b` du catalogue.
 - **Identifiants** : `WorkflowId` = `uuid5(NAMESPACE_URL, "urn:hncs-rd:flow:<IdTechnique>")`, stable d'un build à l'autre.
 - **Connexions** : références `hncs_sharepoint`, `hncs_outlook`, `hncs_teams`, `hncs_o365users` (connecteurs standard uniquement, P-08), toutes au nom du compte de service (H-13). Aucune action HTTP générique : les permissions, groupes, versions et la corbeille passent par « Envoyer une requête HTTP à SharePoint ».
 - **Variables d'environnement** : `hncs_SiteUrl` (sans barre finale), `hncs_ServiceAccountEmail`, `hncs_SupportEmail`, plus `hncs_BoiteRDEmail` et `hncs_BoiteRDDossierCandidatures` exigées par le déclencheur « boîte partagée » de PA-01b (écart signalé à la spec).
 - **Listes** : désignées par leur titre affiché (paramètre `table`) ; les requêtes REST utilisent l'URL relative `/Lists/<NomInterne>` (bibliothèques : `/<NomInterne>`).
 
-## Socle commun appliqué (§ 8.1)
+## Socle commun appliqué ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux))
 
 | Thème | Mise en œuvre |
 | --- | --- |
 | Anti-boucle | Condition de déclenchement exacte de la spec sur `Editor` ≠ compte de service, sur tous les déclencheurs SharePoint |
-| Détection d'une transition | Conditions `Statut` ≠ `StatutPrecedent` et statut cible ∈ partition ; pour les flux à champs protégés (P-09 : PA-07, PA-08, PA-10-conv), déclenchement sur toute modification et garde `Si_aucune_transition_a_traiter` dans le flux |
+| Détection d'une transition | Sur les listes à statut contrôlé, condition de déclenchement = anti-boucle seule (RX-02) ; chaque flux filtre ensuite sur ses statuts cibles ([8.2](../spec.md#82-partition-des-statuts-cibles)). Le statut validé de référence est le dernier `StatutApres` accepté de `HistoriqueStatuts` (à défaut `∅`) ; `StatutPrecedent` n'est qu'une copie de commodité, jamais lue. Garde `Si_aucune_transition_a_traiter` dans le flux |
 | Structure | Portées `Principal` → `Erreur` (si échec ou expiration : PA-00C puis fin en échec) → `Terminer` |
-| Transition humaine | Lecture fraîche, événement obsolète ignoré, `IdHNCS`, protections P-09, PA-00A, contrôles `G_*` (code inconnu = refus), refus → PA-00B (annulation ou corbeille pour une création, N-90) et fin ; sinon effets, PA-00B, post-traitements reprenables |
-| Transition par un flux | PA-00A (rôle FLUX), contrôles, écriture du statut, PA-00B (Origine Flux), puis effets du statut cible (§ 6.1-8) ; refus = avertissement, rien n'est écrit |
+| Colonnes techniques | Au début de chaque déclenchement humain (un seul flux par liste servie par plusieurs flux : PA-02 pour `Candidatures`, PA-04 pour `Alternants`), si la dernière version n'est pas du compte de service et qu'une colonne `flux` a changé depuis la version précédente (« Obtenir les modifications »), toutes les colonnes `flux` reprennent leur valeur de la version précédente (API des versions), Avertissement, N-92, puis traitement sur les valeurs rétablies |
+| Transition humaine | Colonnes techniques rétablies, lecture fraîche, événement obsolète ignoré, `IdHNCS`, protections P-09, PA-00A, contrôles `G_*` (code inconnu = refus), refus → PA-00B (rétablissement du statut validé lu dans l'historique ou corbeille pour une création, N-90) et fin ; sinon effets, PA-00B, post-traitements reprenables |
+| Transition par un flux | PA-00A (rôle FLUX), contrôles, écriture du statut, PA-00B (Origine Flux), puis effets du statut cible ([6.1](../spec.md#61-règles-générales), règle 8) ; refus = avertissement, rien n'est écrit |
 | Paramètres | Liste `Parametres` lue au début de chaque exécution, filtrée par catégorie, avec valeurs par défaut de `specs/referentiels-initiaux.md` |
 | Dates | « Aujourd'hui » et dates seules en heure de Paris ; dates-heures écrites en UTC |
 | Notifications | Boîte partagée `Destinataires.BoiteRD` ; Teams (bot Flow) aux personnes nommées si `Fonction.NotificationsTeams` = Oui, échec Teams non bloquant ; groupes résolus par REST (H-14) |
 | Idempotence | Dates déjà posées, `CodeModeleAction`, dossiers existants, `DernierRappel`, `RefMessage`, marqueurs `JournalFlux` (N-17), comparaison de `DateRevue` à la modification déclenchante |
-| Empreintes (P-09, § 6.5) | JSON compact dans l'ordre de la spec, comparées clé par clé ; empreinte vide = initialisation sans rétablissement |
+| Empreintes (P-09, [6.5](../spec.md#65-formats-des-empreintes-p-09)) | JSON compact dans l'ordre de la spec, comparées clé par clé ; empreinte vide = initialisation sans rétablissement |
+| Rapprochement quotidien | PA-00E rétablit chaque jour, via PA-00B (motif « Rapprochement quotidien »), tout statut différent du dernier statut accepté de l'historique (éléments non modifiés depuis 30 minutes) et le signale dans N-98 |
 
 ## Ordre d'activation
 
@@ -56,7 +58,7 @@ python flows/build/build_solution.py            # produit flows/dist/HNCSRDSuivi
 3. Flux du lot 2, puis du lot 3 une fois les listes de lot 3 déployées.
 4. **PA-13 reste désactivé** : ne l'activer qu'après validation de `Conservation.CandidatureNonRetenueMois` (H-10).
 
-`deploy/Import-HNCSRDFlows.ps1` applique cet ordre (via l'API Web Dataverse, jeton `Get-AzAccessToken`) et laisse PA-13 désactivé ; il peut partager les flux enfants (`-ShareWith`). Les données de test sont à importer **flux désactivés** (spec § 12).
+`deploy/Import-HNCSRDFlows.ps1` applique cet ordre (via l'API Web Dataverse, jeton `Get-AzAccessToken`) et laisse PA-13 désactivé ; il peut partager les flux enfants (`-ShareWith`). Les données de test sont à importer **flux désactivés** (spec [12](../spec.md#12-stratégie-de-test-et-critères-dacceptation)).
 
 ## Procédure de reprise
 

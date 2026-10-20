@@ -2,7 +2,7 @@
   {
     "id": "PA-00A",
     "code": "PA-00A",
-    "displayName": "HNCS-RD PA-00A — Vérifier une transition",
+    "displayName": "HNCS-RD PA-00A : Vérifier une transition",
     "lot": 2,
     "type": "Flux enfant",
     "trigger": {
@@ -35,7 +35,7 @@
   {
     "id": "PA-00B",
     "code": "PA-00B",
-    "displayName": "HNCS-RD PA-00B — Appliquer ou annuler une transition",
+    "displayName": "HNCS-RD PA-00B : Appliquer ou annuler une transition",
     "lot": 2,
     "type": "Flux enfant",
     "trigger": {
@@ -45,6 +45,7 @@
     },
     "targetStatuses": [],
     "listsRead": [
+      "HistoriqueStatuts",
       "Parametres"
     ],
     "listsWritten": [
@@ -95,6 +96,7 @@
         "CodeTransition",
         "DateChangement",
         "FluxRunId",
+        "ID",
         "ItemId",
         "Liste",
         "Motif",
@@ -134,7 +136,7 @@
   {
     "id": "PA-00C",
     "code": "PA-00C",
-    "displayName": "HNCS-RD PA-00C — Journaliser une erreur",
+    "displayName": "HNCS-RD PA-00C : Journaliser une erreur",
     "lot": 1,
     "type": "Flux enfant",
     "trigger": {
@@ -179,7 +181,7 @@
   {
     "id": "PA-00D",
     "code": "PA-00D",
-    "displayName": "HNCS-RD PA-00D — Attribuer les identifiants et initialiser les empreintes",
+    "displayName": "HNCS-RD PA-00D : Attribuer les identifiants et initialiser les empreintes",
     "lot": 1,
     "type": "Planifié",
     "trigger": {
@@ -255,7 +257,6 @@
         "IdHNCS",
         "Referent",
         "Statut",
-        "StatutPrecedent",
         "Sujet"
       ],
       "Alternants": [
@@ -460,7 +461,7 @@
   {
     "id": "PA-00E",
     "code": "PA-00E",
-    "displayName": "HNCS-RD PA-00E — Supervision quotidienne des flux",
+    "displayName": "HNCS-RD PA-00E : Supervision quotidienne des flux",
     "lot": 2,
     "type": "Planifié",
     "trigger": {
@@ -470,11 +471,70 @@
     },
     "targetStatuses": [],
     "listsRead": [
+      "Affectations",
+      "Alternants",
+      "Candidatures",
+      "CommunicationsRD",
+      "ComptesRendus",
+      "Conventions",
+      "HistoriqueStatuts",
       "JournalFlux",
-      "Parametres"
+      "Livrables",
+      "Parametres",
+      "SujetsRD"
     ],
     "listsWritten": [],
     "fieldsUsed": {
+      "Affectations": [
+        "Editor",
+        "ID",
+        "IdHNCS",
+        "Modified",
+        "Statut"
+      ],
+      "Alternants": [
+        "Editor",
+        "ID",
+        "IdHNCS",
+        "Modified",
+        "Statut"
+      ],
+      "Candidatures": [
+        "Editor",
+        "ID",
+        "IdHNCS",
+        "Modified",
+        "Statut"
+      ],
+      "CommunicationsRD": [
+        "Editor",
+        "ID",
+        "IdHNCS",
+        "Modified",
+        "Statut"
+      ],
+      "ComptesRendus": [
+        "Editor",
+        "ID",
+        "IdHNCS",
+        "Modified",
+        "Statut"
+      ],
+      "Conventions": [
+        "Editor",
+        "ID",
+        "IdHNCS",
+        "Modified",
+        "Statut"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
+      ],
       "JournalFlux": [
         "DateEvenement",
         "IdObjet",
@@ -485,10 +545,24 @@
         "StatutReprise",
         "Title"
       ],
+      "Livrables": [
+        "Editor",
+        "ID",
+        "IdHNCS",
+        "Modified",
+        "Statut"
+      ],
       "Parametres": [
         "Categorie",
         "Title",
         "Valeur"
+      ],
+      "SujetsRD": [
+        "Editor",
+        "ID",
+        "IdHNCS",
+        "Modified",
+        "Statut"
       ]
     },
     "statusesWritten": {},
@@ -497,6 +571,7 @@
       "N-98"
     ],
     "childFlows": [
+      "PA-00B",
       "PA-00C"
     ],
     "enabledByDefault": true
@@ -504,7 +579,7 @@
   {
     "id": "PA-00F",
     "code": "PA-00F",
-    "displayName": "HNCS-RD PA-00F — Droits des propriétaires de modèles",
+    "displayName": "HNCS-RD PA-00F : Droits des propriétaires de modèles",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -533,11 +608,13 @@
       ],
       "RegistreModeles": [
         "Created",
+        "DateStatut",
         "ID",
         "IdHNCS",
         "LienFichier",
         "Proprietaire",
         "Statut",
+        "StatutPrecedent",
         "Title",
         "TypeModele",
         "Version"
@@ -545,7 +622,9 @@
     },
     "statusesWritten": {},
     "transitions": [],
-    "notifications": [],
+    "notifications": [
+      "N-92"
+    ],
     "childFlows": [
       "PA-00C"
     ],
@@ -554,7 +633,7 @@
   {
     "id": "PA-01a",
     "code": "PA-01a",
-    "displayName": "HNCS-RD PA-01a — Nouvelle candidature — saisie ou formulaire",
+    "displayName": "HNCS-RD PA-01a : Nouvelle candidature : saisie ou formulaire",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -567,6 +646,7 @@
     ],
     "listsRead": [
       "Candidatures",
+      "HistoriqueStatuts",
       "Parametres"
     ],
     "listsWritten": [
@@ -599,6 +679,14 @@
         "StatutPrecedent",
         "Title"
       ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
+      ],
       "Parametres": [
         "Categorie",
         "Title",
@@ -629,7 +717,7 @@
   {
     "id": "PA-01b",
     "code": "PA-01b",
-    "displayName": "HNCS-RD PA-01b — Nouvelle candidature — boîte mail R&D",
+    "displayName": "HNCS-RD PA-01b : Nouvelle candidature : boîte mail R&D",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -640,6 +728,7 @@
     "targetStatuses": [],
     "listsRead": [
       "Candidatures",
+      "HistoriqueStatuts",
       "Parametres"
     ],
     "listsWritten": [
@@ -672,6 +761,14 @@
         "Statut",
         "StatutPrecedent",
         "Title"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "Parametres": [
         "Categorie",
@@ -709,7 +806,7 @@
   {
     "id": "PA-02",
     "code": "PA-02",
-    "displayName": "HNCS-RD PA-02 — Présélection et suivi de l'analyse",
+    "displayName": "HNCS-RD PA-02 : Présélection et suivi de l'analyse",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -728,6 +825,7 @@
     "listsRead": [
       "Candidatures",
       "Entretiens",
+      "HistoriqueStatuts",
       "Parametres"
     ],
     "listsWritten": [
@@ -737,6 +835,7 @@
     ],
     "fieldsUsed": {
       "Candidatures": [
+        "AccuseReceptionEnvoye",
         "AvisAnalyse",
         "Canal",
         "Created",
@@ -745,9 +844,12 @@
         "DateDecisionFinale",
         "DateDecisionPreselection",
         "DateDemarrageConfirmee",
+        "DateFinConservation",
         "DateFinPrevue",
         "DateInformationCandidat",
+        "DateIntegration",
         "DateReception",
+        "DateStatut",
         "DateTransmissionAdmin",
         "DecideurFinal",
         "DecisionPreselection",
@@ -757,11 +859,13 @@
         "Email",
         "Etablissement",
         "ID",
+        "IdAlternant",
         "IdHNCS",
         "InformationCandidat",
         "ModeReception",
         "MotifCode",
         "PolePressenti",
+        "RefMessage",
         "ResponsableAnalyse",
         "Statut",
         "StatutPrecedent",
@@ -771,6 +875,14 @@
         "Candidature",
         "Resultat",
         "Statut"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "Parametres": [
         "Categorie",
@@ -801,7 +913,8 @@
       "N-05",
       "N-06",
       "N-07",
-      "N-08"
+      "N-08",
+      "N-92"
     ],
     "childFlows": [
       "PA-00A",
@@ -813,7 +926,7 @@
   {
     "id": "PA-02b",
     "code": "PA-02b",
-    "displayName": "HNCS-RD PA-02b — Relance des candidatures sans traitement",
+    "displayName": "HNCS-RD PA-02b : Relance des candidatures sans traitement",
     "lot": 2,
     "type": "Planifié",
     "trigger": {
@@ -855,7 +968,7 @@
   {
     "id": "PA-03-ent",
     "code": "PA-03",
-    "displayName": "HNCS-RD PA-03 — Entretien (entretiens)",
+    "displayName": "HNCS-RD PA-03 : Entretien (entretiens)",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -867,6 +980,7 @@
     "listsRead": [
       "Candidatures",
       "Entretiens",
+      "HistoriqueStatuts",
       "Parametres"
     ],
     "listsWritten": [
@@ -899,6 +1013,7 @@
         "DateHeure",
         "DateSaisieResultat",
         "DateStatut",
+        "DemandeResultatEnvoyee",
         "ID",
         "IdHNCS",
         "LienReunion",
@@ -918,6 +1033,7 @@
         "CodeTransition",
         "DateChangement",
         "FluxRunId",
+        "ID",
         "ItemId",
         "Liste",
         "Motif",
@@ -948,7 +1064,8 @@
     ],
     "notifications": [
       "N-04",
-      "N-11"
+      "N-11",
+      "N-92"
     ],
     "childFlows": [
       "PA-00A",
@@ -960,7 +1077,7 @@
   {
     "id": "PA-03-cand",
     "code": "PA-03",
-    "displayName": "HNCS-RD PA-03 — Entretien (candidatures)",
+    "displayName": "HNCS-RD PA-03 : Entretien (candidatures)",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -977,6 +1094,7 @@
     "listsRead": [
       "Candidatures",
       "Entretiens",
+      "HistoriqueStatuts",
       "Parametres"
     ],
     "listsWritten": [
@@ -1000,13 +1118,20 @@
         "PolePressenti",
         "ResponsableAnalyse",
         "Statut",
-        "StatutPrecedent",
         "Title"
       ],
       "Entretiens": [
         "Candidature",
         "Resultat",
         "Statut"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "Parametres": [
         "Categorie",
@@ -1035,7 +1160,7 @@
   {
     "id": "PA-03b",
     "code": "PA-03b",
-    "displayName": "HNCS-RD PA-03b — Rappels d'entretien et demande de résultat",
+    "displayName": "HNCS-RD PA-03b : Rappels d'entretien et demande de résultat",
     "lot": 2,
     "type": "Planifié",
     "trigger": {
@@ -1091,7 +1216,7 @@
   {
     "id": "PA-04-cand",
     "code": "PA-04",
-    "displayName": "HNCS-RD PA-04 — Intégration (candidatures)",
+    "displayName": "HNCS-RD PA-04 : Intégration (candidatures)",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -1108,6 +1233,7 @@
       "Alternants",
       "Candidatures",
       "Etablissements",
+      "HistoriqueStatuts",
       "ModelesActions",
       "Parametres",
       "Referents"
@@ -1181,13 +1307,20 @@
         "ReferentPressenti",
         "ResponsableAnalyse",
         "Statut",
-        "StatutPrecedent",
         "Title"
       ],
       "Etablissements": [
         "ResponsableHNCS",
         "Statut",
         "Title"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "ModelesActions": [
         "Actif",
@@ -1242,7 +1375,7 @@
   {
     "id": "PA-04-alt",
     "code": "PA-04",
-    "displayName": "HNCS-RD PA-04 — Intégration (alternants)",
+    "displayName": "HNCS-RD PA-04 : Intégration (alternants)",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -1261,6 +1394,7 @@
       "Candidatures",
       "ComptesRendus",
       "Etablissements",
+      "HistoriqueStatuts",
       "Livrables",
       "ModelesActions",
       "Parametres",
@@ -1303,6 +1437,7 @@
         "Created",
         "DateDebut",
         "DateFin",
+        "DateStatut",
         "EmpreinteReferent",
         "Etablissement",
         "ID",
@@ -1325,6 +1460,14 @@
       ],
       "Etablissements": [
         "ResponsableHNCS"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "Livrables": [
         "Affectation",
@@ -1364,7 +1507,8 @@
       "ALT-T08"
     ],
     "notifications": [
-      "N-91"
+      "N-91",
+      "N-92"
     ],
     "childFlows": [
       "PA-00A",
@@ -1376,7 +1520,7 @@
   {
     "id": "PA-04-act",
     "code": "PA-04",
-    "displayName": "HNCS-RD PA-04 — Intégration (actions d'intégration)",
+    "displayName": "HNCS-RD PA-04 : Intégration (actions d'intégration)",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -1398,15 +1542,19 @@
       "ActionsIntegration": [
         "Bloquante",
         "Candidature",
+        "CodeModeleAction",
         "Commentaire",
         "Contexte",
         "Created",
+        "DateStatut",
+        "DernierRappel",
         "EmpreinteAction",
         "ID",
         "IdHNCS",
         "Preuve",
         "Responsable",
         "Statut",
+        "StatutPrecedent",
         "Title"
       ],
       "Candidatures": [
@@ -1439,7 +1587,7 @@
   {
     "id": "PA-04b",
     "code": "PA-04b",
-    "displayName": "HNCS-RD PA-04b — Activation des alternants et rappels d'actions",
+    "displayName": "HNCS-RD PA-04b : Activation des alternants et rappels d'actions",
     "lot": 2,
     "type": "Planifié",
     "trigger": {
@@ -1515,7 +1663,7 @@
   {
     "id": "PA-05",
     "code": "PA-05",
-    "displayName": "HNCS-RD PA-05 — Affectation",
+    "displayName": "HNCS-RD PA-05 : Affectation",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -1535,6 +1683,7 @@
       "Affectations",
       "Alternants",
       "ComptesRendus",
+      "HistoriqueStatuts",
       "Livrables",
       "Parametres",
       "Referents",
@@ -1557,6 +1706,7 @@
         "Created",
         "DateDebut",
         "DateFin",
+        "DateStatut",
         "EmpreinteVerrou",
         "ID",
         "IdHNCS",
@@ -1604,6 +1754,7 @@
         "CodeTransition",
         "DateChangement",
         "FluxRunId",
+        "ID",
         "ItemId",
         "Liste",
         "Motif",
@@ -1698,7 +1849,8 @@
       "N-20",
       "N-21",
       "N-22",
-      "N-91"
+      "N-91",
+      "N-92"
     ],
     "childFlows": [
       "PA-00A",
@@ -1710,7 +1862,7 @@
   {
     "id": "PA-06",
     "code": "PA-06",
-    "displayName": "HNCS-RD PA-06 — Échéance de livrable",
+    "displayName": "HNCS-RD PA-06 : Échéance de livrable",
     "lot": 2,
     "type": "Planifié",
     "trigger": {
@@ -1760,7 +1912,7 @@
   {
     "id": "PA-07",
     "code": "PA-07",
-    "displayName": "HNCS-RD PA-07 — Revue d'un livrable",
+    "displayName": "HNCS-RD PA-07 : Revue d'un livrable",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -1781,6 +1933,7 @@
     "listsRead": [
       "ActionsIntegration",
       "Affectations",
+      "HistoriqueStatuts",
       "Livrables",
       "LivrablesRD",
       "Parametres",
@@ -1813,6 +1966,14 @@
         "Referent",
         "Sujet"
       ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
+      ],
       "Livrables": [
         "Affectation",
         "CommentaireRevue",
@@ -1821,8 +1982,10 @@
         "DateDepot",
         "DatePremierDepot",
         "DateRevue",
+        "DateStatut",
         "DateValidation",
         "DecisionRevue",
+        "DernierRappel",
         "DoD1Fonctionnel",
         "DoD2FicheMethodo",
         "DoD3Restitution",
@@ -1832,6 +1995,7 @@
         "EcheanceInitiale",
         "EmpreinteCommentaire",
         "EmpreinteRevue",
+        "EnRetard",
         "ID",
         "IdHNCS",
         "LienDocument",
@@ -1908,7 +2072,7 @@
   {
     "id": "PA-07b",
     "code": "PA-07b",
-    "displayName": "HNCS-RD PA-07b — Dépôt d'une nouvelle version",
+    "displayName": "HNCS-RD PA-07b : Dépôt d'une nouvelle version",
     "lot": 2,
     "type": "Automatisé",
     "trigger": {
@@ -1953,7 +2117,9 @@
     },
     "statusesWritten": {},
     "transitions": [],
-    "notifications": [],
+    "notifications": [
+      "N-92"
+    ],
     "childFlows": [
       "PA-00C"
     ],
@@ -1962,7 +2128,7 @@
   {
     "id": "PA-08",
     "code": "PA-08",
-    "displayName": "HNCS-RD PA-08 — Compte rendu périodique",
+    "displayName": "HNCS-RD PA-08 : Compte rendu périodique",
     "lot": 3,
     "type": "Automatisé",
     "trigger": {
@@ -1982,6 +2148,7 @@
       "Affectations",
       "Alternants",
       "ComptesRendus",
+      "HistoriqueStatuts",
       "Parametres",
       "Referents"
     ],
@@ -2007,7 +2174,9 @@
         "CommentaireReferent",
         "Created",
         "DateRemise",
+        "DateStatut",
         "DateValidation",
+        "DernierRappel",
         "Echeance",
         "EmpreinteRevue",
         "EtatGeneral",
@@ -2021,6 +2190,14 @@
         "StatutPrecedent",
         "Title",
         "Valideur"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "Parametres": [
         "Categorie",
@@ -2056,7 +2233,7 @@
   {
     "id": "PA-08b",
     "code": "PA-08b",
-    "displayName": "HNCS-RD PA-08b — Création et relance des comptes rendus",
+    "displayName": "HNCS-RD PA-08b : Création et relance des comptes rendus",
     "lot": 3,
     "type": "Planifié",
     "trigger": {
@@ -2146,7 +2323,7 @@
   {
     "id": "PA-09-alt",
     "code": "PA-09",
-    "displayName": "HNCS-RD PA-09 — Fin d'alternance (alternants)",
+    "displayName": "HNCS-RD PA-09 : Fin d'alternance (alternants)",
     "lot": 3,
     "type": "Automatisé",
     "trigger": {
@@ -2166,6 +2343,7 @@
       "Alternants",
       "BilansAlternance",
       "Etablissements",
+      "HistoriqueStatuts",
       "Livrables",
       "ModelesActions",
       "Parametres",
@@ -2223,7 +2401,6 @@
         "Pole",
         "ReferentPrincipal",
         "Statut",
-        "StatutPrecedent",
         "Title"
       ],
       "BilansAlternance": [
@@ -2238,6 +2415,14 @@
       ],
       "Etablissements": [
         "ResponsableHNCS"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "Livrables": [
         "Affectation",
@@ -2302,7 +2487,7 @@
   {
     "id": "PA-09-bil",
     "code": "PA-09",
-    "displayName": "HNCS-RD PA-09 — Fin d'alternance (bilans)",
+    "displayName": "HNCS-RD PA-09 : Fin d'alternance (bilans)",
     "lot": 3,
     "type": "Automatisé",
     "trigger": {
@@ -2316,6 +2501,7 @@
       "Alternants",
       "BilansAlternance",
       "Etablissements",
+      "JournalFlux",
       "ModelesActions",
       "Parametres",
       "Referents"
@@ -2368,6 +2554,11 @@
         "Statut",
         "Title"
       ],
+      "JournalFlux": [
+        "IdObjet",
+        "Message",
+        "Title"
+      ],
       "ModelesActions": [
         "Actif",
         "Bloquante",
@@ -2400,7 +2591,8 @@
     },
     "transitions": [],
     "notifications": [
-      "N-38"
+      "N-38",
+      "N-92"
     ],
     "childFlows": [
       "PA-00C"
@@ -2410,7 +2602,7 @@
   {
     "id": "PA-09b",
     "code": "PA-09b",
-    "displayName": "HNCS-RD PA-09b — Détection des fins d'alternance",
+    "displayName": "HNCS-RD PA-09b : Détection des fins d'alternance",
     "lot": 3,
     "type": "Planifié",
     "trigger": {
@@ -2526,7 +2718,7 @@
   {
     "id": "PA-10-conv",
     "code": "PA-10",
-    "displayName": "HNCS-RD PA-10 — École et convention (conventions)",
+    "displayName": "HNCS-RD PA-10 : École et convention (conventions)",
     "lot": 3,
     "type": "Automatisé",
     "trigger": {
@@ -2547,6 +2739,7 @@
     "listsRead": [
       "Conventions",
       "Etablissements",
+      "HistoriqueStatuts",
       "Parametres"
     ],
     "listsWritten": [
@@ -2559,6 +2752,7 @@
         "DateDecisionPartenariat",
         "DateFin",
         "DateSignature",
+        "DateStatut",
         "DecideurPartenariat",
         "DecisionPartenariat",
         "EmpreinteDecision",
@@ -2575,6 +2769,14 @@
         "ID",
         "Statut",
         "Title"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "Parametres": [
         "Categorie",
@@ -2608,7 +2810,7 @@
   {
     "id": "PA-10-int",
     "code": "PA-10",
-    "displayName": "HNCS-RD PA-10 — École et convention (échanges)",
+    "displayName": "HNCS-RD PA-10 : École et convention (échanges)",
     "lot": 3,
     "type": "Automatisé",
     "trigger": {
@@ -2652,7 +2854,9 @@
     },
     "statusesWritten": {},
     "transitions": [],
-    "notifications": [],
+    "notifications": [
+      "N-92"
+    ],
     "childFlows": [
       "PA-00C"
     ],
@@ -2661,7 +2865,7 @@
   {
     "id": "PA-10b",
     "code": "PA-10b",
-    "displayName": "HNCS-RD PA-10b — Échéances des conventions et des écoles",
+    "displayName": "HNCS-RD PA-10b : Échéances des conventions et des écoles",
     "lot": 3,
     "type": "Planifié",
     "trigger": {
@@ -2732,7 +2936,7 @@
   {
     "id": "PA-11",
     "code": "PA-11",
-    "displayName": "HNCS-RD PA-11 — Préparation de la gouvernance",
+    "displayName": "HNCS-RD PA-11 : Préparation de la gouvernance",
     "lot": 3,
     "type": "Planifié",
     "trigger": {
@@ -2809,7 +3013,7 @@
   {
     "id": "PA-12",
     "code": "PA-12",
-    "displayName": "HNCS-RD PA-12 — Validation des communications",
+    "displayName": "HNCS-RD PA-12 : Validation des communications",
     "lot": 3,
     "type": "Automatisé",
     "trigger": {
@@ -2829,6 +3033,7 @@
     ],
     "listsRead": [
       "CommunicationsRD",
+      "HistoriqueStatuts",
       "Parametres"
     ],
     "listsWritten": [
@@ -2842,6 +3047,7 @@
         "Created",
         "DateEffective",
         "DatePrevue",
+        "DateStatut",
         "DateValidation",
         "Externe",
         "ID",
@@ -2851,6 +3057,14 @@
         "Title",
         "UrlPublication",
         "ValidationInterne"
+      ],
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
       ],
       "Parametres": [
         "Categorie",
@@ -2871,7 +3085,8 @@
     ],
     "notifications": [
       "N-44",
-      "N-45"
+      "N-45",
+      "N-92"
     ],
     "childFlows": [
       "PA-00A",
@@ -2883,13 +3098,13 @@
   {
     "id": "PA-13",
     "code": "PA-13",
-    "displayName": "HNCS-RD PA-13 — Conservation des candidatures",
+    "displayName": "HNCS-RD PA-13 : Conservation des candidatures",
     "lot": 5,
     "type": "Planifié",
     "trigger": {
       "kind": "Recurrence",
       "list": null,
-      "recurrence": "Mensuel (le 1er à 06:00, heure de Paris) — désactivé par défaut"
+      "recurrence": "Mensuel (le 1er à 06:00, heure de Paris) : désactivé par défaut"
     },
     "targetStatuses": [],
     "listsRead": [
@@ -2930,7 +3145,7 @@
   {
     "id": "PA-14",
     "code": "PA-14",
-    "displayName": "HNCS-RD PA-14 — Arbitrage du portefeuille de sujets",
+    "displayName": "HNCS-RD PA-14 : Arbitrage du portefeuille de sujets",
     "lot": 3,
     "type": "Automatisé",
     "trigger": {
@@ -2949,6 +3164,7 @@
       "Abandonné"
     ],
     "listsRead": [
+      "HistoriqueStatuts",
       "Parametres",
       "Referents",
       "SujetsRD"
@@ -2957,6 +3173,14 @@
       "SujetsRD"
     ],
     "fieldsUsed": {
+      "HistoriqueStatuts": [
+        "CodeTransition",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Resultat",
+        "StatutApres"
+      ],
       "Parametres": [
         "Categorie",
         "Title",
@@ -2967,6 +3191,7 @@
       ],
       "SujetsRD": [
         "Created",
+        "DateStatut",
         "ID",
         "IdHNCS",
         "MotifDecision",
@@ -2991,7 +3216,8 @@
       "SUJ-T09"
     ],
     "notifications": [
-      "N-47"
+      "N-47",
+      "N-92"
     ],
     "childFlows": [
       "PA-00A",

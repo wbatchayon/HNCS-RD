@@ -37,7 +37,7 @@ DIST = FLOWS / "dist"
 MODEL = json.loads((ROOT / "provisioning" / "model" / "model.generated.json").read_text(encoding="utf-8"))
 
 SOLUTION = "HNCSRDSuivi"
-SOLUTION_LABEL = "HNCS-RD — Suivi R&D (flux Power Automate)"
+SOLUTION_LABEL = "HNCS-RD : Suivi R&D (flux Power Automate)"
 PUBLISHER = "hncs"
 PUBLISHER_LABEL = "HNCS Groupe"
 PREFIX = "hncs"

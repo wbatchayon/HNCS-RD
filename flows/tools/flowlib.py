@@ -253,6 +253,10 @@ class Flow:
                  targets=(), enabled=True, objet=None):
         self.id = tech_id
         self.code = code
+        # Nom affiché : « HNCS-RD PA-xx : <Libellé du catalogue> » (§ 2.2), suffixe de liste éventuel conservé
+        m = re.search(r"\s(\([^()]*\))$", label)
+        if code in MODEL.flows:
+            label = f"HNCS-RD {code} : {MODEL.flows[code]['name']}" + (f" {m.group(1)}" if m else "")
         self.label = label
         self.lot = lot
         self.type = ftype
@@ -582,12 +586,12 @@ def post_item(seq, base, lst, values: dict, after=None):
     return seq.add(base, conn_action(flow, "shared_sharepointonline", "PostItem", params), after=after)
 
 
-def item_changes(seq, base, lst, id_expr, after=None):
+def item_changes(seq, base, lst, id_expr, after=None, since=None):
     flow = seq.flow
     flow.read(lst)
     return seq.add(base, conn_action(flow, "shared_sharepointonline", "GetItemChanges", {
         "dataset": at(SITE), "table": MODEL.title(lst), "id": at(id_expr),
-        "since": ip("triggerOutputs()?['body/{TriggerWindowStartToken}']"), "includeDrafts": False}), after=after)
+        "since": ip(since or "triggerOutputs()?['body/{TriggerWindowStartToken}']"), "includeDrafts": False}), after=after)
 
 
 def create_folder(seq, base, lib, rel_expr, after=None):
@@ -761,7 +765,7 @@ def eval_controls(seq, v, known: dict, tag):
 def ctl_msg(code, detail_expr=None):
     rule = MODEL.control_rule(code)
     if detail_expr:
-        return f"concat({q(code + ' — ')}, {detail_expr})"
+        return f"concat({q(code + ' : ')}, {detail_expr})"
     return q(f"{code} ({rule})")
 
 

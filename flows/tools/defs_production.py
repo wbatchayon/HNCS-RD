@@ -6,7 +6,7 @@ from flowlib import (MODEL, SITE, SVC, TZ, TODAY, ANTI_LOOP, Flow, P, arr, at, c
                      foreach, get_item, get_items, grant_folder, grant_item, ip, item_link, list_exists, lib_url, list_link,
                      log, notify, odq, patch_item, post_item, q, recurrence_trigger, select, sp_trigger, standard_shell,
                      switch, terminate, truthy)
-from gen_common import (jdate, jnum, CR_FP, DOD, I_EL, LIV_FP, Env, affectation_controls, cadence_effective, capitalisation_parts,
+from gen_common import (restore_flux_columns, jdate, jnum, CR_FP, DOD, I_EL, LIV_FP, Env, affectation_controls, cadence_effective, capitalisation_parts,
                         changed_keys, controls_needed_for, cr_controls, create_cr, emp_action, first, flux_creation,
                         fp_compute, fp_refresh, fp_restore_values, livrable_controls, lookup_first, period_current,
                         period_end, period_first, transition_body, valideur_legitime)
@@ -52,7 +52,7 @@ def ev_trigger():
 # --------------------------------------------------------------------------------------------
 
 def creer_livrable(s, f, tag, aff_id, aff_idobj, suj, modele, owner, reviseur, echeance):
-    vals = {"Title": ip(f"concat({modele}?['Title'], ' — ', coalesce({suj}?['IdHNCS'], ''))"),
+    vals = {"Title": ip(f"concat({modele}?['Title'], ' : ', coalesce({suj}?['IdHNCS'], ''))"),
             "Affectation": at(aff_id), "Sujet": at(f"{suj}?['ID']"),
             "TypeLivrable": ip(f"coalesce({modele}?['TypeLivrableCible']?['Value'], 'Autre')"),
             "Modele": at(f"{modele}?['ID']"), "VersionModele": ip(f"{modele}?['Version']"),
@@ -74,21 +74,19 @@ def n22(s, f, I, ID, idobj, alt_mail, ref_mail, tag):
     sel = select(s, f"Ids_livrables_ouverts_{tag}", f"body('{lv}')?['value']", at("concat(item()?['IdHNCS'], ' (', item()?['Statut']?['Value'], ')')"))
     f.use(AFF, "DateFin", "MotifFin")
     notify(s, "N-22", [alt_mail, ref_mail, f.group_emails("G_RD")], {
-        "IdHNCS": idobj, "DateFin": dfr(I + "?['DateFin']"), "MotifFin": f"coalesce({I}?['MotifFin'], '—')",
+        "IdHNCS": idobj, "DateFin": dfr(I + "?['DateFin']"), "MotifFin": f"coalesce({I}?['MotifFin'], '-')",
         "LivrablesOuverts": f"if(empty(body('{sel}')), 'aucun', join(body('{sel}'), ', '))", "Lien": item_link(AFF, ID)})
 
 
 # --------------------------------------------------------------------------------------------
-# PA-05 — Affectation
+# PA-05 : Affectation
 # --------------------------------------------------------------------------------------------
 
 def pa05():
-    f = Flow("PA-05", "PA-05", "HNCS-RD PA-05 — Affectation", 2, "Automatisé", "SharePointItem", AFF,
+    f = Flow("PA-05", "PA-05", "HNCS-RD PA-05 : Affectation", 2, "Automatisé", "SharePointItem", AFF,
              targets=targets("PA-05", AFF), objet="Affectation")
     t = "triggerOutputs()?['body/"
-    sp_trigger(f, AFF, "GetOnUpdatedItems", [ANTI_LOOP,
-               f"@or(and(not(equals(coalesce({t}Statut/Value'], ''), coalesce({t}StatutPrecedent'], ''))), contains({arr(f.targets)}, {t}Statut/Value'])), "
-               f"and(not(empty({t}EmpreinteVerrou'])), not(equals({t}EmpreinteVerrou'], {ev_trigger()}))))"])
+    sp_trigger(f, AFF, "GetOnUpdatedItems", [ANTI_LOOP])  # RX-02 : toute modification humaine
     f.use(AFF, "Alternant", "Sujet", "Referent", "DateDebut", "DateFin", "EmpreinteVerrou", "Title", "AffectationRemplacee",
           "MotifFin", "CadenceCR", "Objectifs", "ProchaineEcheanceCR", "IdHNCS")
     f.use("Alternants", "CompteM365", "IdHNCS", "ID", "ReferentPrincipal", "EmpreinteReferent", "Title")
@@ -99,7 +97,7 @@ def pa05():
             I = env.I
             cond(z, "Si_titre_vide", f"empty({I}?['Title'])",
                  lambda y: patch_item(y, "Renseigner_titre", AFF, env.ID, {
-                     "Title": ip(f"concat(coalesce({I}?['Alternant']?['Value'], ''), ' – ', coalesce({I}?['Sujet']?['Value'], ''))")}, I))
+                     "Title": ip(f"concat(coalesce({I}?['Alternant']?['Value'], ''), ' / ', coalesce({I}?['Sujet']?['Value'], ''))")}, I))
             emp = f"coalesce({I}?['EmpreinteVerrou'], '')"
 
             def restore(y):
@@ -111,14 +109,14 @@ def pa05():
                     AFF, env.ID, env.IDOBJ)
                 notify(y, "N-91", [ACTEUR], {"IdHNCS": env.IDOBJ, "Champs": q("Alternant, Sujet, Référent, Date de début"), "Lien": env.LIEN},
                        teams_to=[ACTEUR])
-                # v1.5.0 : pas d'arrêt — un changement de statut fait dans la même modification est traité ensuite
+                # v1.5.0 : pas d'arrêt : un changement de statut fait dans la même modification est traité ensuite
                 # sur les valeurs rétablies (sinon la garde de transition termine l'exécution)
             viole = compose(z, "Verrou_viole", at(f"and(not(empty({emp})), {verrou_differs(emp, I)})"))
             vv = f"equals(string(outputs('{viole}')), 'True')"
             cond(z, "Si_champs_verrouilles_modifies", vv, restore)
             # § 6.5 : empreinte vide sur une affectation déjà active (données importées) → initialisation, sans rien rétablir
             cond(z, "Si_verrou_a_initialiser",
-                 f"and(empty({emp}), contains(createArray('Active', 'À risque', 'Bloquée', 'Terminée', 'Clôturée'), coalesce({I}?['StatutPrecedent'], '')))",
+                 f"and(empty({emp}), contains(createArray('Active', 'À risque', 'Bloquée', 'Terminée', 'Clôturée'), {env.AVANT}))",
                  lambda y: patch_item(y, "Initialiser_EmpreinteVerrou", AFF, env.ID, {"EmpreinteVerrou": ip(ev_item(I))}, I))
             env["ALT"] = lookup_first(z, "Alternant_affectation", "Alternants", f"if({vv}, json({emp})?['AlternantId'], {I}?['Alternant']?['Id'])",
                                       fields=("CompteM365", "IdHNCS", "Statut", "ReferentPrincipal", "EmpreinteReferent", "Title"))
@@ -192,7 +190,7 @@ def pa05():
                 f.use("SujetsRD", "Title", "GitlabProjetUrl")
                 notify(y, "N-20", [am, rm], {
                     "IdHNCS": env.IDOBJ, "NomAlternant": f"{A}?['Title']",
-                    "Sujet": f"concat({sujid}, ' — ', coalesce({suj}?['Title'], ''))", "Objectifs": f"coalesce({I}?['Objectifs'], '—')",
+                    "Sujet": f"concat({sujid}, ' : ', coalesce({suj}?['Title'], ''))", "Objectifs": f"coalesce({I}?['Objectifs'], '-')",
                     "Livrables": f"if(empty(body('{ids}')), 'aucun', join(body('{ids}'), ', '))",
                     "LienSujet": item_link("SujetsRD", f"coalesce({suj}?['ID'], 0)"),
                     "LienGitlab": f"coalesce({suj}?['GitlabProjetUrl'], {item_link('SujetsRD', f"coalesce({suj}?['ID'], 0)")})",
@@ -239,11 +237,11 @@ def pa05():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-06 — Échéance de livrable
+# PA-06 : Échéance de livrable
 # --------------------------------------------------------------------------------------------
 
 def pa06():
-    f = Flow("PA-06", "PA-06", "HNCS-RD PA-06 — Échéance de livrable", 2, "Planifié", "Recurrence", recurrence="Quotidien 07:00 (heure de Paris)")
+    f = Flow("PA-06", "PA-06", "HNCS-RD PA-06 : Échéance de livrable", 2, "Planifié", "Recurrence", recurrence="Quotidien 07:00 (heure de Paris)")
     recurrence_trigger(f, {"frequency": "Day", "interval": 1, "schedule": {"hours": ["7"], "minutes": [0]}})
 
     def body(s):
@@ -292,11 +290,11 @@ def pa06():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-07 — Revue d'un livrable
+# PA-07 : Revue d'un livrable
 # --------------------------------------------------------------------------------------------
 
 def pa07():
-    f = Flow("PA-07", "PA-07", "HNCS-RD PA-07 — Revue d'un livrable", 2, "Automatisé", "SharePointItem", LIV,
+    f = Flow("PA-07", "PA-07", "HNCS-RD PA-07 : Revue d'un livrable", 2, "Automatisé", "SharePointItem", LIV,
              targets=targets("PA-07", LIV), objet="Livrable")
     sp_trigger(f, LIV, "GetOnUpdatedItems", [ANTI_LOOP])  # P-09 : toute modification humaine
     f.use(LIV, "Affectation", "Sujet", "Reviseur", "Proprietaire", "Modele", "VersionModele", "Echeance", "EcheanceInitiale",
@@ -369,7 +367,7 @@ def pa07():
                      lambda w: notify(w, "N-92", [ACTEUR], {"IdHNCS": env.IDOBJ, "Champs": q("Reviseur"),
                                                             "RoleHabilite": q("Réviseur : référent de l'affectation ou membre de la Direction R&D"),
                                                             "Lien": env.LIEN}, teams_to=[ACTEUR]))
-            cond(z, "Si_creation", f"and(empty({I}?['StatutPrecedent']), equals({env.APRES}, 'À produire'))", creation)
+            cond(z, "Si_creation", f"and(equals({env.AVANT}, '∅'), equals({env.APRES}, 'À produire'))", creation)
             env["REV"] = f"if(and(not(empty({I}?['Reviseur']?['Email'])), {rev_ok}), {I}?['Reviseur']?['Email'], {env.REFMAIL})"
 
         dec_new = "less(ticks(coalesce({I}?['DateRevue'], '1900-01-01T00:00:00Z')), ticks(triggerOutputs()?['body/Modified']))"
@@ -431,7 +429,7 @@ def pa07():
                     lambda e, loop: patch_item(e, "Terminer_correction", ACT, f"items('{loop}')?['ID']", {"Statut": "Terminée"}, f"items('{loop}')"))
             notify(z, "N-27", [f"{I}?['Proprietaire']?['Email']"], {
                 "IdHNCS": env.IDOBJ, "Valideur": "coalesce(triggerOutputs()?['body/Editor/DisplayName'], '')",
-                "Date": dfr("utcNow()"), "Version": f"string(coalesce(first(body('{d}')?['value'])?['{{VersionNumber}}'], '—'))",
+                "Date": dfr("utcNow()"), "Version": f"string(coalesce(first(body('{d}')?['value'])?['{{VersionNumber}}'], '-'))",
                 "Lien": env.LIEN}, teams_to=[f"{I}?['Proprietaire']?['Email']"])
 
         def archive(z, env, tag="man"):
@@ -442,7 +440,7 @@ def pa07():
         def suspendu(z, env):
             I = env.I
             notify(z, "N-29", [f"{I}?['Proprietaire']?['Email']", env.REV], {
-                "IdHNCS": env.IDOBJ, "Statut": env.APRES, "Motif": f"coalesce({I}?['MotifSuspension'], '—')", "Lien": env.LIEN})
+                "IdHNCS": env.IDOBJ, "Statut": env.APRES, "Motif": f"coalesce({I}?['MotifSuspension'], '-')", "Lien": env.LIEN})
 
         def post(s2, env):
             def capitalise(y):
@@ -476,12 +474,14 @@ def pa07():
 
 
 def pa07b():
-    f = Flow("PA-07b", "PA-07b", "HNCS-RD PA-07b — Dépôt d'une nouvelle version", 2, "Automatisé", "SharePointFile", "LivrablesRD")
+    f = Flow("PA-07b", "PA-07b", "HNCS-RD PA-07b : Dépôt d'une nouvelle version", 2, "Automatisé", "SharePointFile", "LivrablesRD")
     sp_trigger(f, "LivrablesRD", "GetOnUpdatedFileItems", [ANTI_LOOP, "@not(empty(triggerOutputs()?['body/Livrable/Id']))"])
     f.use("LivrablesRD", "Livrable", "Sujet", "IdObjet", "ID")
 
     def body(s):
         T = "triggerOutputs()?['body"
+        restore_flux_columns(s, "LivrablesRD", "triggerOutputs()?['body/ID']", "''",
+                             "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))")
         g = get_item(s, "Lire_livrable", LIV, f"{T}/Livrable/Id']")
         L = f"body('{g}')"
         f.use(LIV, "IdHNCS", "Sujet", "LienDocument", "ID")
@@ -495,11 +495,11 @@ def pa07b():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-08 — Compte rendu périodique et PA-08b
+# PA-08 : Compte rendu périodique et PA-08b
 # --------------------------------------------------------------------------------------------
 
 def pa08():
-    f = Flow("PA-08", "PA-08", "HNCS-RD PA-08 — Compte rendu périodique", 3, "Automatisé", "SharePointItem", CR,
+    f = Flow("PA-08", "PA-08", "HNCS-RD PA-08 : Compte rendu périodique", 3, "Automatisé", "SharePointItem", CR,
              targets=targets("PA-08", CR), objet="CompteRendu")
     sp_trigger(f, CR, "GetOnUpdatedItems", [ANTI_LOOP])  # P-09 : toute modification humaine
     f.use(CR, "Affectation", "Alternant", "Valideur", "Title", "PeriodeDebut", "PeriodeFin", "EmpreinteRevue", "DateRemise",
@@ -537,23 +537,23 @@ def pa08():
 
             def creation(y):
                 patch_item(y, "Effets_creation", CR, env.ID, {
-                    "Title": ip(f"coalesce({I}?['Title'], concat('CR ', coalesce({aff}?['IdHNCS'], ''), ' — ', {dloc(I + "?['PeriodeDebut']")}, ' au ', {dloc(I + "?['PeriodeFin']")}))"),
+                    "Title": ip(f"coalesce({I}?['Title'], concat('CR ', coalesce({aff}?['IdHNCS'], ''), ' : ', {dloc(I + "?['PeriodeDebut']")}, ' au ', {dloc(I + "?['PeriodeFin']")}))"),
                     "Alternant": at(f"coalesce({I}?['Alternant']?['Id'], {aff}?['Alternant']?['Id'])"),
                     "Valideur": at(f"if(empty({I}?['Valideur']?['Email']), {env.REFMAIL}, {I}?['Valideur']?['Claims'])")}, I)
                 grant_item(y, "cr", CR, env.ID, [("user", env.ALTMAIL, "CSS"), ("user", env.VAL, "CSS")])
-            cond(z, "Si_creation", f"and(empty({I}?['StatutPrecedent']), equals({env.APRES}, 'Attendu'))", creation)
+            cond(z, "Si_creation", f"and(equals({env.AVANT}, '∅'), equals({env.APRES}, 'Attendu'))", creation)
 
         def remis(z, env):
             I = env.I
             patch_item(z, "Date_remise", CR, env.ID, {"DateRemise": ip("utcNow()")}, I)
-            notify(z, "N-32", [env.VAL], {"IdHNCS": env.IDOBJ, "NomAlternant": env.ALTNOM, "EtatGeneral": f"coalesce({I}?['EtatGeneral']?['Value'], '—')",
-                                          "Avancement": f"string(coalesce({I}?['Avancement'], '—'))", "Lien": env.LIEN}, teams_to=[env.VAL])
+            notify(z, "N-32", [env.VAL], {"IdHNCS": env.IDOBJ, "NomAlternant": env.ALTNOM, "EtatGeneral": f"coalesce({I}?['EtatGeneral']?['Value'], '-')",
+                                          "Avancement": f"string(coalesce({I}?['Avancement'], '-'))", "Lien": env.LIEN}, teams_to=[env.VAL])
             cond(z, "Si_blocage_signale", truthy(I + "?['BlocageSignale']"),
                  lambda y: notify(y, "N-33", [f.group_emails("G_DRD")], {"IdHNCS": env.IDOBJ, "Lien": env.LIEN}))
 
         def n34(z, env, explication):
             notify(z, "N-34", [env.ALTMAIL], {"IdHNCS": env.IDOBJ, "Statut": env.APRES, "Explication": q(explication),
-                                              "Commentaire": f"replace(coalesce({env.I}?['CommentaireReferent'], '—'), decodeUriComponent('%0A'), '<br/>')",
+                                              "Commentaire": f"replace(coalesce({env.I}?['CommentaireReferent'], '-'), decodeUriComponent('%0A'), '<br/>')",
                                               "Lien": env.LIEN}, teams_to=[env.ALTMAIL])
 
         def valide(z, env):
@@ -575,7 +575,7 @@ def pa08():
 
 
 def pa08b():
-    f = Flow("PA-08b", "PA-08b", "HNCS-RD PA-08b — Création et relance des comptes rendus", 3, "Planifié", "Recurrence",
+    f = Flow("PA-08b", "PA-08b", "HNCS-RD PA-08b : Création et relance des comptes rendus", 3, "Planifié", "Recurrence",
              recurrence="Quotidien 06:45 (heure de Paris)")
     recurrence_trigger(f, {"frequency": "Day", "interval": 1, "schedule": {"hours": ["6"], "minutes": [45]}})
 
@@ -614,7 +614,7 @@ def pa08b():
             alt = lookup_first(e, "Alternant_CR", "Alternants", f"{it}?['Alternant']?['Id']", fields=("CompteM365",))
             am = f"{alt}?['CompteM365']?['Email']"
             notify(e, "N-30", [am], {"IdHNCS": f"coalesce({it}?['IdHNCS'], string({it}?['ID']))", "Date": dfr(it + "?['Echeance']"),
-                                     "Periode": f"concat({dfr(it + "?['PeriodeDebut']")}, ' – ', {dfr(it + "?['PeriodeFin']")})",
+                                     "Periode": f"concat({dfr(it + "?['PeriodeDebut']")}, ' au ', {dfr(it + "?['PeriodeFin']")})",
                                      "Lien": item_link(CR, f"{it}?['ID']")}, teams_to=[am])
             patch_item(e, "Memoriser_rappel", CR, f"{it}?['ID']", {"DernierRappel": ip(f"concat('J-1:', {demain})")}, it)
         foreach(s, "Pour_rappel", f"body('{veille}')", rappel)
@@ -629,7 +629,7 @@ def pa08b():
                             cr_controls(f, it, controls_needed_for("CR-T04")), src=it,
                             after_fn=lambda w: notify(w, "N-31", [f"{it}?['Valideur']?['Email']"], {
                                 "IdHNCS": idc, "NomAlternant": f"{alt}?['Title']", "Date": dfr(it + "?['Echeance']"),
-                                "Periode": f"concat({dfr(it + "?['PeriodeDebut']")}, ' – ', {dfr(it + "?['PeriodeFin']")})",
+                                "Periode": f"concat({dfr(it + "?['PeriodeDebut']")}, ' au ', {dfr(it + "?['PeriodeFin']")})",
                                 "Lien": item_link(CR, f"{it}?['ID']")}))
         foreach(s, "Pour_CR_echu", f"body('{echus}')", non_remis)
     standard_shell(f, body)
@@ -643,10 +643,10 @@ DOC = {
     "PA-05": dict(
         objectif="Exécuter les conséquences d'une affectation décidée par la R&D (accès, livrables proposés, premier compte rendu, référent principal), protéger l'affectation active (P-03) et terminer une affectation remplacée sans l'écraser.",
         entrees="Élément `Affectations` créé ou modifié (changement de statut, ou champs verrouillés différents de `EmpreinteVerrou`).",
-        etapes=["`IdHNCS` ; `Title` = `{IdAlternant} – {IdSujet}` si vide.",
+        etapes=["`IdHNCS` ; `Title` = `{IdAlternant} / {IdSujet}` si vide.",
                 "Verrouillage (P-03) : `EmpreinteVerrou` (`{\"AlternantId\":12,\"SujetId\":3,\"ReferentId\":5,\"DateDebut\":\"2026-11-02\"}`, § 6.5) renseignée et `Alternant`, `Sujet`, `Referent` ou `DateDebut` différents (comparaison clé par clé) → valeurs rétablies, Avertissement, N-91 à l'auteur (« créez une nouvelle affectation ») ; si la même modification change le statut, la transition est ensuite traitée sur les valeurs rétablies, sinon fin ; empreinte vide sur une affectation déjà validée (données importées) → initialisée sans rien rétablir.",
                 "Transition : PA-00A (`ItemAuteurEmail` = compte de l'alternant, `ItemValideurEmail` = compte du référent) puis `G_AFFECTATION_COMPLETE` (dont `CompteM365` de l'alternant renseigné), `G_DATE_FIN`, `G_LIVRABLES_CLOS`.",
-                "**Active** (depuis « À préparer ») : `EmpreinteVerrou` figée ; dossier `04 — Livrables R&D/{SUJ}` (alternant CSS) ; lecture de l'alternant sur l'affectation ; référent CSS sur `05 — Suivi des alternants/{ALT}` ; référent principal de l'alternant = référent de l'affectation (et `EmpreinteReferent`), changement historisé (Objet = Alternant, `CodeTransition` = `REF-PRINCIPAL`, `StatutAvant` / `StatutApres` = `IdHNCS` des référents) et lecture du référent sur la fiche ; livrables « À produire » proposés depuis `RegistreModeles` (`CreationAuto`, « Approuvé », `ApplicableA` contient le type du sujet ; `Proprietaire` = compte de l'alternant, `Reviseur` = compte du référent ; idempotent par affectation + modèle ; effets de création de PA-07 exécutés : propriétaire CSS, `EmpreinteRevue`, LIV-T01 FLUX) ; premier compte rendu « Attendu » si la liste du lot 3 existe et que la cadence n'est pas « Par jalon » (effets de création de PA-08, CR-T01 FLUX), `ProchaineEcheanceCR` ; N-20.",
+                "**Active** (depuis « À préparer ») : `EmpreinteVerrou` figée ; dossier `04 : Livrables R&D/{SUJ}` (alternant CSS) ; lecture de l'alternant sur l'affectation ; référent CSS sur `05 : Suivi des alternants/{ALT}` ; référent principal de l'alternant = référent de l'affectation (et `EmpreinteReferent`), changement historisé (Objet = Alternant, `CodeTransition` = `REF-PRINCIPAL`, `StatutAvant` / `StatutApres` = `IdHNCS` des référents) et lecture du référent sur la fiche ; livrables « À produire » proposés depuis `RegistreModeles` (`CreationAuto`, « Approuvé », `ApplicableA` contient le type du sujet ; `Proprietaire` = compte de l'alternant, `Reviseur` = compte du référent ; idempotent par affectation + modèle ; effets de création de PA-07 exécutés : propriétaire CSS, `EmpreinteRevue`, LIV-T01 FLUX) ; premier compte rendu « Attendu » si la liste du lot 3 existe et que la cadence n'est pas « Par jalon » (effets de création de PA-08, CR-T01 FLUX), `ProchaineEcheanceCR` ; N-20.",
                 "Remplacement (`AffectationRemplacee` active) : `DateFin` = max(début de l'ancienne, début de la nouvelle − 1 jour), `MotifFin` = « Remplacée par {IdHNCS} », AFF-T05 (FLUX, `G_DATE_FIN`) puis N-22 listant les livrables encore ouverts ; aucun autre champ de l'ancienne affectation n'est modifié ; aucun transfert automatique de livrable (H-51).",
                 "**À risque / Bloquée** : N-21 à G_DRD. **Terminée** : N-22 (livrables encore ouverts listés, décision de la R&D). **Clôturée** : `G_LIVRABLES_CLOS`.", "PA-00B."],
         sorties="Empreinte, accès, livrables et compte rendu proposés, référent principal, historique, notifications.",
@@ -681,7 +681,7 @@ DOC = {
         tests=["Alternant désigné réviseur de son propre livrable → validation refusée.", "Corrections avec le même commentaire que la fois précédente → refus `G_COMMENTAIRE_REVUE`.",
                "Membre G_REF non réviseur qui coche un critère DoD → rétabli, N-92.", "Validation d'un POC avec DoD complète → archivage automatique (LIV-T08), documents « Référence »."]),
     "PA-07b": dict(
-        objectif="Rattacher les documents déposés dans « 04 — Livrables R&D » à leur livrable, sans changer son statut.",
+        objectif="Rattacher les documents déposés dans « 04 : Livrables R&D » à leur livrable, sans changer son statut.",
         entrees="Fichier créé ou modifié dans `LivrablesRD` avec la colonne `Livrable` renseignée.",
         etapes=["`IdObjet` = `IdHNCS` du livrable ; `Sujet` du document = sujet du livrable si vide.",
                 "`LienDocument` du livrable vide → renseigné avec le lien du fichier.", "**Aucun changement de statut** : la soumission reste une action explicite (LIV-T03)."],

@@ -3,21 +3,22 @@ from __future__ import annotations
 
 import json
 
-from flowlib import (MODEL, SITE, SVC, SUPPORT, TZ, Flow, Seq, P, arr, at, child_trigger, compose, cond, filt, foreach,
+from flowlib import (odq, MODEL, SITE, SVC, SUPPORT, TZ, Flow, Seq, P, arr, at, child_trigger, compose, cond, filt, foreach,
                      get_items, html_table, ip, list_exists, log, notify, odq, patch_item, post_item, q, read_params,
                      recurrence_trigger, response, scope, select, sp_http, standard_shell, terminate, idhncs_expr,
                      list_srv, item_link, list_link)
 
 T = "triggerBody()"
 STATUS_LISTS = sorted({p["list"] for p in MODEL.partition})
+ACCEPTEE, REFUSEE = MODEL.enums["RESULTAT_TRANSITION"][0], MODEL.enums["RESULTAT_TRANSITION"][1]
 
 
 # --------------------------------------------------------------------------------------------
-# PA-00A — Vérifier une transition
+# PA-00A : Vérifier une transition
 # --------------------------------------------------------------------------------------------
 
 def pa00a():
-    f = Flow("PA-00A", "PA-00A", "HNCS-RD PA-00A — Vérifier une transition", 2, "Flux enfant", "ChildFlow")
+    f = Flow("PA-00A", "PA-00A", "HNCS-RD PA-00A : Vérifier une transition", 2, "Flux enfant", "ChildFlow")
     f.params_needed = False
     child_trigger(f, {
         "Objet": ("string", "Objet de la transition (énumération OBJET_TRANSITION)"),
@@ -109,11 +110,11 @@ def pa00a():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-00B — Appliquer ou annuler une transition
+# PA-00B : Appliquer ou annuler une transition
 # --------------------------------------------------------------------------------------------
 
 def pa00b():
-    f = Flow("PA-00B", "PA-00B", "HNCS-RD PA-00B — Appliquer ou annuler une transition", 2, "Flux enfant", "ChildFlow")
+    f = Flow("PA-00B", "PA-00B", "HNCS-RD PA-00B : Appliquer ou annuler une transition", 2, "Flux enfant", "ChildFlow")
     child_trigger(f, {
         "Liste": ("string", "Nom interne de la liste"), "ItemId": ("number", "ID SharePoint"),
         "IdObjet": ("string", "IdHNCS"), "Objet": ("string", "Objet (OBJET_TRANSITION)"),
@@ -134,8 +135,14 @@ def pa00b():
         read_params(s, ["Destinataires", "Fonctionnalités"])
         te = sp_http(s, "Type_entite", "GET", ip(f"concat({base_uri}, ''')?$select=ListItemEntityTypeFullName')"))
         accepte = f"equals(toLower(string({T}?['Accepte'])), 'true')"
-        creation = f"equals({T}?['StatutAvant'], '∅')"
-        retabli = compose(s, "Statut_retabli", at(f"if({creation}, 'création annulée : élément placé dans la corbeille du site', {T}?['StatutAvant'])"))
+        # RX-02 : statut validé de référence = dernier StatutApres accepté dans l'historique (jamais StatutPrecedent)
+        hist = get_items(s, "Historique_element", "HistoriqueStatuts",
+                         filter_=f"Liste eq {odq(T + "?['Liste']")} and ItemId eq @{{{T}?['ItemId']}} and Resultat eq {q(ACCEPTEE)}",
+                         fields=("Liste", "ItemId", "Resultat", "StatutApres", "CodeTransition", "ID"), order="ID desc", top=100)
+        acc = filt(s, "Transitions_acceptees", f"body('{hist}')?['value']", "not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))")
+        valide = compose(s, "Statut_valide", at(f"if(empty(body('{acc}')), coalesce({T}?['StatutAvant'], '∅'), first(body('{acc}'))?['StatutApres'])"))
+        creation = f"equals(outputs('{valide}'), '∅')"
+        retabli = compose(s, "Statut_retabli", at(f"if({creation}, 'création annulée : élément placé dans la corbeille du site', outputs('{valide}'))"))
         item_uri = ip(f"concat({base_uri}, ''')/items(', string({T}?['ItemId']), ')')")
         etype = f"body('{te}')?['ListItemEntityTypeFullName']"
 
@@ -146,7 +153,8 @@ def pa00b():
 
         def no(n):
             def restore(r):
-                c = compose(r, "Corps_annulation", {"__metadata": {"type": ip(etype)}, "Statut": ip(f"{T}?['StatutAvant']")})
+                c = compose(r, "Corps_annulation", {"__metadata": {"type": ip(etype)}, "Statut": ip(f"outputs('{valide}')"),
+                                                    "StatutPrecedent": ip(f"outputs('{valide}')")})
                 sp_http(r, "Retablir_statut", "POST", item_uri, body=ip(f"outputs('{c}')"), headers=verbose)
 
             def recycle(r):
@@ -165,7 +173,7 @@ def pa00b():
             "ItemId": at(f"{T}?['ItemId']"), "StatutAvant": ip(f"if(equals({T}?['StatutAvant'], '∅'), '', {T}?['StatutAvant'])"),
             "StatutApres": ip(f"{T}?['StatutApres']"), "CodeTransition": ip(f"coalesce({T}?['CodeTransition'], '')"), "Acteur": ip(f"{T}?['ActeurEmail']"),
             "ActeurEmail": ip(f"{T}?['ActeurEmail']"), "DateChangement": ip("utcNow()"), "Origine": ip(f"{T}?['Origine']"),
-            "Resultat": ip(f"if({accepte}, 'Acceptée', 'Refusée — annulée')"), "Motif": ip(f"coalesce({T}?['Motif'], '')"),
+            "Resultat": ip(f"if({accepte}, {q(ACCEPTEE)}, {q(REFUSEE)})"), "Motif": ip(f"coalesce({T}?['Motif'], '')"),
             "FluxRunId": ip(f"coalesce({T}?['RunId'], '')")})
         response(s, "Repondre", {"Ok": True}, {"Ok": "boolean"})
 
@@ -179,23 +187,23 @@ def pa00b():
         objectif="Appliquer (acceptation) ou annuler (refus) une transition et l'historiser.",
         entrees="`Liste`, `ItemId`, `IdObjet`, `Objet`, `StatutAvant`, `StatutApres`, `Accepte`, `CodeTransition`, `ActeurEmail`, `Origine`, `Motif`, `RunId`.",
         etapes=["Lire les paramètres (boîte R&D, notifications Teams).",
-                "Acceptée : `StatutPrecedent` = `StatutApres`, `DateStatut` = maintenant (REST `MERGE`, liste désignée par son nom interne via `GetList`).",
-                "Refusée : `Statut` = `StatutAvant` (`StatutPrecedent` inchangé) puis N-90 à l'acteur. Refus d'une création (`StatutAvant` = `∅`, § 6.1-3 bis) : l'élément est envoyé à la corbeille du site (`recycle`, récupérable 93 jours, jamais supprimé définitivement), puis N-90.",
-                "Dans les deux cas : création d'un élément `HistoriqueStatuts` (`Acceptée` ou `Refusée — annulée`)."],
+                "Acceptée : `StatutPrecedent` = `StatutApres` (copie de commodité pour les vues), `DateStatut` = maintenant (REST `MERGE`, liste désignée par son nom interne via `GetList`) ; l'entrée d'historique créée devient le statut validé de référence.",
+                "Refusée : statut validé = dernier `StatutApres` accepté de `HistoriqueStatuts` pour l'élément (entrées `REF-PRINCIPAL` exclues ; à défaut, `StatutAvant` reçu) ; `Statut` rétabli à cette valeur (et `StatutPrecedent`, simple copie), jamais à partir de `StatutPrecedent` ; puis N-90 à l'acteur. Refus d'une création (statut validé `∅`, § 6.1-3 bis) : l'élément est envoyé à la corbeille du site (`recycle`, récupérable 93 jours, jamais supprimé définitivement), puis N-90.",
+                "Dans les deux cas : création d'un élément `HistoriqueStatuts` (`Acceptée` ou `Refusée et annulée`)."],
         sorties="`Ok` = true.",
         erreurs="Toute erreur d'écriture termine le flux en échec : l'action d'appel du parent échoue et le parent passe en portée `Erreur` (PA-00C).",
         decision="Le flux ne modifie jamais une décision : il ne fait que rétablir le dernier statut validé.",
-        tests=["Refus : statut rétabli, historique « Refusée — annulée », N-90 reçu.", "Acceptation : `StatutPrecedent` et `DateStatut` mis à jour.",
+        tests=["Refus : statut rétabli, historique « Refusée et annulée », N-90 reçu.", "Acceptation : `StatutPrecedent` et `DateStatut` mis à jour.",
                "Écriture impossible (liste verrouillée) : le parent journalise une erreur."])
     return f
 
 
 # --------------------------------------------------------------------------------------------
-# PA-00C — Journaliser une erreur
+# PA-00C : Journaliser une erreur
 # --------------------------------------------------------------------------------------------
 
 def pa00c():
-    f = Flow("PA-00C", "PA-00C", "HNCS-RD PA-00C — Journaliser une erreur", 2, "Flux enfant", "ChildFlow")
+    f = Flow("PA-00C", "PA-00C", "HNCS-RD PA-00C : Journaliser une erreur", 2, "Flux enfant", "ChildFlow")
     child_trigger(f, {
         "CodeFlux": ("string", "Code du flux appelant"), "Niveau": ("string", "Info, Avertissement ou Erreur"),
         "Liste": ("string", "Nom interne de la liste concernée"), "ItemId": ("string", "ID SharePoint (texte, facultatif)"),
@@ -246,11 +254,11 @@ def pa00c():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-00D — Attribuer les identifiants manquants
+# PA-00D : Attribuer les identifiants manquants
 # --------------------------------------------------------------------------------------------
 
 def pa00d():
-    f = Flow("PA-00D", "PA-00D", "HNCS-RD PA-00D — Attribuer les identifiants et initialiser les empreintes", 1, "Planifié", "Recurrence",
+    f = Flow("PA-00D", "PA-00D", "HNCS-RD PA-00D : Attribuer les identifiants et initialiser les empreintes", 1, "Planifié", "Recurrence",
              recurrence="Toutes les heures (exécution manuelle possible par « Exécuter »)")
     recurrence_trigger(f, {"frequency": "Hour", "interval": 1})
     lists = [o for o in MODEL.data["objects"] if o["kind"] == "list" and o["prefix"]]
@@ -267,11 +275,12 @@ def pa00d():
                       after={s.last: ["Succeeded", "Skipped", "Failed"]})
         specs = [
             ("Affectations", "EmpreinteVerrou",
-             "EmpreinteVerrou eq null and (StatutPrecedent eq 'Active' or StatutPrecedent eq 'À risque' or StatutPrecedent eq 'Bloquée' "
-             "or StatutPrecedent eq 'Terminée' or StatutPrecedent eq 'Clôturée')",
-             lambda e, it: ip(ev_item(it)), ("Alternant", "Sujet", "Referent", "DateDebut", "StatutPrecedent")),
-            ("Livrables", "EmpreinteRevue", "EmpreinteRevue eq null", "LIV", ()),
-            ("ComptesRendus", "EmpreinteRevue", "EmpreinteRevue eq null", "CR", ()),
+             "EmpreinteVerrou eq null and (Statut eq 'Active' or Statut eq 'À risque' or Statut eq 'Bloquée' "
+             "or Statut eq 'Terminée' or Statut eq 'Clôturée')",
+             lambda e, it: ip(ev_item(it)), ("Alternant", "Sujet", "Referent", "DateDebut", "Statut")),
+            # EmpreinteRevue est une colonne Note (RX-01) : non filtrable en OData, filtre appliqué dans le flux
+            ("Livrables", "EmpreinteRevue", None, "LIV", ()),
+            ("ComptesRendus", "EmpreinteRevue", None, "CR", ()),
             ("ActionsIntegration", "EmpreinteAction", "EmpreinteAction eq null", lambda e, it: ip(emp_action(it)), ("Bloquante", "Statut")),
             ("Alternants", "EmpreinteReferent", "EmpreinteReferent eq null and ReferentPrincipalId ne null",
              lambda e, it: ip(f"string({it}?['ReferentPrincipal']?['Id'])"), ("ReferentPrincipal",)),
@@ -285,6 +294,9 @@ def pa00d():
                 def per_list(ls, lst=lst, col=col, flt=flt, value=value, fields=fields):
                     def work(w):
                         items = get_items(w, f"Empreintes_vides_{lst}", lst, filter_=flt, fields=(col,) + tuple(fields))
+                        src = f"body('{items}')?['value']"
+                        if flt is None:
+                            src = f"body('{filt(w, f'Sans_empreinte_{lst}', src, f'empty(item()?[{chr(39)}{col}{chr(39)}])')}')"
 
                         def each(e, loop):
                             it = f"items('{loop}')"
@@ -295,7 +307,7 @@ def pa00d():
                                 v = value(e, it)
                             patch_item(e, f"Initialiser_{col}_{lst}", lst, f"{it}?['ID']", {col: v}, it)
                             e.add(f"Compter_empreinte_{lst}", {"type": "IncrementVariable", "inputs": {"name": "NbEmpreintes", "value": 1}})
-                        foreach(w, f"Pour_empreinte_{lst}", f"body('{items}')?['value']", each)
+                        foreach(w, f"Pour_empreinte_{lst}", src, each)
                     if MODEL.obj(lst)["lot"] >= 3:
                         cond(ls, f"Si_liste_deployee_empreinte_{lst}", list_exists(ls, f"emp_{lst}", lst), work)
                     else:
@@ -349,7 +361,7 @@ def pa00d():
                 "`IdHNCS` = `{PREFIXE}-{année de Created, heure de Paris}-{ID sur 4 chiffres}` ; Pôles : `POL-{CodePole}`.",
                 "Une portée par liste : l'échec d'une liste est journalisé (PA-00C, Erreur) sans bloquer les autres.",
                 "Nombre d'identifiants attribués → `JournalFlux` niveau Info.",
-                "À partir du lot 2 (au moins une transition historisée par un flux, Origine = Flux) : empreintes vides initialisées à partir des valeurs courantes, sans rien rétablir — `EmpreinteVerrou` des affectations déjà validées (actives ou au-delà), `EmpreinteRevue` des livrables et comptes rendus, `EmpreinteAction`, `EmpreinteReferent` (référent renseigné), `EmpreinteDecision` (décideur déjà tracé, H-55) ; une portée par liste, liste ou colonne absente ignorée sans erreur ; nombre initialisé → `JournalFlux` Info."],
+                "À partir du lot 2 (au moins une transition historisée par un flux, Origine = Flux) : empreintes vides initialisées à partir des valeurs courantes, sans rien rétablir : `EmpreinteVerrou` des affectations déjà validées (actives ou au-delà), `EmpreinteRevue` des livrables et comptes rendus, `EmpreinteAction`, `EmpreinteReferent` (référent renseigné), `EmpreinteDecision` (décideur déjà tracé, H-55) ; une portée par liste, liste ou colonne absente ignorée sans erreur ; nombre initialisé → `JournalFlux` Info."],
         sorties="`IdHNCS` renseigné.",
         erreurs="PA-00C par liste en échec ; rattrapage automatique au passage suivant.",
         decision="Sans objet.",
@@ -360,49 +372,110 @@ def pa00d():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-00E — Supervision quotidienne
+# PA-00E : Supervision quotidienne
 # --------------------------------------------------------------------------------------------
 
 def pa00e():
-    f = Flow("PA-00E", "PA-00E", "HNCS-RD PA-00E — Supervision quotidienne des flux", 2, "Planifié", "Recurrence",
+    f = Flow("PA-00E", "PA-00E", "HNCS-RD PA-00E : Supervision quotidienne des flux", 2, "Planifié", "Recurrence",
              recurrence="Quotidien 07:30 (heure de Paris)")
     recurrence_trigger(f, {"frequency": "Day", "interval": 1, "schedule": {"hours": ["7"], "minutes": [30]}})
 
+    objets = {p["list"]: p["object"] for p in MODEL.partition}
+
+    def rapprochement(s):
+        """Étape 1 (RX-02) : Statut ≠ dernier StatutApres accepté de l'historique → rétablissement par PA-00B (refus, motif
+        « Rapprochement quotidien »), Avertissement. Les éléments modifiés depuis moins de 30 minutes (exécution
+        possiblement en cours) et ceux sans aucune transition acceptée sont ignorés."""
+        from flowlib import historize
+        prevp = None
+        for lst, objet in sorted(objets.items()):
+            def per_list(ls, lst=lst, objet=objet):
+                def work(w):
+                    items = get_items(w, f"Elements_{lst}", lst, fields=("Statut", "IdHNCS", "ID", "Modified", "Editor"))
+                    hist = get_items(w, f"Historique_{lst}", "HistoriqueStatuts",
+                                     filter_=f"Liste eq '{lst}' and Resultat eq {q(ACCEPTEE)}",
+                                     fields=("Liste", "ItemId", "Resultat", "StatutApres", "CodeTransition", "ID"), order="ID desc")
+                    acc = filt(w, f"Acceptees_{lst}", f"body('{hist}')?['value']",
+                               "not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))")
+
+                    def each(e, loop):
+                        it = f"items('{loop}')"
+                        mine = filt(e, f"Historique_element_{lst}", f"body('{acc}')", f"equals(int(item()?['ItemId']), int({it}?['ID']))")
+                        valide = f"first(body('{mine}'))?['StatutApres']"
+                        idobj = f"coalesce({it}?['IdHNCS'], string({it}?['ID']))"
+
+                        def fix(g):
+                            historize(g, f"Retablir_{lst}", lst, f"{it}?['ID']", idobj, objet, valide, f"{it}?['Statut']?['Value']", False,
+                                      "''", f"toLower(coalesce({it}?['Editor']?['Email'], ''))", "Flux", q("Rapprochement quotidien"))
+                            log(g, f"Journaliser_rapprochement_{lst}", "Avertissement",
+                                f"concat('Rapprochement quotidien : statut « ', {it}?['Statut']?['Value'], ' » rétabli à « ', {valide}, ' »')",
+                                lst, f"{it}?['ID']", idobj)
+                            g.add(f"Compter_rapprochement_{lst}", {"type": "IncrementVariable", "inputs": {"name": "NbRapprochements", "value": 1}})
+                            g.add(f"Noter_rapprochement_{lst}", {"type": "AppendToArrayVariable", "inputs": {"name": "Rapprochements", "value": {
+                                "Liste": lst, "Objet": ip(idobj), "StatutConstate": ip(f"{it}?['Statut']?['Value']"), "StatutRetabli": ip(valide)}}})
+                        cond(e, f"Si_statut_non_valide_{lst}",
+                             (f"and(greater(length(body('{mine}')), 0), not(equals({it}?['Statut']?['Value'], {valide})), "
+                              f"less(ticks({it}?['Modified']), ticks(addMinutes(utcNow(), -30))))"), fix)
+                    foreach(w, f"Pour_element_{lst}", f"body('{items}')?['value']", each)
+                if MODEL.obj(lst)["lot"] >= 3:
+                    cond(ls, f"Si_liste_deployee_{lst}", list_exists(ls, f"rap_{lst}", lst), work)
+                else:
+                    work(ls)
+            after = None if prevp is None else {prevp: ["Succeeded", "Failed", "TimedOut", "Skipped"]}
+            sc = scope(s, f"Rapprochement_{lst}", per_list, after=after)
+            prevp = log(s, f"Erreur_rapprochement_{lst}", "Erreur", q(f"PA-00E : échec du rapprochement des statuts ({lst})"), lst,
+                        after={sc: ["Failed", "TimedOut"]})
+        return prevp
+
     def body(s):
+        last = rapprochement(s)
         j = get_items(s, "Erreurs_a_reprendre", "JournalFlux", filter_="Niveau eq 'Erreur' and StatutReprise eq 'À reprendre'",
+                      after={last: ["Succeeded", "Skipped", "Failed"]},
                       fields=("Title", "Niveau", "StatutReprise", "IdObjet", "Liste", "DateEvenement", "RunUrl", "Message"),
                       order="DateEvenement desc")
         tab = html_table(s, "Tableau_erreurs", f"body('{j}')?['value']", [
             ("Date", "if(empty(item()?['DateEvenement']), '', formatDateTime(convertTimeZone(item()?['DateEvenement'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy HH:mm'))"),
             ("Flux", "item()?['Title']"), ("Objet", "coalesce(item()?['IdObjet'], '')"),
             ("Message", "item()?['Message']"), ("Exécution", "coalesce(item()?['RunUrl'], '')")])
-        cond(s, "Si_erreurs", f"greater(length(body('{j}')?['value']), 0)",
+        rap = html_table(s, "Tableau_rapprochements", "variables('Rapprochements')", [
+            ("Liste", "item()?['Liste']"), ("Objet", "item()?['Objet']"), ("Statut constaté", "item()?['StatutConstate']"),
+            ("Statut rétabli", "item()?['StatutRetabli']")])
+        synthese = (f"concat(body('{tab}'), if(greater(variables('NbRapprochements'), 0), concat('<p>Rapprochement quotidien : ', "
+                    f"string(variables('NbRapprochements')), ' statut(s) rétabli(s) à partir de l''historique.</p>', body('{rap}')), ''))")
+        cond(s, "Si_erreurs_ou_rapprochements", f"or(greater(length(body('{j}')?['value']), 0), greater(variables('NbRapprochements'), 0))",
              lambda y: notify(y, "N-98", [SUPPORT, f.group_emails("G_PROP")], {
-                 "Nombre": f"string(length(body('{j}')?['value']))", "Tableau": f"body('{tab}')",
+                 "Nombre": f"string(length(body('{j}')?['value']))", "Tableau": synthese,
                  "Lien": list_link("JournalFlux")}))
-    standard_shell(f, body)
+    standard_shell(f, body, variables=[("NbRapprochements", "integer", 0), ("Rapprochements", "array", [])])
     f.doc = dict(
-        objectif="Rappeler chaque jour les erreurs de flux non reprises.",
-        entrees="`JournalFlux` : Niveau = Erreur et `StatutReprise` = « À reprendre ».",
-        etapes=["Lister les erreurs à reprendre.", "Si la liste n'est pas vide : N-98 (synthèse avec liens d'exécution) au support (`hncs_SupportEmail`) et aux membres de G_PROP."],
-        sorties="Courriel de synthèse.", erreurs="Socle (PA-00C).", decision="Sans objet.",
-        tests=["Aucune erreur : aucun courriel.", "Deux erreurs à reprendre : N-98 avec deux lignes ; après « Reprise effectuée », plus de rappel."])
+        objectif="Rapprocher chaque jour les statuts de l'historique validé (filet de sécurité) et rappeler les erreurs de flux non reprises.",
+        entrees="Listes à statut contrôlé (§ 8.2) et `HistoriqueStatuts` ; `JournalFlux` : Niveau = Erreur et `StatutReprise` = « À reprendre ».",
+        etapes=["Rapprochement des statuts : pour chaque élément dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` (entrées `REF-PRINCIPAL` exclues), sans modification depuis 30 minutes (aucune exécution en cours), rétablissement par PA-00B (refus, Origine Flux, motif « Rapprochement quotidien », N-90 à l'auteur de la dernière modification) et `JournalFlux` Avertissement. Les éléments sans aucune transition acceptée sont ignorés. Une portée par liste ; les listes du lot 3 ne sont traitées que si elles sont déployées.",
+                "Lister les erreurs à reprendre.",
+                "Si la liste n'est pas vide, ou si l'étape 1 a rétabli des statuts : N-98 (synthèse avec liens d'exécution et tableau des rapprochements) au support (`hncs_SupportEmail`) et aux membres de G_PROP."],
+        sorties="Statuts rétablis, historique, courriel de synthèse.", erreurs="Socle (PA-00C) ; échec d'une liste journalisé sans bloquer les autres.",
+        decision="Le rapprochement ne prend aucune décision : il rétablit le dernier statut validé par une transition acceptée.",
+        tests=["Aucune erreur ni écart : aucun courriel.", "Deux erreurs à reprendre : N-98 avec deux lignes ; après « Reprise effectuée », plus de rappel.",
+               "Statut d'un livrable modifié par l'API sans transition acceptée → rétabli au statut validé, N-90, mention dans N-98."])
     return f
 
 
 # --------------------------------------------------------------------------------------------
-# PA-00F — Droits des propriétaires de modèles
+# PA-00F : Droits des propriétaires de modèles
 # --------------------------------------------------------------------------------------------
 
 def pa00f():
     from flowlib import ANTI_LOOP, sp_trigger, get_item, item_changes, grant_item, ensure_idhncs
+    from gen_common import restore_flux_columns
     MOD = "RegistreModeles"
-    f = Flow("PA-00F", "PA-00F", "HNCS-RD PA-00F — Droits des propriétaires de modèles", 2, "Automatisé", "SharePointItem", MOD)
+    f = Flow("PA-00F", "PA-00F", "HNCS-RD PA-00F : Droits des propriétaires de modèles", 2, "Automatisé", "SharePointItem", MOD)
     sp_trigger(f, MOD, "GetOnUpdatedItems", [ANTI_LOOP])
     f.use(MOD, "Proprietaire", "LienFichier", "IdHNCS", "ID")
 
     def body(s):
         I = "body('Lire_element')"
+        restore_flux_columns(s, MOD, "triggerOutputs()?['body/ID']", "coalesce(triggerOutputs()?['body/IdHNCS'], '')",
+                             "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))")
         get_item(s, "Lire_element", MOD, "triggerOutputs()?['body/ID']")
         ID = f"{I}?['ID']"
         idobj = ensure_idhncs(s, MOD, I, ID, "el")
@@ -425,7 +498,7 @@ def pa00f():
              f"and(not(empty({owner})), or({creation}, {chg('Proprietaire')}, {chg('LienFichier')}))", grant)
     standard_shell(f, body, MOD, "triggerOutputs()?['body/ID']", "triggerOutputs()?['body/IdHNCS']")
     f.doc = dict(
-        objectif="Réserver la modification d'un modèle à son propriétaire (§ 7.4) : élément du registre et fichiers de « 03 — Modèles R&D » liés.",
+        objectif="Réserver la modification d'un modèle à son propriétaire (§ 7.4) : élément du registre et fichiers de « 03 : Modèles R&D » liés.",
         entrees="Élément `RegistreModeles` créé ou modifié (création, changement de `Proprietaire` ou de `LienFichier`, détectés par « Obtenir les modifications »).",
         etapes=["`IdHNCS` (`MOD-…`) si vide.",
                 "Rompre l'héritage de l'élément (copie) et donner CSS au `Proprietaire`.",

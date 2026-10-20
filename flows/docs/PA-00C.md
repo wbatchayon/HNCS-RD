@@ -1,6 +1,6 @@
-# PA-00C — Journaliser une erreur
+# PA-00C : Journaliser une erreur
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -61,4 +61,4 @@ Sans objet.
 
 ## Données lues et écrites
 
-- `PA-00C` : lit `Parametres` ; écrit `JournalFlux` ; flux enfants —.
+- `PA-00C` : lit `Parametres` ; écrit `JournalFlux` ; flux enfants -.

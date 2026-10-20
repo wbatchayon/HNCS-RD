@@ -1,6 +1,6 @@
-# PA-09b — Détection des fins d'alternance
+# PA-09b : Détection des fins d'alternance
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -15,7 +15,7 @@ Détecter les fins d'alternance proches et préparer la clôture.
 
 ## Déclencheur(s)
 
-- `PA-09b` : Récurrence — Quotidien 06:50 (heure de Paris).
+- `PA-09b` : Récurrence : Quotidien 06:50 (heure de Paris).
 
 ## Entrées
 
@@ -24,7 +24,7 @@ Détecter les fins d'alternance proches et préparer la clôture.
 ## Traitement pas à pas
 
 1. `DateFin` ≤ aujourd'hui + `Fin.AnticipationJours` → « Fin planifiée » (ALT-T04, FLUX).
-2. Effets du statut cible (§ 6.1-8) : checklist « Clôture d'alternance » (idempotente), bilan « À réaliser » s'il n'existe pas (référent CSS), N-35 au référent, à G_RD et au responsable HNCS de l'école.
+2. Effets du statut cible ([6.1](../../spec.md#61-règles-générales), règle 8) : checklist « Clôture d'alternance » (idempotente), bilan « À réaliser » s'il n'existe pas (référent CSS), N-35 au référent, à G_RD et au responsable HNCS de l'école.
 
 ## Sorties
 
@@ -34,7 +34,7 @@ Détecter les fins d'alternance proches et préparer la clôture.
 
 | Code | De | Vers | Acteurs | Contrôles |
 | --- | --- | --- | --- | --- |
-| ALT-T04 | Actif | Fin planifiée | FLUX, RD | — |
+| ALT-T04 | Actif | Fin planifiée | FLUX, RD | - |
 
 Statuts écrits par le compte de service (rôle `FLUX`, jamais une décision humaine) :
 

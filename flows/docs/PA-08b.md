@@ -1,6 +1,6 @@
-# PA-08b — Création et relance des comptes rendus
+# PA-08b : Création et relance des comptes rendus
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -15,7 +15,7 @@ Créer les comptes rendus attendus selon la cadence, rappeler l'échéance et co
 
 ## Déclencheur(s)
 
-- `PA-08b` : Récurrence — Quotidien 06:45 (heure de Paris).
+- `PA-08b` : Récurrence : Quotidien 06:45 (heure de Paris).
 
 ## Entrées
 
@@ -35,7 +35,7 @@ Créer les comptes rendus attendus selon la cadence, rappeler l'échéance et co
 
 | Code | De | Vers | Acteurs | Contrôles |
 | --- | --- | --- | --- | --- |
-| CR-T01 | ∅ | Attendu | FLUX, RD | — |
+| CR-T01 | ∅ | Attendu | FLUX, RD | - |
 | CR-T04-01 | Attendu | Non remis | FLUX | G_CR_ECHU |
 | CR-T04-02 | En rédaction | Non remis | FLUX | G_CR_ECHU |
 

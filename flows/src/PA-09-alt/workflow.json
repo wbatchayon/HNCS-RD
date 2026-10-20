@@ -72,12 +72,6 @@
           "conditions": [
             {
               "expression": "@not(equals(toLower(triggerOutputs()?['body/Editor/Email']), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))))"
-            },
-            {
-              "expression": "@not(equals(coalesce(triggerOutputs()?['body/Statut/Value'], ''), coalesce(triggerOutputs()?['body/StatutPrecedent'], '')))"
-            },
-            {
-              "expression": "@contains(createArray('Suspendu', 'Fin planifiée', 'Terminé', 'Clôturé'), triggerOutputs()?['body/Statut/Value'])"
             }
           ]
         }
@@ -310,18 +304,58 @@
                 ]
               }
             },
-            "Statut_avant": {
-              "type": "Compose",
-              "inputs": "@if(empty(body('Lire_element')?['StatutPrecedent']), '∅', body('Lire_element')?['StatutPrecedent'])",
+            "Historique_el": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Historique des statuts",
+                  "$filter": "Liste eq 'Alternants' and ItemId eq @{body('Lire_element')?['ID']} and Resultat eq 'Acceptée'",
+                  "$orderby": "ID desc",
+                  "$top": 100
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
               "runAfter": {
                 "Si_IdHNCS_vide_el": [
                   "Succeeded"
                 ]
               }
             },
+            "Transitions_acceptees_el": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Historique_el')?['value']",
+                "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+              },
+              "runAfter": {
+                "Historique_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Statut_valide_el": {
+              "type": "Compose",
+              "inputs": "@if(empty(body('Transitions_acceptees_el')), '∅', coalesce(first(body('Transitions_acceptees_el'))?['StatutApres'], '∅'))",
+              "runAfter": {
+                "Transitions_acceptees_el": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Si_aucune_transition_a_traiter": {
               "type": "If",
-              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], coalesce(body('Lire_element')?['StatutPrecedent'], ''))), contains(createArray('Suspendu', 'Fin planifiée', 'Terminé', 'Clôturé'), body('Lire_element')?['Statut']?['Value'])))",
+              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))), contains(createArray('Suspendu', 'Fin planifiée', 'Terminé', 'Clôturé'), body('Lire_element')?['Statut']?['Value'])))",
               "actions": {
                 "Fin_sans_transition": {
                   "type": "Terminate",
@@ -335,7 +369,7 @@
                 "actions": {}
               },
               "runAfter": {
-                "Statut_avant": [
+                "Statut_valide_el": [
                   "Succeeded"
                 ]
               }
@@ -348,7 +382,7 @@
                 },
                 "body": {
                   "Objet": "Alternant",
-                  "StatutAvant": "@{outputs('Statut_avant')}",
+                  "StatutAvant": "@{outputs('Statut_valide_el')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
                   "ItemAuteurEmail": "@{coalesce('', '')}",
@@ -484,7 +518,7 @@
             "Controles_echec_el": {
               "type": "Query",
               "inputs": {
-                "from": "@createArray(if(and(contains(outputs('Controles_el'), 'G_CLOTURE_ALTERNANCE'), not(and(equals(length(body('Actions_cloture_ouvertes_el')), 0), greater(length(body('Bilans_realises_el')?['value']), 0)))), concat('G_CLOTURE_ALTERNANCE — ', concat(if(greater(length(body('Actions_cloture_ouvertes_el')), 0), concat(string(length(body('Actions_cloture_ouvertes_el'))), ' action(s) bloquante(s) de clôture non terminée(s) ; '), ''), if(equals(length(body('Bilans_realises_el')?['value']), 0), 'aucun bilan « Réalisé » ; ', ''))), ''))",
+                "from": "@createArray(if(and(contains(outputs('Controles_el'), 'G_CLOTURE_ALTERNANCE'), not(and(equals(length(body('Actions_cloture_ouvertes_el')), 0), greater(length(body('Bilans_realises_el')?['value']), 0)))), concat('G_CLOTURE_ALTERNANCE : ', concat(if(greater(length(body('Actions_cloture_ouvertes_el')), 0), concat(string(length(body('Actions_cloture_ouvertes_el'))), ' action(s) bloquante(s) de clôture non terminée(s) ; '), ''), if(equals(length(body('Bilans_realises_el')?['value']), 0), 'aucun bilan « Réalisé » ; ', ''))), ''))",
                 "where": "@not(empty(item()))"
               },
               "runAfter": {
@@ -508,7 +542,7 @@
                       "ItemId": "@int(body('Lire_element')?['ID'])",
                       "IdObjet": "@{outputs('IdObjet_el')}",
                       "Objet": "Alternant",
-                      "StatutAvant": "@{outputs('Statut_avant')}",
+                      "StatutAvant": "@{outputs('Statut_valide_el')}",
                       "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                       "Accepte": "@false",
                       "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
@@ -611,7 +645,7 @@
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                               "body/To": "@{join(union(body('DestOK_N36'), body('DestOK_N36')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-36] @{outputs('IdObjet_el')} suspendu",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-36] @{outputs('IdObjet_el')} suspendu</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>L'alternance <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) est suspendue.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Alternants/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la fiche alternant</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-36] @{outputs('IdObjet_el')} suspendu</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>L'alternance <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) est suspendue.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Alternants/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la fiche alternant</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -1282,7 +1316,7 @@
                         "columns": [
                           {
                             "header": "Action",
-                            "value": "@concat(coalesce(item()?['IdHNCS'], ''), ' — ', item()?['Title'])"
+                            "value": "@concat(coalesce(item()?['IdHNCS'], ''), ' : ', item()?['Title'])"
                           },
                           {
                             "header": "Responsable",
@@ -1348,7 +1382,7 @@
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                               "body/To": "@{join(union(body('DestOK_N35'), body('DestOK_N35')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-35] Fin d'alternance planifiée : @{outputs('IdObjet_el')}",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-35] Fin d'alternance planifiée : @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>L'alternance <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) se termine le @{if(empty(body('Lire_element')?['DateFin']), '', formatDateTime(convertTimeZone(body('Lire_element')?['DateFin'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}.</p>\n<p>Checklist de clôture :</p>@{body('Tableau_clo_man')}\n<p>Bilan à réaliser : @{coalesce(first(body('Bilan_man')?['value'])?['IdHNCS'], '')} — <a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/BilansAlternance/DispForm.aspx?ID=', string(coalesce(first(body('Bilan_man')?['value'])?['ID'], 0)))}\">ouvrir le bilan</a></p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Alternants/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la fiche alternant</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-35] Fin d'alternance planifiée : @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>L'alternance <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) se termine le @{if(empty(body('Lire_element')?['DateFin']), '', formatDateTime(convertTimeZone(body('Lire_element')?['DateFin'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}.</p>\n<p>Checklist de clôture :</p>@{body('Tableau_clo_man')}\n<p>Bilan à réaliser : @{coalesce(first(body('Bilan_man')?['value'])?['IdHNCS'], '')} : <a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/BilansAlternance/DispForm.aspx?ID=', string(coalesce(first(body('Bilan_man')?['value'])?['ID'], 0)))}\">ouvrir le bilan</a></p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Alternants/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la fiche alternant</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -1721,7 +1755,7 @@
                                       "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                                       "body/To": "@{join(union(body('DestOK_N22'), body('DestOK_N22')), ';')}",
                                       "body/Subject": "[HNCS-R&D][N-22] Affectation @{coalesce(body('Relire_affectation')?['IdHNCS'], string(items('Pour_affectation')?['ID']))} terminée",
-                                      "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-22] Affectation @{coalesce(body('Relire_affectation')?['IdHNCS'], string(items('Pour_affectation')?['ID']))} terminée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>L'affectation <strong>@{coalesce(body('Relire_affectation')?['IdHNCS'], string(items('Pour_affectation')?['ID']))}</strong> est terminée.</p>\n<ul><li>Date de fin : @{if(empty(body('Relire_affectation')?['DateFin']), '', formatDateTime(convertTimeZone(body('Relire_affectation')?['DateFin'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</li><li>Motif de fin : @{coalesce(body('Relire_affectation')?['MotifFin'], '—')}</li></ul>\n<p>Livrables encore ouverts, restés rattachés à cette affectation : @{if(empty(body('Ids_livrables_ouverts_fin')), 'aucun', join(body('Ids_livrables_ouverts_fin'), ', '))}</p>\n<p>Pour chacun, la R&amp;D décide (aucun transfert automatique) : le poursuivre dans la nouvelle affectation en créant un livrable avec « Livrable d'origine » puis suspendre l'ancien (motif « Transféré vers … »), ou le clore normalement.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Affectations/DispForm.aspx?ID=', string(items('Pour_affectation')?['ID']))}\">Ouvrir l'affectation</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                                      "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-22] Affectation @{coalesce(body('Relire_affectation')?['IdHNCS'], string(items('Pour_affectation')?['ID']))} terminée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>L'affectation <strong>@{coalesce(body('Relire_affectation')?['IdHNCS'], string(items('Pour_affectation')?['ID']))}</strong> est terminée.</p>\n<ul><li>Date de fin : @{if(empty(body('Relire_affectation')?['DateFin']), '', formatDateTime(convertTimeZone(body('Relire_affectation')?['DateFin'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</li><li>Motif de fin : @{coalesce(body('Relire_affectation')?['MotifFin'], '-')}</li></ul>\n<p>Livrables encore ouverts, restés rattachés à cette affectation : @{if(empty(body('Ids_livrables_ouverts_fin')), 'aucun', join(body('Ids_livrables_ouverts_fin'), ', '))}</p>\n<p>Pour chacun, la R&amp;D décide (aucun transfert automatique) : le poursuivre dans la nouvelle affectation en créant un livrable avec « Livrable d'origine » puis suspendre l'ancien (motif « Transféré vers … »), ou le clore normalement.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Affectations/DispForm.aspx?ID=', string(items('Pour_affectation')?['ID']))}\">Ouvrir l'affectation</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                                       "body/Importance": "Normal"
                                     },
                                     "authentication": "@parameters('$authentication')",
@@ -2445,7 +2479,7 @@
                         "columns": [
                           {
                             "header": "Action",
-                            "value": "@concat(coalesce(item()?['IdHNCS'], ''), ' — ', item()?['Title'])"
+                            "value": "@concat(coalesce(item()?['IdHNCS'], ''), ' : ', item()?['Title'])"
                           },
                           {
                             "header": "Responsable",
@@ -2511,7 +2545,7 @@
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                               "body/To": "@{join(union(body('DestOK_N37'), body('DestOK_N37')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-37] Fin d'alternance enregistrée : @{outputs('IdObjet_el')}",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-37] Fin d'alternance enregistrée : @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>La fin de l'alternance <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) est enregistrée.</p>\n<ul><li>Affectations terminées : @{if(empty(body('Affectations_terminees')), 'aucune', join(body('Affectations_terminees'), ', '))}</li></ul>\n<p>Checklist de clôture (le retrait des accès reste une action humaine) :</p>@{body('Tableau_clo_term')}\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Alternants/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la fiche alternant</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-37] Fin d'alternance enregistrée : @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>La fin de l'alternance <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) est enregistrée.</p>\n<ul><li>Affectations terminées : @{if(empty(body('Affectations_terminees')), 'aucune', join(body('Affectations_terminees'), ', '))}</li></ul>\n<p>Checklist de clôture (le retrait des accès reste une action humaine) :</p>@{body('Tableau_clo_term')}\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Alternants/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la fiche alternant</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -2576,7 +2610,7 @@
                   "ItemId": "@int(body('Lire_element')?['ID'])",
                   "IdObjet": "@{outputs('IdObjet_el')}",
                   "Objet": "Alternant",
-                  "StatutAvant": "@{outputs('Statut_avant')}",
+                  "StatutAvant": "@{outputs('Statut_valide_el')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "Accepte": "@true",
                   "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",

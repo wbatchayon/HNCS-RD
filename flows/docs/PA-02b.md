@@ -1,6 +1,6 @@
-# PA-02b — Relance des candidatures sans traitement
+# PA-02b : Relance des candidatures sans traitement
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -15,7 +15,7 @@ Relancer les candidatures restées sans traitement au-delà du délai paramétr�
 
 ## Déclencheur(s)
 
-- `PA-02b` : Récurrence — Quotidien 08:00 (heure de Paris).
+- `PA-02b` : Récurrence : Quotidien 08:00 (heure de Paris).
 
 ## Entrées
 
@@ -61,4 +61,4 @@ Aucune modification : simple relance.
 
 ## Données lues et écrites
 
-- `PA-02b` : lit `Candidatures`, `Parametres` ; écrit — ; flux enfants PA-00C.
+- `PA-02b` : lit `Candidatures`, `Parametres` ; écrit - ; flux enfants PA-00C.

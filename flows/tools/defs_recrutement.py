@@ -6,7 +6,7 @@ from flowlib import (MODEL, SITE, SVC, TZ, TODAY, ANTI_LOOP, Flow, P, arr, at, c
                      foreach, get_item, get_items, grant_folder, grant_item, historize, ip, item_changes, item_link, lib_srv,
                      log, notify, odata, odq, patch_item, list_exists, post_item, q, recurrence_trigger, select, sp_http, sp_trigger,
                      standard_shell, switch, terminate, truthy, verify, autorise, list_srv)
-from gen_common import (CTX_FORM, I_EL, alternant_controls, blocking_bad_where, candidature_controls, checklist_table,
+from gen_common import (ref_status, restore_flux_columns, CTX_FORM, I_EL, alternant_controls, blocking_bad_where, candidature_controls, checklist_table,
                         controls_needed_for, emp_action, first, flux_creation, generate_actions, lookup_first, role_map,
                         role_resolution, transition_body)
 
@@ -58,10 +58,10 @@ def n03(s, f, I, idobj, ID):
 
 
 # --------------------------------------------------------------------------------------------
-# PA-01 — traitement commun
+# PA-01 : traitement commun
 # --------------------------------------------------------------------------------------------
 
-def pa01_common(s, f, I, ID, idobj, origine, acteur, attachments=None):
+def pa01_common(s, f, I, ID, idobj, origine, acteur, attachments=None, ref="'∅'"):
     f.use(CAND, "ID", "Created", "Email", "Statut", "StatutPrecedent", "ResponsableAnalyse", "LienCV", "DoublonPotentiel",
           "DoublonDe", "AccuseReceptionEnvoye", "Title", "Canal", "DateReception", "PosteVise", "IdHNCS")
     # 2. Contrôle doublon (si Email renseigné)
@@ -98,7 +98,7 @@ def pa01_common(s, f, I, ID, idobj, origine, acteur, attachments=None):
     f.trans("CAND-T01")
     if origine == "Flux":
         f.status(CAND, "Reçue")
-    cond(s, "Si_creation_non_historisee", f"empty({I}?['StatutPrecedent'])",
+    cond(s, "Si_creation_non_historisee", f"equals({ref}, '∅')",
          lambda y: historize(y, "Historiser_CAND_T01", CAND, ID, idobj, "Candidature", q("∅"), q("Reçue"), True,
                              q("CAND-T01"), acteur, origine))
     # 5. Responsable renseigné et identité qualifiée → CAND-T02 (FLUX, exception documentée) puis N-03 (§ 6.1-8)
@@ -111,13 +111,13 @@ def pa01_common(s, f, I, ID, idobj, origine, acteur, attachments=None):
     # 6. N-01
     notify(s, "N-01", [f"if(empty({resp(I)}), {f.group_emails('G_RD')}, {resp(I)})"], {
         "IdHNCS": idobj, "NomCandidat": f"{I}?['Title']", "Canal": f"{I}?['Canal']?['Value']",
-        "DateReception": dtloc(I + "?['DateReception']"), "PosteVise": f"coalesce({I}?['PosteVise'], '—')",
+        "DateReception": dtloc(I + "?['DateReception']"), "PosteVise": f"coalesce({I}?['PosteVise'], '-')",
         "Doublon": (f"if(and(not(empty(trim(coalesce({I}?['Email'], '')))), greater(length(body('{d}')?['value']), 0)), "
                     f"concat('doublon potentiel de ', coalesce({first(d)}?['IdHNCS'], '')), 'aucun')"),
         "Qualification": (f"if({identite_ok(I)}, '', 'Identité à qualifier : le courriel provient d''une plateforme. Renseignez le nom "
                           f"et l''adresse du candidat à partir du message avant l''analyse (contrôle G_IDENTITE).')"),
         "Lien": item_link(CAND, ID), "LienDossier": url}, teams_to=[resp(I)])
-    # 7. N-02 (accusé de réception, désactivé par défaut — H-09)
+    # 7. N-02 (accusé de réception, désactivé par défaut : H-09)
     def ar(y):
         notify(y, "N-02", [f"{I}?['Email']"], {"NomCandidat": f"{I}?['Title']"})
         patch_item(y, "Accuse_reception_envoye", CAND, ID, {"AccuseReceptionEnvoye": at("true")}, I)
@@ -126,9 +126,9 @@ def pa01_common(s, f, I, ID, idobj, origine, acteur, attachments=None):
 
 
 def pa01a():
-    f = Flow("PA-01a", "PA-01a", "HNCS-RD PA-01a — Nouvelle candidature — saisie ou formulaire", 2, "Automatisé",
+    f = Flow("PA-01a", "PA-01a", "HNCS-RD PA-01a : Nouvelle candidature : saisie ou formulaire", 2, "Automatisé",
              "SharePointItem", CAND, targets=targets("PA-01", CAND), objet="Candidature")
-    sp_trigger(f, CAND, "GetOnNewItems", [ANTI_LOOP, cond_transition(), cond_targets(f.targets)])
+    sp_trigger(f, CAND, "GetOnNewItems", [ANTI_LOOP])  # RX-02 : anti-boucle uniquement, filtrage dans le flux
     acteur = "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))"
 
     def body(s):
@@ -136,20 +136,24 @@ def pa01a():
         get_item(s, "Lire_element", CAND, "triggerOutputs()?['body/ID']")
         ID = f"{I}?['ID']"
         idobj = ensure_idhncs(s, CAND, I, ID, "el")
+        ref = ref_status(s, CAND, ID, "el")
+        # Création à traiter : aucune transition acceptée dans l'historique et statut « Reçue »
+        cond(s, "Si_aucune_transition_a_traiter", f"not(and(equals({ref}, '∅'), equals({I}?['Statut']?['Value'], 'Reçue')))",
+             lambda y: terminate(y, "Fin_sans_creation_a_traiter"))
         # Socle : PA-00A sur CAND-T01 ; refus d'une création → § 6.1-3 bis (corbeille, historique, N-90)
         v = verify(s, "Verifier_creation", "Candidature", q("∅"), q("Reçue"), acteur)
-        cond(s, "Si_creation_refusee", f"and(not({autorise(v)}), empty({I}?['StatutPrecedent']))",
+        cond(s, "Si_creation_refusee", f"not({autorise(v)})",
              lambda y: (historize(y, "Annuler_creation", CAND, ID, idobj, "Candidature", q("∅"), q("Reçue"), False,
                                   f"body('{v}')?['CodeTransition']", acteur, "Humain", f"coalesce(body('{v}')?['Motif'], '')"),
                         terminate(y, "Fin_creation_refusee")))
-        pa01_common(s, f, I, ID, idobj, "Humain", acteur)
+        pa01_common(s, f, I, ID, idobj, "Humain", acteur, ref=ref)
     standard_shell(f, body, CAND, "triggerOutputs()?['body/ID']", "triggerOutputs()?['body/IdHNCS']")
     f.doc = DOC["PA-01a"]
     return f
 
 
 def pa01b():
-    f = Flow("PA-01b", "PA-01b", "HNCS-RD PA-01b — Nouvelle candidature — boîte mail R&D", 2, "Automatisé",
+    f = Flow("PA-01b", "PA-01b", "HNCS-RD PA-01b : Nouvelle candidature : boîte mail R&D", 2, "Automatisé",
              "SharedMailbox", None, objet="Candidature")
     f.connections.add("shared_office365")
     f.trigger_name = "Quand_un_courriel_arrive_dans_la_boite_RD"
@@ -185,7 +189,7 @@ def pa01b():
 
         def create(y):
             p = post_item(y, "Creer_candidature", CAND, {
-                "Title": ip(f"if({pf}, concat('À qualifier – ', {msgid}), first(split({sender}, '@')))"),
+                "Title": ip(f"if({pf}, concat('À qualifier : ', {msgid}), first(split({sender}, '@')))"),
                 "Email": ip(f"if({pf}, '', {sender})"), "Canal": ip(f"outputs('{canal}')"),
                 "ModeReception": "Boîte mail R&D", "DateReception": ip(f"coalesce({TB}/receivedDateTime'], utcNow())"),
                 "Statut": "Reçue", "RefMessage": ip(msgid)})
@@ -198,20 +202,21 @@ def pa01b():
         get_item(s, "Lire_element", CAND, "variables('IdCandidature')")
         ID = f"{I}?['ID']"
         idobj = ensure_idhncs(s, CAND, I, ID, "el")
-        pa01_common(s, f, I, ID, idobj, "Flux", SVC, attachments=f"{TB}/attachments']")
+        ref = ref_status(s, CAND, ID, "el")
+        pa01_common(s, f, I, ID, idobj, "Flux", SVC, attachments=f"{TB}/attachments']", ref=ref)
     standard_shell(f, body, CAND, "variables('IdCandidature')", "''", variables=[("IdCandidature", "integer", 0)])
     f.doc = DOC["PA-01b"]
     return f
 
 
 # --------------------------------------------------------------------------------------------
-# PA-02 — Présélection et suivi de l'analyse
+# PA-02 : Présélection et suivi de l'analyse
 # --------------------------------------------------------------------------------------------
 
 def pa02():
-    f = Flow("PA-02", "PA-02", "HNCS-RD PA-02 — Présélection et suivi de l'analyse", 2, "Automatisé", "SharePointItem", CAND,
+    f = Flow("PA-02", "PA-02", "HNCS-RD PA-02 : Présélection et suivi de l'analyse", 2, "Automatisé", "SharePointItem", CAND,
              targets=targets("PA-02", CAND), objet="Candidature")
-    sp_trigger(f, CAND, "GetOnUpdatedItems", [ANTI_LOOP, cond_transition(), cond_targets(f.targets)])
+    sp_trigger(f, CAND, "GetOnUpdatedItems", [ANTI_LOOP])  # RX-02 : anti-boucle uniquement, filtrage dans le flux
     f.use(CAND, "ResponsableAnalyse", "DateAnalyse", "DateDecisionPreselection", "DecisionPreselection", "DestinataireAdmin",
           "DateTransmissionAdmin", "DateDecisionFinale", "DateCloture", "MotifCode", "InformationCandidat", "Email", "Title",
           "Created", "IdHNCS")
@@ -272,7 +277,7 @@ def pa02():
                 "DateDecisionFinale": at(f"if(and({admin_dec}, empty({I}?['DateDecisionFinale'])), utcNow(), {I}?['DateDecisionFinale'])"),
                 "DateCloture": at(f"coalesce({I}?['DateCloture'], utcNow())")}, I)
             notify(z, "N-06", [f.group_emails("G_RD"), f"if({admin_imp}, {P('Destinataires.Administration')}, '')"],
-                   {"IdHNCS": env.IDOBJ, "Statut": env.APRES, "MotifCode": f"coalesce({I}?['MotifCode']?['Value'], '—')", "Lien": env.LIEN})
+                   {"IdHNCS": env.IDOBJ, "Statut": env.APRES, "MotifCode": f"coalesce({I}?['MotifCode']?['Value'], '-')", "Lien": env.LIEN})
 
             def auto(y):
                 notify(y, "N-07", [f"{I}?['Email']"], {"NomCandidat": f"{I}?['Title']"})
@@ -288,7 +293,7 @@ def pa02():
             admin_imp = f"contains({arr(APRES_TRANSMISSION)}, {env.AVANT})"
             patch_item(z, "Date_cloture", CAND, env.ID, {"DateCloture": at(f"coalesce({I}?['DateCloture'], utcNow())")}, I)
             notify(z, "N-06", [f.group_emails("G_RD"), f"if({admin_imp}, {P('Destinataires.Administration')}, '')"],
-                   {"IdHNCS": env.IDOBJ, "Statut": env.APRES, "MotifCode": f"coalesce({I}?['MotifCode']?['Value'], '—')", "Lien": env.LIEN})
+                   {"IdHNCS": env.IDOBJ, "Statut": env.APRES, "MotifCode": f"coalesce({I}?['MotifCode']?['Value'], '-')", "Lien": env.LIEN})
 
         def transmise(z, env):
             notify(z, "N-04", [P("Destinataires.Administration")], {"IdHNCS": env.IDOBJ, "NomCandidat": f"{env.I}?['Title']", "Lien": env.LIEN})
@@ -313,7 +318,7 @@ def pa02():
 
 
 def pa02b():
-    f = Flow("PA-02b", "PA-02b", "HNCS-RD PA-02b — Relance des candidatures sans traitement", 2, "Planifié", "Recurrence",
+    f = Flow("PA-02b", "PA-02b", "HNCS-RD PA-02b : Relance des candidatures sans traitement", 2, "Planifié", "Recurrence",
              recurrence="Quotidien 08:00 (heure de Paris)")
     recurrence_trigger(f, {"frequency": "Day", "interval": 1, "schedule": {"hours": ["8"], "minutes": [0]}})
 
@@ -340,18 +345,20 @@ def pa02b():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-03 — Entretien (entretiens + candidatures) et PA-03b
+# PA-03 : Entretien (entretiens + candidatures) et PA-03b
 # --------------------------------------------------------------------------------------------
 
 def pa03_ent():
     ENT = "Entretiens"
-    f = Flow("PA-03-ent", "PA-03", "HNCS-RD PA-03 — Entretien (entretiens)", 2, "Automatisé", "SharePointItem", ENT)
+    f = Flow("PA-03-ent", "PA-03", "HNCS-RD PA-03 : Entretien (entretiens)", 2, "Automatisé", "SharePointItem", ENT)
     sp_trigger(f, ENT, "GetOnUpdatedItems", [ANTI_LOOP])
     f.use(ENT, "ID", "Statut", "StatutPrecedent", "DateStatut", "DateHeure", "Resultat", "LienReunion", "RappelEnvoye",
           "Participants", "Candidature", "SaisiPar", "DateSaisieResultat", "Title", "Modalite")
 
     def body(s):
         I = I_EL
+        restore_flux_columns(s, ENT, "triggerOutputs()?['body/ID']", "coalesce(triggerOutputs()?['body/IdHNCS'], '')",
+                             "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))")
         get_item(s, "Lire_element", ENT, "triggerOutputs()?['body/ID']")
         ID = f"{I}?['ID']"
         idobj = ensure_idhncs(s, ENT, I, ID, "el")
@@ -369,11 +376,13 @@ def pa03_ent():
         acteur = "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))"
 
         # 5. Historisation de tout changement de Statut ou de Resultat (Objet = Entretien, § 6.1-7)
+        ref_ent = ref_status(s, ENT, ID, "ent")
+
         def histo(y):
             res = f"{I}?['Resultat']?['Value']"
             post_item(y, "Historiser_entretien", "HistoriqueStatuts", {
                 "Title": ip(idobj), "Objet": "Entretien", "Liste": ENT, "ItemId": at(f"int({ID})"),
-                "StatutAvant": ip(f"coalesce({I}?['StatutPrecedent'], '')"),
+                "StatutAvant": ip(f"if(equals({ref_ent}, '∅'), '', {ref_ent})"),
                 "StatutApres": ip(f"{I}?['Statut']?['Value']"),
                 "CodeTransition": "", "Acteur": ip(acteur), "ActeurEmail": ip(acteur), "DateChangement": ip("utcNow()"),
                 "Origine": "Humain", "Resultat": "Acceptée", "Motif": ip(f"if(empty({res}), '', concat('Résultat : ', {res}))"), "FluxRunId": ip("workflow()?['run']?['name']")})
@@ -453,9 +462,9 @@ def pa03_ent():
 
 
 def pa03_cand():
-    f = Flow("PA-03-cand", "PA-03", "HNCS-RD PA-03 — Entretien (candidatures)", 2, "Automatisé", "SharePointItem", CAND,
+    f = Flow("PA-03-cand", "PA-03", "HNCS-RD PA-03 : Entretien (candidatures)", 2, "Automatisé", "SharePointItem", CAND,
              targets=targets("PA-03", CAND), objet="Candidature")
-    sp_trigger(f, CAND, "GetOnUpdatedItems", [ANTI_LOOP, cond_transition(), cond_targets(f.targets)])
+    sp_trigger(f, CAND, "GetOnUpdatedItems", [ANTI_LOOP])  # RX-02 : anti-boucle uniquement, filtrage dans le flux
 
     def body(s):
         def attente(z, env):
@@ -468,7 +477,7 @@ def pa03_cand():
             notify(z, "N-13", [f.group_emails("G_ADM"), resp(I)], {"IdHNCS": env.IDOBJ, "NomCandidat": f"{I}?['Title']",
                                                                    "Lien": env.LIEN}, teams_to=[resp(I)])
         needed = MODEL.controls_for("Candidature", f.targets)
-        transition_body(s, f, CAND, "Candidature", effects={"En attente de décision": attente, "Retenue": retenue},
+        transition_body(s, f, CAND, "Candidature", restore=False, effects={"En attente de décision": attente, "Retenue": retenue},
                         controls=candidature_controls(f, I_EL, f"{I_EL}?['ID']", needed))
     standard_shell(f, body, CAND, "triggerOutputs()?['body/ID']", "triggerOutputs()?['body/IdHNCS']")
     f.doc = DOC["PA-03-cand"]
@@ -476,7 +485,7 @@ def pa03_cand():
 
 
 def pa03b():
-    f = Flow("PA-03b", "PA-03b", "HNCS-RD PA-03b — Rappels d'entretien et demande de résultat", 2, "Planifié", "Recurrence",
+    f = Flow("PA-03b", "PA-03b", "HNCS-RD PA-03b : Rappels d'entretien et demande de résultat", 2, "Planifié", "Recurrence",
              recurrence="Toutes les heures de 07:00 à 20:00 (heure de Paris)")
     recurrence_trigger(f, {"frequency": "Day", "interval": 1,
                            "schedule": {"hours": [str(h) for h in range(7, 21)], "minutes": [0]}})
@@ -501,7 +510,7 @@ def pa03b():
             notify(r, "N-10", [parts], {
                 "IdHNCS": f"coalesce({it}?['IdHNCS'], string({it}?['ID']))", "IdCandidature": f"coalesce({C}?['IdHNCS'], '')",
                 "NomCandidat": f"{C}?['Title']", "Date": dtloc(it + "?['DateHeure']"), "Modalite": f"{it}?['Modalite']?['Value']",
-                "LienReunion": f"coalesce({it}?['LienReunion'], '—')", "Lien": item_link(ENT, f"{it}?['ID']")}, teams_to=[parts])
+                "LienReunion": f"coalesce({it}?['LienReunion'], '-')", "Lien": item_link(ENT, f"{it}?['ID']")}, teams_to=[parts])
             patch_item(r, "Rappel_envoye", ENT, f"{it}?['ID']", {"RappelEnvoye": at("true")}, it)
         foreach(s, "Pour_rappel", f"body('{a}')", rappel)
         b = filt(s, "Resultats_a_demander", f"body('{e}')?['value']",
@@ -520,7 +529,7 @@ def pa03b():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-04 — Intégration (candidatures, alternants, actions) et PA-04b
+# PA-04 : Intégration (candidatures, alternants, actions) et PA-04b
 # --------------------------------------------------------------------------------------------
 
 def alternant_setup(z, f, A, AID, aidobj, rc, resp_expr, eco_resp, tag):
@@ -547,9 +556,9 @@ def alternant_setup(z, f, A, AID, aidobj, rc, resp_expr, eco_resp, tag):
 
 
 def pa04_cand():
-    f = Flow("PA-04-cand", "PA-04", "HNCS-RD PA-04 — Intégration (candidatures)", 2, "Automatisé", "SharePointItem", CAND,
+    f = Flow("PA-04-cand", "PA-04", "HNCS-RD PA-04 : Intégration (candidatures)", 2, "Automatisé", "SharePointItem", CAND,
              targets=targets("PA-04", CAND), objet="Candidature")
-    sp_trigger(f, CAND, "GetOnUpdatedItems", [ANTI_LOOP, cond_transition(), cond_targets(f.targets)])
+    sp_trigger(f, CAND, "GetOnUpdatedItems", [ANTI_LOOP])  # RX-02 : anti-boucle uniquement, filtrage dans le flux
     f.use(CAND, "ResponsableAnalyse", "Title", "IdHNCS", "Etablissement", "Formation", "PolePressenti", "ReferentPressenti",
           "DateDemarrageConfirmee", "DateFinPrevue", "IdAlternant", "DateIntegration", "ID")
 
@@ -603,10 +612,10 @@ def pa04_cand():
             notify(z, "N-16", [f.group_emails("G_RD"), rc, P("Destinataires.Administration")], {
                 "IdAlternant": aidobj, "NomAlternant": f"{A}?['Title']", "IdCandidature": env.IDOBJ,
                 "DateDebut": dfr(A + "?['DateDebut']"), "Pole": f"coalesce({I}?['PolePressenti']?['Value'], '')",
-                "Referent": f"coalesce({ref}?['Title'], '—')", "Lien": item_link(ALT, AID), "LienDossierSuivi": suivi}, teams_to=[rc])
+                "Referent": f"coalesce({ref}?['Title'], '-')", "Lien": item_link(ALT, AID), "LienDossierSuivi": suivi}, teams_to=[rc])
 
         needed = MODEL.controls_for("Candidature", f.targets)
-        transition_body(s, f, CAND, "Candidature", effects={"Formalités en cours": formalites, "Intégrée": integree},
+        transition_body(s, f, CAND, "Candidature", restore=False, effects={"Formalités en cours": formalites, "Intégrée": integree},
                         controls=candidature_controls(f, I_EL, f"{I_EL}?['ID']", needed))
     standard_shell(f, body, CAND, "triggerOutputs()?['body/ID']", "triggerOutputs()?['body/IdHNCS']")
     f.doc = DOC["PA-04-cand"]
@@ -614,13 +623,10 @@ def pa04_cand():
 
 
 def pa04_alt():
-    f = Flow("PA-04-alt", "PA-04", "HNCS-RD PA-04 — Intégration (alternants)", 2, "Automatisé", "SharePointItem", ALT,
+    f = Flow("PA-04-alt", "PA-04", "HNCS-RD PA-04 : Intégration (alternants)", 2, "Automatisé", "SharePointItem", ALT,
              targets=targets("PA-04", ALT), objet="Alternant")
     tgt = f.targets
-    sp_trigger(f, ALT, "GetOnUpdatedItems", [ANTI_LOOP,
-               "@or(and(not(equals(coalesce(triggerOutputs()?['body/Statut/Value'], ''), coalesce(triggerOutputs()?['body/StatutPrecedent'], ''))), "
-               f"contains({arr(tgt)}, triggerOutputs()?['body/Statut/Value'])), not(empty(triggerOutputs()?['body/CompteM365/Email'])), "
-               "not(equals(string(coalesce(triggerOutputs()?['body/ReferentPrincipal/Id'], '')), coalesce(triggerOutputs()?['body/EmpreinteReferent'], ''))))"])
+    sp_trigger(f, ALT, "GetOnUpdatedItems", [ANTI_LOOP])  # RX-02 : toute modification humaine
     f.use(ALT, "CompteM365", "IdHNCS", "ReferentPrincipal", "EmpreinteReferent", "Etablissement", "Title")
     acteur = "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))"
 
@@ -630,7 +636,7 @@ def pa04_alt():
             cur_ref = f"string(coalesce({I}?['ReferentPrincipal']?['Id'], ''))"
             emp = f"coalesce({I}?['EmpreinteReferent'], '')"
 
-            # P-09 : référent principal dérivé (PA-04 / PA-05) — toute modification manuelle est rétablie (N-91)
+            # P-09 : référent principal dérivé (PA-04 / PA-05) : toute modification manuelle est rétablie (N-91)
             def protect(y):
                 patch_item(y, "Retablir_referent_principal", ALT, env.ID, {
                     "ReferentPrincipal": at(f"if(empty({emp}), null, int({emp}))")}, I)
@@ -642,7 +648,7 @@ def pa04_alt():
             def init(y):
                 patch_item(y, "Initialiser_EmpreinteReferent", ALT, env.ID, {"EmpreinteReferent": ip(cur_ref)}, I)
             cond(z, "Si_referent_modifie", f"not(equals({cur_ref}, {emp}))",
-                 lambda y: cond(y, "Si_empreinte_referent_connue", f"and(not(empty({emp})), not(empty({I}?['StatutPrecedent'])))", protect, init))
+                 lambda y: cond(y, "Si_empreinte_referent_connue", f"and(not(empty({emp})), not(equals({env.AVANT}, '∅')))", protect, init))
 
             ch = item_changes(z, "Changements", ALT, env.ID)
             changed = f"equals(string(coalesce(body('{ch}')?['ColumnHasChanged']?['CompteM365'], false)), 'True')"
@@ -715,20 +721,22 @@ def pa04_alt():
 
         needed = MODEL.controls_for("Alternant", f.targets)
         transition_body(s, f, ALT, "Alternant", pre=pre, effects={"À intégrer": a_integrer, "Actif": actif},
-                        controls=lambda y, tag: alternant_controls(f, I_EL, f"{I_EL}?['ID']", needed, "outputs('Statut_avant')", "false")(y, tag))
+                        controls=lambda y, tag: alternant_controls(f, I_EL, f"{I_EL}?['ID']", needed, "outputs('Statut_valide_el')", "false")(y, tag))
     standard_shell(f, body, ALT, "triggerOutputs()?['body/ID']", "triggerOutputs()?['body/IdHNCS']")
     f.doc = DOC["PA-04-alt"]
     return f
 
 
 def pa04_act():
-    f = Flow("PA-04-act", "PA-04", "HNCS-RD PA-04 — Intégration (actions d'intégration)", 2, "Automatisé", "SharePointItem", ACT)
+    f = Flow("PA-04-act", "PA-04", "HNCS-RD PA-04 : Intégration (actions d'intégration)", 2, "Automatisé", "SharePointItem", ACT)
     sp_trigger(f, ACT, "GetOnUpdatedItems", [ANTI_LOOP])  # tous contextes (droits du responsable, § 7.4)
     f.use(ACT, "Contexte", "Candidature", "EmpreinteAction", "Bloquante", "Statut", "Responsable", "IdHNCS", "ID")
     acteur = "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))"
 
     def body(s):
         I = I_EL
+        restore_flux_columns(s, ACT, "triggerOutputs()?['body/ID']", "coalesce(triggerOutputs()?['body/IdHNCS'], '')",
+                             "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))")
         get_item(s, "Lire_element", ACT, "triggerOutputs()?['body/ID']")
         ID = f"{I}?['ID']"
         idobj = ensure_idhncs(s, ACT, I, ID, "el")
@@ -792,7 +800,7 @@ def pa04_act():
 
 
 def pa04b():
-    f = Flow("PA-04b", "PA-04b", "HNCS-RD PA-04b — Activation des alternants et rappels d'actions", 2, "Planifié", "Recurrence",
+    f = Flow("PA-04b", "PA-04b", "HNCS-RD PA-04b : Activation des alternants et rappels d'actions", 2, "Planifié", "Recurrence",
              recurrence="Quotidien 06:30 (heure de Paris)")
     recurrence_trigger(f, {"frequency": "Day", "interval": 1, "schedule": {"hours": ["6"], "minutes": [30]}})
 
@@ -828,8 +836,8 @@ def pa04b():
             rr = f"{it}?['Responsable']?['Email']"
             to = f"if(empty({rr}), {role_resolution(it + "?['RoleResponsable']?['Value']", fallback)}, {rr})"
             notify(e, "N-19", [to], {"IdHNCS": f"coalesce({it}?['IdHNCS'], string({it}?['ID']))", "Action": f"{it}?['Title']",
-                                     "Date": dfr(it + "?['Echeance']"), "Description": f"coalesce({it}?['Description'], '—')",
-                                     "PreuveAttendue": f"coalesce({it}?['PreuveAttendue'], '—')", "Lien": item_link(ACT, f"{it}?['ID']")},
+                                     "Date": dfr(it + "?['Echeance']"), "Description": f"coalesce({it}?['Description'], '-')",
+                                     "PreuveAttendue": f"coalesce({it}?['PreuveAttendue'], '-')", "Lien": item_link(ACT, f"{it}?['ID']")},
                    teams_to=[rr])
             patch_item(e, "Memoriser_rappel", ACT, f"{it}?['ID']", {"DernierRappel": ip(marker)}, it)
         foreach(s, "Pour_action", f"body('{r}')", rappel)
@@ -846,12 +854,12 @@ BUILDERS = [pa01a, pa01b, pa02, pa02b, pa03_ent, pa03_cand, pa03b, pa04_cand, pa
 DOC = {
     "PA-01a": dict(
         objectif="Enregistrer proprement toute nouvelle candidature (saisie manuelle, formulaire ou boîte mail R&D) : identifiant, signalement de doublon, dossier CV cloisonné, historique et notification de la R&D.",
-        entrees="Élément `Candidatures` créé par une personne (statut « Reçue »).",
-        etapes=["`IdHNCS` (`CAND-AAAA-NNNN`) s'il est vide.",
-                "Socle : PA-00A sur CAND-T01 (∅ → Reçue, acteurs RD ou FLUX) ; refus → règle § 6.1-3 bis : PA-00B envoie l'élément à la corbeille du site, historise « Refusée — annulée » et notifie N-90 ; fin.",
+        entrees="Élément `Candidatures` saisi par la R&D (statut « Reçue »).",
+        etapes=["`IdHNCS` (`CAND-AAAA-NNNN`) s'il est vide ; statut validé = dernière transition acceptée de `HistoriqueStatuts` : l'exécution ne continue que pour une création (aucune transition acceptée) au statut « Reçue ».",
+                "Socle : PA-00A sur CAND-T01 (∅ → Reçue, acteurs RD ou FLUX) ; refus → règle § 6.1-3 bis : PA-00B envoie l'élément à la corbeille du site, historise « Refusée et annulée » et notifie N-90 ; fin.",
                 "Contrôle doublon si `Email` est renseigné : autre candidature non terminale (≠ Intégrée, Non retenue, Clôturée) avec le même `Email` (comparaison SharePoint insensible à la casse) → `DoublonPotentiel` = Oui et `DoublonDe` ; jamais de fusion ni de clôture.",
-                "Dossier `01 — Recrutement/{AAAA}/{IdHNCS}` (AAAA = année de création, heure de Paris) créé s'il est absent ; héritage rompu avec copie (G_PROP FC, G_DRD et G_RD CSS ajoutés explicitement) ; `LienCV` = lien du dossier.",
-                "PA-00B : historiser CAND-T01 si `StatutPrecedent` est vide (fixe `StatutPrecedent` = Reçue).",
+                "Dossier `01 : Recrutement/{AAAA}/{IdHNCS}` (AAAA = année de création, heure de Paris) créé s'il est absent ; héritage rompu avec copie (G_PROP FC, G_DRD et G_RD CSS ajoutés explicitement) ; `LienCV` = lien du dossier.",
+                "PA-00B : historiser CAND-T01 si aucune transition n'est encore acceptée pour l'élément (`StatutPrecedent` = Reçue, copie de commodité).",
                 "Si `ResponsableAnalyse` est renseigné **et** `G_IDENTITE` satisfait : CAND-T02 (Reçue → À analyser, rôle FLUX, exception documentée) via PA-00A, contrôles `G_RESP_ANALYSE` et `G_IDENTITE`, écriture du statut, PA-00B, puis N-03 au responsable (règle § 6.1-8).",
                 "N-01 au responsable d'analyse, sinon aux membres de G_RD (Teams au responsable) ; pour une candidature « À qualifier », N-01 demande la qualification de l'identité.",
                 "Si `Fonction.AccuseReceptionActif` = Oui, identité qualifiée et `AccuseReceptionEnvoye` = Non : N-02 au candidat puis `AccuseReceptionEnvoye` = Oui."],
@@ -859,7 +867,7 @@ DOC = {
         erreurs="Socle : portée `Erreur` → PA-00C (N-99) puis échec ; la resoumission est idempotente (identifiant, doublon, dossier, historique et accusé déjà posés ne sont pas refaits). N-01 peut être renvoyée lors d'une resoumission (aucun marqueur prévu par la spec).",
         decision="Aucune décision : le doublon est **signalé**, jamais fusionné ni clôturé ; la présélection reste une décision de la R&D.",
         tests=["Saisie manuelle par un membre RD : identifiant, dossier, historique CAND-T01, N-01 à G_RD.",
-               "Création par un membre ADMIN (hors acteurs de CAND-T01) : élément en corbeille, historique « Refusée — annulée », N-90.",
+               "Création par un membre ADMIN (hors acteurs de CAND-T01) : élément en corbeille, historique « Refusée et annulée », N-90.",
                "Saisie avec responsable : passage à « À analyser » par FLUX, historisé, N-03.",
                "Même e-mail qu'une candidature ouverte : doublon signalé, aucune autre modification.", "Accusé de réception désactivé par défaut : aucun courriel au candidat."]),
     "PA-01b": dict(
@@ -867,17 +875,17 @@ DOC = {
         entrees="Expéditeur, objet, `Internet-Message-Id`, date de réception et pièces jointes du courriel.",
         etapes=["Idempotence : si une candidature porte déjà ce `RefMessage` et que son dossier CV est posé → fin ; si elle existe sans dossier (exécution interrompue) → reprise sur l'élément existant.",
                 "Canal déduit par `Canal.Regles` (`motif=canal`) : domaine de l'expéditeur, puis balise d'objet (ex. `[CANDIDATURE-SITE]`) ; valeur hors énumération ou aucune règle → « À qualifier ».",
-                "Création de l'élément (`ModeReception` = Boîte mail R&D, `Statut` = Reçue, `DateReception`, `RefMessage`) : courriel de plateforme (règle de **domaine** donnant LinkedIn ou France Travail) → `Title` = « À qualifier – {RefMessage} », `Email` vide ; sinon `Email` = adresse de l'expéditeur et `Title` = partie locale de l'adresse (le nom affiché n'est pas exposé par le déclencheur standard, voir divergences).",
+                "Création de l'élément (`ModeReception` = Boîte mail R&D, `Statut` = Reçue, `DateReception`, `RefMessage`) : courriel de plateforme (règle de **domaine** donnant LinkedIn ou France Travail) → `Title` = « À qualifier : {RefMessage} », `Email` vide ; sinon `Email` = adresse de l'expéditeur et `Title` = partie locale de l'adresse (le nom affiché n'est pas exposé par le déclencheur standard, voir divergences).",
                 "Traitement commun PA-01a (CAND-T01 par FLUX) ; en plus, enregistrement des pièces jointes non incorporées dont l'extension figure dans `Canal.ExtensionsAutorisees` dans le dossier CV, métadonnées `TypeDocument` = CV, `Candidature`, `IdObjet`.",
                 "Pièce jointe refusée (type) → `JournalFlux` Avertissement (extension seulement, jamais le nom du fichier) ; la candidature est créée quand même."],
         sorties="Candidature créée et complétée, pièces jointes classées, historique CAND-T01 (Origine Flux).",
         erreurs="Socle (PA-00C) ; reprise par resoumission sans doublon grâce à `RefMessage`.",
         decision="Aucune : le flux enregistre, il ne juge pas la candidature ; l'identité d'un courriel de plateforme est qualifiée par la R&D.",
-        tests=["Courriel `[CANDIDATURE-SITE]` → canal « Site HNCS », e-mail de l'expéditeur.", "Expéditeur `@linkedin.com` → « LinkedIn », titre « À qualifier – … », e-mail vide, pas de passage automatique à « À analyser ».",
+        tests=["Courriel `[CANDIDATURE-SITE]` → canal « Site HNCS », e-mail de l'expéditeur.", "Expéditeur `@linkedin.com` → « LinkedIn », titre « À qualifier : … », e-mail vide, pas de passage automatique à « À analyser ».",
                "Pièce jointe `.exe` refusée et journalisée.", "Même courriel retraité : aucun doublon."]),
     "PA-02": dict(
         objectif="Tracer l'analyse des candidatures par la R&D, exécuter la transmission à l'administration après présélection et notifier les clôtures.",
-        entrees="Élément `Candidatures` modifié vers un statut de la partition PA-02, `StatutPrecedent`, `Editor`.",
+        entrees="Élément `Candidatures` modifié par une personne (toute modification) ; statut validé lu dans `HistoriqueStatuts` ; `Editor`.",
         etapes=["Socle : lecture fraîche de l'élément, événement obsolète ignoré, `IdHNCS`.",
                 "PA-00A (acteur = `Editor`) puis contrôles `G_*` renvoyés (`G_RESP_ANALYSE`, `G_IDENTITE`, `G_AVIS_ANALYSE`, `G_AUCUN_ENTRETIEN_ACTIF`, `G_DECISION_FINALE`, `G_DECIDEUR`) ; refus → PA-00B (annulation, N-90) et fin.",
                 "**À analyser** / **En cours d'analyse** depuis « Reçue » : contrôle doublon si `Email` est renseigné (comme PA-01).",
@@ -888,7 +896,7 @@ DOC = {
                 "**Clôturée** : `DateCloture` ; N-06.", "**Transmise à l'administration** (retour CAND-T08 saisi à la main) : N-04 à l'administration.",
                 "PA-00B (acceptée)."],
         sorties="Champs datés, permissions, notifications, historique.",
-        erreurs="Échec de partage → la candidature reste « Présélectionnée » (StatutPrecedent non validé), erreur journalisée (PA-00C) ; la resoumission rejoue les étapes idempotentes (dates déjà posées conservées, permissions réattribuées sans doublon, N-05 non renvoyé si `DateTransmissionAdmin` est posée).",
+        erreurs="Échec de partage → la candidature reste « Présélectionnée » (transition non encore acceptée dans l'historique), erreur journalisée (PA-00C) ; la resoumission rejoue les étapes idempotentes (dates déjà posées conservées, permissions réattribuées sans doublon, N-05 non renvoyé si `DateTransmissionAdmin` est posée).",
         decision="La présélection et le refus sont saisis par la R&D (ou l'administration après transmission) ; le flux n'exécute que la transmission (CAND-T05) en conséquence de la présélection. `DecisionPreselection` n'est que le reflet de la décision portée par le statut.",
         tests=["Passage à « En cours d'analyse » d'une candidature « À qualifier » → refus `G_IDENTITE`.",
                "Présélection sans avis → refus `G_AVIS_ANALYSE`, statut rétabli, N-90.", "Présélection avec avis → G_ADM (ou le seul destinataire) voit la candidature et le dossier, N-05 sans pièce jointe ni avis, statut « Transmise à l'administration ».",
@@ -934,13 +942,13 @@ DOC = {
         sorties="Rappels et demandes, indicateurs posés (idempotence).", erreurs="Socle (PA-00C) ; rattrapage au passage horaire suivant.",
         decision="Aucune.", tests=["Entretien dans 20 h → un seul rappel.", "Entretien passé de 3 h → une seule demande de résultat."]),
     "PA-04-cand": dict(
-        objectif="Lancer les formalités d'intégration et, à la confirmation, créer la fiche alternant et ses dossiers cloisonnés — uniquement si les formalités sont au bon stade (P-02).",
+        objectif="Lancer les formalités d'intégration et, à la confirmation, créer la fiche alternant et ses dossiers cloisonnés : uniquement si les formalités sont au bon stade (P-02).",
         entrees="Élément `Candidatures` modifié vers « Formalités en cours » ou « Intégrée ».",
-        etapes=["**Formalités en cours** (CAND-T13) : PA-00A ; actions générées depuis `ModelesActions` (contexte « Formalités d'intégration », `Actif` = Oui), une par `Code`, liées à la candidature, échéance = aujourd'hui + `DelaiJours`, responsable résolu (§ 8.1 : ADMIN → `Destinataires.Administration`, RD → responsable d'analyse sinon `Destinataires.DirectionRD`, DIRECTION_RD → `Destinataires.DirectionRD`, PROPRIETAIRE → `Destinataires.Support`), CSS du responsable sur l'action, `EmpreinteAction` initialisée (idempotent par Candidature + `CodeModeleAction`) ; dossier `02 — Administration/Candidatures/{CAND}` (héritage de la bibliothèque) ; N-15 avec le tableau des actions ; PA-00B.",
+        etapes=["**Formalités en cours** (CAND-T13) : PA-00A ; actions générées depuis `ModelesActions` (contexte « Formalités d'intégration », `Actif` = Oui), une par `Code`, liées à la candidature, échéance = aujourd'hui + `DelaiJours`, responsable résolu (§ 8.1 : ADMIN → `Destinataires.Administration`, RD → responsable d'analyse sinon `Destinataires.DirectionRD`, DIRECTION_RD → `Destinataires.DirectionRD`, PROPRIETAIRE → `Destinataires.Support`), CSS du responsable sur l'action, `EmpreinteAction` initialisée (idempotent par Candidature + `CodeModeleAction`) ; dossier `02 : Administration/Candidatures/{CAND}` (héritage de la bibliothèque) ; N-15 avec le tableau des actions ; PA-00B.",
                 "**Intégrée** (CAND-T14) : PA-00A puis `G_INTEGRATION` ; échec → annulation (retour « Formalités en cours ») et N-90 détaillant les éléments manquants (a) à (e).",
                 "Fiche `Alternants` liée existante (`CandidatureSource`) → rien n'est recréé ; sinon création (`Title`, `CandidatureSource`, `Etablissement`, `Formation`, `Pole` = `PolePressenti`, `ReferentPrincipal` = `ReferentPressenti` et `EmpreinteReferent`, `DateDebut`, `DateFin`, statut « À intégrer ») ; ALT-T01 par FLUX avec `G_SOURCE_ALTERNANT` (candidature source « Intégrée »), historisé ; `JournalFlux` Info.",
                 "Candidature : `IdAlternant`, `DateIntegration`.",
-                "Dossiers : `05 — Suivi des alternants/{ALT}` (copie + alternant si compte connu + référent : CSS), `/{ALT}/_Evaluations` (sans copie : G_PROP FC, G_DRD R, référent CSS ; alternant exclu), `02 — Administration/Alternants/{ALT}` et son sous-dossier `Operationnel` (G_RD : R) ; lecture du référent principal sur la fiche ; liens renseignés.",
+                "Dossiers : `05 : Suivi des alternants/{ALT}` (copie + alternant si compte connu + référent : CSS), `/{ALT}/_Evaluations` (sans copie : G_PROP FC, G_DRD R, référent CSS ; alternant exclu), `02 : Administration/Alternants/{ALT}` et son sous-dossier `Operationnel` (G_RD : R) ; lecture du référent principal sur la fiche ; liens renseignés.",
                 "Actions « Accueil » liées à l'alternant (idempotentes, responsables résolus, REFERENT → référent pressenti, ECOLES → responsable HNCS de l'établissement) ; `JournalFlux` Info.",
                 "Établissement « Prospect » ou « Contact établi » → « Établissement d'accueil » (constat factuel, pas un partenariat).",
                 "N-16 à G_RD, au référent pressenti et à l'administration ; PA-00B."],
@@ -953,7 +961,7 @@ DOC = {
         objectif="Contrôler la création manuelle et l'activation des alternants, protéger le référent principal dérivé et ouvrir le dossier de suivi quand le compte Microsoft 365 est renseigné.",
         entrees="Élément `Alternants` créé ou modifié (statut « À intégrer » / « Actif », compte renseigné, ou référent principal différent de son empreinte).",
         etapes=["P-09 : `ReferentPrincipal` différent de `EmpreinteReferent` (ID du référent en texte, § 6.5) sur une fiche existante → valeur rétablie, Avertissement, N-91 à l'auteur, fin ; empreinte vide (fiche importée ou création) → initialisée sans rien rétablir.",
-                "Changement de `CompteM365` (« Obtenir les modifications ») : alternant ajouté (CSS) sur `05 — Suivi des alternants/{ALT}` (hors `_Evaluations`) ; dossier absent → Avertissement ; attributions de PA-05 rejouées pour ses affectations actives (dossier `04 — Livrables R&D/{SUJ}` CSS, lecture de l'affectation, CSS sur les livrables dont il est propriétaire et sur ses comptes rendus).",
+                "Changement de `CompteM365` (« Obtenir les modifications ») : alternant ajouté (CSS) sur `05 : Suivi des alternants/{ALT}` (hors `_Evaluations`) ; dossier absent → Avertissement ; attributions de PA-05 rejouées pour ses affectations actives (dossier `04 : Livrables R&D/{SUJ}` CSS, lecture de l'affectation, CSS sur les livrables dont il est propriétaire et sur ses comptes rendus).",
                 "Création manuelle (ALT-T01 par DIRECTION_RD, reprise de l'existant) : PA-00A puis `G_SOURCE_ALTERNANT` (`CandidatureSource` vide et `Fonction.RepriseExistantActive` = Oui) ; refus → corbeille (§ 6.1-3 bis) ; acceptation → étapes 5 et 6 de PA-04 (dossiers, accès du référent, checklist « Accueil »).",
                 "Passage à « Actif » saisi à la main : PA-00A puis `G_DATE_DEBUT_ATTEINTE` (depuis « À intégrer » ; non exigé depuis « Suspendu ») ou `G_DATE_FIN_REPORTEE` (prolongation depuis « Fin planifiée », ALT-T08) ; refus → annulation et N-90. Prolongation acceptée : échéance des actions de clôture encore ouvertes = nouvelle `DateFin` ; le bilan « À réaliser » est conservé ; `JournalFlux` Info.",
                 "PA-00B (acceptée)."],
@@ -965,7 +973,7 @@ DOC = {
     "PA-04-act": dict(
         objectif="Protéger les formalités (caractère bloquant, clôture des actions), ouvrir l'action à son responsable et prévenir l'administration lorsque toutes les formalités bloquantes sont terminées, sans changer aucun statut de candidature.",
         entrees="Élément `ActionsIntegration` créé ou modifié, tous contextes (droits du responsable) ; `G_ACTION_FORMALITE` et N-17 pour le seul contexte « Formalités d'intégration ».",
-        etapes=["Contexte « Formalités d'intégration » — `G_ACTION_FORMALITE` (P-09) : `Bloquante` modifiée par une personne hors G_ADM, action bloquante passée à « Non applicable » hors G_ADM, ou action passée à « Terminée » par une personne qui n'est ni membre de G_ADM ni le `Responsable` → valeurs de `EmpreinteAction` (`{\"Bloquante\":true,\"Statut\":\"À faire\"}`, § 6.5) rétablies, Avertissement, N-92, fin ; sinon empreinte mise à jour ; empreinte vide → initialisée sans rien rétablir.",
+        etapes=["Contexte « Formalités d'intégration » : `G_ACTION_FORMALITE` (P-09) : `Bloquante` modifiée par une personne hors G_ADM, action bloquante passée à « Non applicable » hors G_ADM, ou action passée à « Terminée » par une personne qui n'est ni membre de G_ADM ni le `Responsable` → valeurs de `EmpreinteAction` (`{\"Bloquante\":true,\"Statut\":\"À faire\"}`, § 6.5) rétablies, Avertissement, N-92, fin ; sinon empreinte mise à jour ; empreinte vide → initialisée sans rien rétablir.",
                 "Tous contextes : CSS du `Responsable` sur l'action (§ 7.4, idempotent ; l'ancien responsable n'est pas retiré).",
                 "Candidature liée « Formalités en cours » : si au moins une action existe et que toutes les actions bloquantes sont « Terminée » avec preuve ou « Non applicable » avec commentaire → N-17 à l'administration, une seule fois (marqueur `JournalFlux` Info « N-17 envoyée »)."],
         sorties="Empreinte et permissions de l'action, N-17.", erreurs="Socle (PA-00C).",

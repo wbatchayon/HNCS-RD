@@ -2837,7 +2837,7 @@
                         "parameters": {
                           "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
                           "table": "Affectations",
-                          "$filter": "EmpreinteVerrou eq null and (StatutPrecedent eq 'Active' or StatutPrecedent eq 'À risque' or StatutPrecedent eq 'Bloquée' or StatutPrecedent eq 'Terminée' or StatutPrecedent eq 'Clôturée')",
+                          "$filter": "EmpreinteVerrou eq null and (Statut eq 'Active' or Statut eq 'À risque' or Statut eq 'Bloquée' or Statut eq 'Terminée' or Statut eq 'Clôturée')",
                           "$top": 5000
                         },
                         "authentication": "@parameters('$authentication')",
@@ -2922,7 +2922,6 @@
                         "parameters": {
                           "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
                           "table": "Livrables",
-                          "$filter": "EmpreinteRevue eq null",
                           "$top": 5000
                         },
                         "authentication": "@parameters('$authentication')",
@@ -2934,9 +2933,21 @@
                       },
                       "runAfter": {}
                     },
+                    "Sans_empreinte_Livrables": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Empreintes_vides_Livrables')?['value']",
+                        "where": "@empty(item()?['EmpreinteRevue'])"
+                      },
+                      "runAfter": {
+                        "Empreintes_vides_Livrables": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
                     "Pour_empreinte_Livrables": {
                       "type": "Foreach",
-                      "foreach": "@body('Empreintes_vides_Livrables')?['value']",
+                      "foreach": "@body('Sans_empreinte_Livrables')",
                       "actions": {
                         "Empreinte_Livrables": {
                           "type": "Compose",
@@ -2995,7 +3006,7 @@
                         }
                       },
                       "runAfter": {
-                        "Empreintes_vides_Livrables": [
+                        "Sans_empreinte_Livrables": [
                           "Succeeded"
                         ]
                       }
@@ -3064,7 +3075,6 @@
                             "parameters": {
                               "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
                               "table": "Comptes rendus de suivi",
-                              "$filter": "EmpreinteRevue eq null",
                               "$top": 5000
                             },
                             "authentication": "@parameters('$authentication')",
@@ -3076,9 +3086,21 @@
                           },
                           "runAfter": {}
                         },
+                        "Sans_empreinte_ComptesRendus": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('Empreintes_vides_ComptesRendus')?['value']",
+                            "where": "@empty(item()?['EmpreinteRevue'])"
+                          },
+                          "runAfter": {
+                            "Empreintes_vides_ComptesRendus": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
                         "Pour_empreinte_ComptesRendus": {
                           "type": "Foreach",
-                          "foreach": "@body('Empreintes_vides_ComptesRendus')?['value']",
+                          "foreach": "@body('Sans_empreinte_ComptesRendus')",
                           "actions": {
                             "Empreinte_ComptesRendus": {
                               "type": "Compose",
@@ -3136,7 +3158,7 @@
                             }
                           },
                           "runAfter": {
-                            "Empreintes_vides_ComptesRendus": [
+                            "Sans_empreinte_ComptesRendus": [
                               "Succeeded"
                             ]
                           }

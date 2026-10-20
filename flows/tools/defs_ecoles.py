@@ -1,11 +1,11 @@
 """Fin d'alternance, écoles, gouvernance, communications, conservation et sujets : PA-09/09b, PA-10/10b, PA-11, PA-12, PA-13, PA-14."""
 from __future__ import annotations
 
-from flowlib import (item_changes, MODEL, SITE, SVC, TZ, TODAY, ANTI_LOOP, Flow, P, arr, at, compose, cond, cond_targets, cond_transition,
+from flowlib import (odq, item_changes, MODEL, SITE, SVC, TZ, TODAY, ANTI_LOOP, Flow, P, arr, at, compose, cond, cond_targets, cond_transition,
                      create_with_id, dfr, dloc, ensure_idhncs, filt, flux_transition, foreach, get_item, get_items, grant_item,
                      html_table, ip, item_link, list_link, log, notify, odata, patch_item, q, recurrence_trigger, select,
                      sp_trigger, standard_shell, switch, teams_channel, terminate, truthy)
-from gen_common import (I_EL, affectation_controls, alternant_controls, communication_controls, controls_needed_for,
+from gen_common import (restore_flux_columns, I_EL, affectation_controls, alternant_controls, communication_controls, controls_needed_for,
                         convention_controls, emp_action, fin_planifiee_effects, first, generate_actions, lookup_first, role_map,
                         sujet_controls, transition_body)
 from defs_production import n22
@@ -21,13 +21,13 @@ def targets(code, lst):
 
 
 # --------------------------------------------------------------------------------------------
-# PA-09 — Fin d'alternance (alternants, bilans) et PA-09b
+# PA-09 : Fin d'alternance (alternants, bilans) et PA-09b
 # --------------------------------------------------------------------------------------------
 
 def pa09_alt():
-    f = Flow("PA-09-alt", "PA-09", "HNCS-RD PA-09 — Fin d'alternance (alternants)", 3, "Automatisé", "SharePointItem", ALT,
+    f = Flow("PA-09-alt", "PA-09", "HNCS-RD PA-09 : Fin d'alternance (alternants)", 3, "Automatisé", "SharePointItem", ALT,
              targets=targets("PA-09", ALT), objet="Alternant")
-    sp_trigger(f, ALT, "GetOnUpdatedItems", [ANTI_LOOP, cond_transition(), cond_targets(f.targets)])
+    sp_trigger(f, ALT, "GetOnUpdatedItems", [ANTI_LOOP])  # RX-02 : anti-boucle uniquement, filtrage dans le flux
     f.use(ALT, "ReferentPrincipal", "DateFinReelle", "Title", "IdHNCS", "Etablissement", "DateFin")
 
     def body(s):
@@ -70,29 +70,29 @@ def pa09_alt():
                 "Affectations": f"if(empty(body('{ids}')), 'aucune', join(body('{ids}'), ', '))", "Checklist": tab, "Lien": env.LIEN})
 
         needed = MODEL.controls_for("Alternant", f.targets)
-        transition_body(s, f, ALT, "Alternant", effects={"Suspendu": suspendu, "Fin planifiée": fin_planifiee, "Terminé": termine},
-                        controls=lambda y, tag: alternant_controls(f, I_EL, f"{I_EL}?['ID']", needed, "outputs('Statut_avant')")(y, tag))
+        transition_body(s, f, ALT, "Alternant", restore=False, effects={"Suspendu": suspendu, "Fin planifiée": fin_planifiee, "Terminé": termine},
+                        controls=lambda y, tag: alternant_controls(f, I_EL, f"{I_EL}?['ID']", needed, "outputs('Statut_valide_el')")(y, tag))
     standard_shell(f, body, ALT, "triggerOutputs()?['body/ID']", "triggerOutputs()?['body/IdHNCS']")
     f.doc = DOC["PA-09-alt"]
     return f
 
 
 def pa09_bil():
-    f = Flow("PA-09-bil", "PA-09", "HNCS-RD PA-09 — Fin d'alternance (bilans)", 3, "Automatisé", "SharePointItem", BIL)
+    f = Flow("PA-09-bil", "PA-09", "HNCS-RD PA-09 : Fin d'alternance (bilans)", 3, "Automatisé", "SharePointItem", BIL)
     t = "triggerOutputs()?['body/"
-    sp_trigger(f, BIL, "GetOnUpdatedItems", [ANTI_LOOP,
-               f"@or(empty({t}StatutPrecedent']), and(equals({t}Statut/Value'], 'Réalisé'), not(equals({t}Statut/Value'], coalesce({t}StatutPrecedent'], '')))))"])
-    f.use(BIL, "Statut", "StatutPrecedent", "DateStatut", "Alternant", "Etablissement", "Referent", "RecommandationPartenariat", "IdHNCS", "ID")
+    sp_trigger(f, BIL, "GetOnUpdatedItems", [ANTI_LOOP])
+    f.use(BIL, "Statut", "Alternant", "Etablissement", "Referent", "RecommandationPartenariat", "IdHNCS", "ID")
 
     def body(s):
         I = I_EL
+        restore_flux_columns(s, BIL, "triggerOutputs()?['body/ID']", "coalesce(triggerOutputs()?['body/IdHNCS'], '')",
+                             "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))")
         get_item(s, "Lire_element", BIL, "triggerOutputs()?['body/ID']")
         ID = f"{I}?['ID']"
         idobj = ensure_idhncs(s, BIL, I, ID, "el")
         ref = lookup_first(s, "Referent_bilan", "Referents", f"{I}?['Referent']?['Id']", fields=("Compte",))
         # Création d'un bilan : référent du bilan CSS sur l'élément (§ 7.4)
-        cond(s, "Si_creation", f"empty({I}?['StatutPrecedent'])",
-             lambda y: grant_item(y, "bilan", BIL, ID, [("user", f"{ref}?['Compte']?['Email']", "CSS")]))
+        grant_item(s, "bilan", BIL, ID, [("user", f"{ref}?['Compte']?['Email']", "CSS")])
 
         def realise(y):
             alt = lookup_first(y, "Alternant_bilan", ALT, f"{I}?['Alternant']?['Id']", fields=("Etablissement", "IdHNCS"))
@@ -111,18 +111,24 @@ def pa09_bil():
                             filter_=f"EtablissementId eq @{{{etab_id}}} and AlternantId eq @{{{I}?['Alternant']?['Id']}} and Contexte eq {odata(CTX_PART)}",
                             fields=("IdHNCS", "ID", "Etablissement", "Alternant", "Contexte"), top=1)
             notify(y, "N-38", [f.group_emails("G_DRD"), f.group_emails("G_ECO")], {
-                "IdHNCS": idobj, "Recommandation": f"coalesce({I}?['RecommandationPartenariat']?['Value'], '—')",
+                "IdHNCS": idobj, "Recommandation": f"coalesce({I}?['RecommandationPartenariat']?['Value'], '-')",
                 "IdEtablissement": f"coalesce({eco}?['IdHNCS'], '')", "IdAction": f"coalesce({first(act)}?['IdHNCS'], '')",
                 "LienAction": item_link("ActionsIntegration", f"coalesce({first(act)}?['ID'], 0)"), "Lien": item_link(BIL, ID)})
-        cond(s, "Si_bilan_realise", f"and(equals({I}?['Statut']?['Value'], 'Réalisé'), not(equals(coalesce({I}?['StatutPrecedent'], ''), 'Réalisé')))", realise)
-        patch_item(s, "Memoriser_statut_traite", BIL, ID, {"StatutPrecedent": ip(f"{I}?['Statut']?['Value']"), "DateStatut": ip("utcNow()")}, I)
+        f.read("JournalFlux", "Title", "IdObjet", "Message")
+        j = get_items(s, "Marqueur_N38", "JournalFlux", filter_=f"Title eq 'PA-09' and IdObjet eq {odq(idobj)}")
+        deja = filt(s, "Bilan_deja_traite", f"body('{j}')?['value']", "equals(item()?['Message'], 'Bilan réalisé traité (N-38 envoyée)')")
+
+        def realise_et_marque(y):
+            realise(y)
+            log(y, "Marquer_bilan_traite", "Info", q("Bilan réalisé traité (N-38 envoyée)"), BIL, ID, idobj)
+        cond(s, "Si_bilan_realise", f"and(equals({I}?['Statut']?['Value'], 'Réalisé'), equals(length(body('{deja}')), 0))", realise_et_marque)
     standard_shell(f, body, BIL, "triggerOutputs()?['body/ID']", "triggerOutputs()?['body/IdHNCS']")
     f.doc = DOC["PA-09-bil"]
     return f
 
 
 def pa09b():
-    f = Flow("PA-09b", "PA-09b", "HNCS-RD PA-09b — Détection des fins d'alternance", 3, "Planifié", "Recurrence",
+    f = Flow("PA-09b", "PA-09b", "HNCS-RD PA-09b : Détection des fins d'alternance", 3, "Planifié", "Recurrence",
              recurrence="Quotidien 06:50 (heure de Paris)")
     recurrence_trigger(f, {"frequency": "Day", "interval": 1, "schedule": {"hours": ["6"], "minutes": [50]}})
 
@@ -144,11 +150,11 @@ def pa09b():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-10 — École et convention (conventions, échanges) et PA-10b
+# PA-10 : École et convention (conventions, échanges) et PA-10b
 # --------------------------------------------------------------------------------------------
 
 def pa10_conv():
-    f = Flow("PA-10-conv", "PA-10", "HNCS-RD PA-10 — École et convention (conventions)", 3, "Automatisé", "SharePointItem", CONV,
+    f = Flow("PA-10-conv", "PA-10", "HNCS-RD PA-10 : École et convention (conventions)", 3, "Automatisé", "SharePointItem", CONV,
              targets=targets("PA-10", CONV), objet="Convention")
     sp_trigger(f, CONV, "GetOnUpdatedItems", [ANTI_LOOP])  # P-09 : toute modification humaine (décision de partenariat)
     f.use(CONV, "DecisionPartenariat", "EmpreinteDecision", "DecideurPartenariat", "DateDecisionPartenariat", "TypeConvention",
@@ -204,13 +210,15 @@ def pa10_conv():
 
 
 def pa10_int():
-    f = Flow("PA-10-int", "PA-10", "HNCS-RD PA-10 — École et convention (échanges)", 3, "Automatisé", "SharePointItem", INT)
+    f = Flow("PA-10-int", "PA-10", "HNCS-RD PA-10 : École et convention (échanges)", 3, "Automatisé", "SharePointItem", INT)
     sp_trigger(f, INT, "GetOnNewItems", [ANTI_LOOP])
     f.use(INT, "Etablissement", "DateInteraction", "ProchaineAction", "DateProchaineAction", "IdHNCS", "ID")
     f.use(ECO, "DateDerniereInteraction", "ProchaineAction", "DateProchaineAction")
 
     def body(s):
         I = I_EL
+        restore_flux_columns(s, INT, "triggerOutputs()?['body/ID']", "coalesce(triggerOutputs()?['body/IdHNCS'], '')",
+                             "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))")
         get_item(s, "Lire_element", INT, "triggerOutputs()?['body/ID']")
         ensure_idhncs(s, INT, I, f"{I}?['ID']", "el")
         g = get_item(s, "Lire_etablissement", ECO, f"{I}?['Etablissement']?['Id']")
@@ -226,7 +234,7 @@ def pa10_int():
 
 
 def pa10b():
-    f = Flow("PA-10b", "PA-10b", "HNCS-RD PA-10b — Échéances des conventions et des écoles", 3, "Planifié", "Recurrence",
+    f = Flow("PA-10b", "PA-10b", "HNCS-RD PA-10b : Échéances des conventions et des écoles", 3, "Planifié", "Recurrence",
              recurrence="Quotidien 07:10 (heure de Paris)")
     recurrence_trigger(f, {"frequency": "Day", "interval": 1, "schedule": {"hours": ["7"], "minutes": [10]}})
 
@@ -248,7 +256,7 @@ def pa10b():
                                 convention_controls(f, it, controls_needed_for(code), "true"), src=it,
                                 after_fn=lambda w: notify(w, "N-40", [f"{it}?['Responsable']?['Email']", f.group_emails("G_ECO")], {
                                     "IdHNCS": idc, "Statut": q(to), "DateFin": dfr(it + "?['DateFin']"),
-                                    "Renouvellement": f"coalesce({it}?['Renouvellement']?['Value'], '—')", "Lien": item_link(CONV, f"{it}?['ID']")}))
+                                    "Renouvellement": f"coalesce({it}?['Renouvellement']?['Value'], '-')", "Lien": item_link(CONV, f"{it}?['ID']")}))
             return each
         foreach(s, "Pour_convention_expiree", f"body('{exp}')", step("CONV-T05", "Expirée", "CONV_T05"))
         foreach(s, "Pour_convention_a_renouveler", f"body('{ren}')", step("CONV-T04", "À renouveler", "CONV_T04"))
@@ -259,7 +267,7 @@ def pa10b():
         def each(x, loop):
             it = f"items('{loop}')"
             rr = f"{it}?['ResponsableHNCS']?['Email']"
-            notify(x, "N-41", [rr], {"IdHNCS": f"coalesce({it}?['IdHNCS'], string({it}?['ID']))", "ProchaineAction": f"coalesce({it}?['ProchaineAction'], '—')",
+            notify(x, "N-41", [rr], {"IdHNCS": f"coalesce({it}?['IdHNCS'], string({it}?['ID']))", "ProchaineAction": f"coalesce({it}?['ProchaineAction'], '-')",
                                      "Date": dfr(it + "?['DateProchaineAction']"), "Lien": item_link(ECO, f"{it}?['ID']")}, teams_to=[rr])
         foreach(s, "Pour_etablissement", f"body('{due}')", each)
     standard_shell(f, body)
@@ -268,11 +276,11 @@ def pa10b():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-11 — Préparation de la gouvernance
+# PA-11 : Préparation de la gouvernance
 # --------------------------------------------------------------------------------------------
 
 def pa11():
-    f = Flow("PA-11", "PA-11", "HNCS-RD PA-11 — Préparation de la gouvernance", 3, "Planifié", "Recurrence",
+    f = Flow("PA-11", "PA-11", "HNCS-RD PA-11 : Préparation de la gouvernance", 3, "Planifié", "Recurrence",
              recurrence="Hebdomadaire lundi 08:00 (heure de Paris) ; Point Direction le 1er lundi du mois ; Revue trimestrielle le 1er lundi du trimestre")
     recurrence_trigger(f, {"frequency": "Week", "interval": 1, "schedule": {"weekDays": ["Monday"], "hours": ["8"], "minutes": [0]}})
     LIV, CR = "Livrables", "ComptesRendus"
@@ -351,17 +359,15 @@ def pa11():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-12 — Validation des communications
+# PA-12 : Validation des communications
 # --------------------------------------------------------------------------------------------
 
 def pa12():
-    f = Flow("PA-12", "PA-12", "HNCS-RD PA-12 — Validation des communications", 3, "Automatisé", "SharePointItem", COM,
+    f = Flow("PA-12", "PA-12", "HNCS-RD PA-12 : Validation des communications", 3, "Automatisé", "SharePointItem", COM,
              targets=targets("PA-12", COM), objet="Communication")
     t = "triggerOutputs()?['body/"
     # statut cible ∈ partition, ou toute autre modification (changement d'Auteur détecté dans le flux, § 7.4)
-    sp_trigger(f, COM, "GetOnUpdatedItems", [ANTI_LOOP,
-               f"@or(and(not(equals(coalesce({t}Statut/Value'], ''), coalesce({t}StatutPrecedent'], ''))), contains({arr(f.targets)}, {t}Statut/Value'])), "
-               f"not(empty({t}Auteur/Email'])))"])
+    sp_trigger(f, COM, "GetOnUpdatedItems", [ANTI_LOOP])  # RX-02 : toute modification humaine (statut ou auteur)
     f.use(COM, "Auteur", "ValidationInterne", "DateValidation", "Canal", "DatePrevue", "AutorisationsTiers", "IdHNCS")
 
     def body(s):
@@ -382,7 +388,7 @@ def pa12():
             ap = f"toLower(coalesce({I}?['ValidationInterne']?['Email'], ''))"
             dest = f"if(and(not(empty({ap})), contains(split(concat({f.group_emails('G_DRD')}, ';', {f.group_emails('G_DIR')}), ';'), {ap})), {ap}, {f.group_emails('G_DRD')})"
             notify(z, "N-44", [dest], {"IdHNCS": env.IDOBJ, "Canal": f"coalesce({I}?['Canal']?['Value'], '')",
-                                       "DatePrevue": dfr(I + "?['DatePrevue']"), "Autorisations": f"coalesce({I}?['AutorisationsTiers']?['Value'], '—')",
+                                       "DatePrevue": dfr(I + "?['DatePrevue']"), "Autorisations": f"coalesce({I}?['AutorisationsTiers']?['Value'], '-')",
                                        "Lien": env.LIEN}, teams_to=[ap])
 
         def validee(z, env):
@@ -408,12 +414,12 @@ def pa12():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-13 — Conservation des candidatures (désactivé par défaut)
+# PA-13 : Conservation des candidatures (désactivé par défaut)
 # --------------------------------------------------------------------------------------------
 
 def pa13():
-    f = Flow("PA-13", "PA-13", "HNCS-RD PA-13 — Conservation des candidatures", 5, "Planifié", "Recurrence",
-             recurrence="Mensuel (le 1er à 06:00, heure de Paris) — désactivé par défaut", enabled=False)
+    f = Flow("PA-13", "PA-13", "HNCS-RD PA-13 : Conservation des candidatures", 5, "Planifié", "Recurrence",
+             recurrence="Mensuel (le 1er à 06:00, heure de Paris) : désactivé par défaut", enabled=False)
     recurrence_trigger(f, {"frequency": "Month", "interval": 1, "startTime": "2026-11-01T06:00:00"})
 
     def body(s):
@@ -442,19 +448,19 @@ def pa13():
 
 
 # --------------------------------------------------------------------------------------------
-# PA-14 — Arbitrage du portefeuille de sujets
+# PA-14 : Arbitrage du portefeuille de sujets
 # --------------------------------------------------------------------------------------------
 
 def pa14():
-    f = Flow("PA-14", "PA-14", "HNCS-RD PA-14 — Arbitrage du portefeuille de sujets", 3, "Automatisé", "SharePointItem", SUJ,
+    f = Flow("PA-14", "PA-14", "HNCS-RD PA-14 : Arbitrage du portefeuille de sujets", 3, "Automatisé", "SharePointItem", SUJ,
              targets=targets("PA-14", SUJ), objet="Sujet")
-    sp_trigger(f, SUJ, "GetOnUpdatedItems", [ANTI_LOOP, cond_transition(), cond_targets(f.targets)])
+    sp_trigger(f, SUJ, "GetOnUpdatedItems", [ANTI_LOOP])  # RX-02 : anti-boucle uniquement, filtrage dans le flux
     f.use(SUJ, "Referent", "MotifDecision", "IdHNCS")
 
     def body(s):
         def n47(z, env, to, objet):
             notify(z, "N-47", to, {"IdHNCS": env.IDOBJ, "Statut": env.APRES, "Objet": q(objet),
-                                   "Motif": f"coalesce({env.I}?['MotifDecision'], '—')", "Lien": env.LIEN})
+                                   "Motif": f"coalesce({env.I}?['MotifDecision'], '-')", "Lien": env.LIEN})
 
         def drd(objet):
             return lambda z, env: n47(z, env, [f.group_emails("G_DRD")], objet)
@@ -482,7 +488,7 @@ DOC = {
         entrees="Élément `Alternants` modifié vers « Suspendu », « Fin planifiée », « Terminé » ou « Clôturé ».",
         etapes=["PA-00A puis contrôles (`G_CLOTURE_ALTERNANCE` pour « Clôturé ») ; refus → annulation, N-90.",
                 "**Suspendu** : N-36 au référent principal et à G_RD.",
-                "**Fin planifiée** (manuel) : mêmes effets que PA-09b — checklist « Clôture d'alternance » (idempotente, échéance = date de fin, responsables résolus § 8.1, CSS des responsables), bilan « À réaliser » s'il n'existe pas (référent CSS), N-35.",
+                "**Fin planifiée** (manuel) : mêmes effets que PA-09b : checklist « Clôture d'alternance » (idempotente, échéance = date de fin, responsables résolus § 8.1, CSS des responsables), bilan « À réaliser » s'il n'existe pas (référent CSS), N-35.",
                 "**Terminé** : affectations encore actives → `DateFin` = `DateFinReelle` puis « Terminée » (AFF-T05, FLUX, `G_DATE_FIN`) et N-22 pour chacune (règle § 6.1-8) ; checklist et bilan garantis ; N-37 (affectations terminées, checklist dont le retrait des accès, action humaine).",
                 "**Clôturé** : contrôle uniquement.", "PA-00B."],
         sorties="Checklist, bilan, affectations terminées, notifications, historique.", erreurs="Socle (PA-00C) ; générations idempotentes.",
@@ -493,7 +499,7 @@ DOC = {
         entrees="Élément `BilansAlternance` créé ou passé à « Réalisé ».",
         etapes=["`IdHNCS` ; à la création : référent du bilan CSS sur l'élément (§ 7.4).",
                 "**Réalisé** : dans tous les cas, action PART-01 « Évaluation partenariat » (idempotente par établissement + alternant) assignée au responsable HNCS de l'école ; si `RecommandationPartenariat` ∈ {Recommandé, À étudier} et que l'établissement n'est ni « Partenaire actif » ni déjà « Partenariat à évaluer » → « Partenariat à évaluer » (jamais de rétrogradation) ; N-38 à G_DRD et G_ECO.",
-                "`StatutPrecedent` du bilan = statut traité (marqueur d'idempotence)."],
+                "Idempotence : marqueur `JournalFlux` Info « Bilan réalisé traité (N-38 envoyée) » ; référent du bilan CSS posé à chaque modification (idempotent)."],
         sorties="Permissions, action d'évaluation, statut d'établissement, N-38.", erreurs="Socle (PA-00C).",
         decision="La recommandation est un signal ; la décision de partenariat reste à DIRECTION_RD / DIRECTION (PA-10).",
         tests=["Bilan réalisé « Non recommandé » → action PART-01 créée, établissement inchangé.", "Établissement « Partenaire actif » → non rétrogradé."]),
@@ -508,7 +514,7 @@ DOC = {
     "PA-10-conv": dict(
         objectif="Contrôler le cycle de vie des conventions (preuve de signature, décision de partenariat préalable) et protéger la décision de partenariat (P-09).",
         entrees="Élément `Conventions` créé ou modifié par une personne (toute modification).",
-        etapes=["`IdHNCS`.", "Transition : PA-00A puis `G_PREUVE_SIGNATURE`, `G_DECISION_PARTENARIAT` (décision « Partenariat retenu » / « Sponsoring retenu » déjà validée — égale à `EmpreinteDecision` — et `DecideurPartenariat` renseigné, pour une convention de partenariat ou de sponsoring) ; refus → annulation, N-90.",
+        etapes=["`IdHNCS`.", "Transition : PA-00A puis `G_PREUVE_SIGNATURE`, `G_DECISION_PARTENARIAT` (décision « Partenariat retenu » / « Sponsoring retenu » déjà validée : égale à `EmpreinteDecision` : et `DecideurPartenariat` renseigné, pour une convention de partenariat ou de sponsoring) ; refus → annulation, N-90.",
                 "**Signée / active** d'une convention de partenariat ou de sponsoring → établissement « Partenaire actif » (constat de signature).",
                 "Décision de partenariat : `DecisionPartenariat` ≠ `EmpreinteDecision` (valeur texte, § 6.5) → empreinte vide et décideur déjà tracé (données importées) : initialisation sans rien rétablir ; sinon acteur membre de G_DRD ou G_DIR : `DecideurPartenariat`, `DateDecisionPartenariat`, empreinte mise à jour, N-39 ; sinon valeur rétablie, Avertissement, N-92 (P-09). Traitée aussi sans transition et après un refus de transition.",
                 "PA-00B."],

@@ -1,6 +1,6 @@
-# PA-07b — Dépôt d'une nouvelle version
+# PA-07b : Dépôt d'une nouvelle version
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -11,11 +11,11 @@
 
 ## Objectif
 
-Rattacher les documents déposés dans « 04 — Livrables R&D » à leur livrable, sans changer son statut.
+Rattacher les documents déposés dans « 04 : Livrables R&D » à leur livrable, sans changer son statut.
 
 ## Déclencheur(s)
 
-- `PA-07b` : SharePoint — fichier de la bibliothèque « 04 — Livrables R&D » créé ou modifié (propriétés uniquement).
+- `PA-07b` : SharePoint : fichier de la bibliothèque « 04 - Livrables R&D » créé ou modifié (propriétés uniquement).
   - condition de déclenchement : `@not(equals(toLower(triggerOutputs()?['body/Editor/Email']), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))))`
   - condition de déclenchement : `@not(empty(triggerOutputs()?['body/Livrable/Id']))`
 
@@ -39,7 +39,9 @@ Aucune transition de statut.
 
 ## Notifications
 
-Aucune.
+| Code | Destinataires | Canal | Objet | Modèle |
+| --- | --- | --- | --- | --- |
+| N-92 | Auteur de la modification | Mail+Teams | {IdHNCS} : modification d'un champ protégé annulée | `flows/templates/N-92.html` |
 
 ## Contrôles
 

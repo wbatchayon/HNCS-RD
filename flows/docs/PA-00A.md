@@ -1,6 +1,6 @@
-# PA-00A — Vérifier une transition
+# PA-00A : Vérifier une transition
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -62,4 +62,4 @@ Aucune : le flux ne fait que vérifier ; il n'existe aucun rôle `FLUX` sur une 
 
 ## Données lues et écrites
 
-- `PA-00A` : lit `TransitionsStatuts` ; écrit — ; flux enfants —.
+- `PA-00A` : lit `TransitionsStatuts` ; écrit - ; flux enfants -.

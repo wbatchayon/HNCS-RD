@@ -81,12 +81,6 @@
           "conditions": [
             {
               "expression": "@not(equals(toLower(triggerOutputs()?['body/Editor/Email']), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))))"
-            },
-            {
-              "expression": "@not(equals(coalesce(triggerOutputs()?['body/Statut/Value'], ''), coalesce(triggerOutputs()?['body/StatutPrecedent'], '')))"
-            },
-            {
-              "expression": "@contains(createArray('Reçue'), triggerOutputs()?['body/Statut/Value'])"
             }
           ]
         }
@@ -417,6 +411,76 @@
                 ]
               }
             },
+            "Historique_el": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Historique des statuts",
+                  "$filter": "Liste eq 'Candidatures' and ItemId eq @{body('Lire_element')?['ID']} and Resultat eq 'Acceptée'",
+                  "$orderby": "ID desc",
+                  "$top": 100
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Si_IdHNCS_vide_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Transitions_acceptees_el": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Historique_el')?['value']",
+                "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+              },
+              "runAfter": {
+                "Historique_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Statut_valide_el": {
+              "type": "Compose",
+              "inputs": "@if(empty(body('Transitions_acceptees_el')), '∅', coalesce(first(body('Transitions_acceptees_el'))?['StatutApres'], '∅'))",
+              "runAfter": {
+                "Transitions_acceptees_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_aucune_transition_a_traiter": {
+              "type": "If",
+              "expression": "@not(and(equals(outputs('Statut_valide_el'), '∅'), equals(body('Lire_element')?['Statut']?['Value'], 'Reçue')))",
+              "actions": {
+                "Fin_sans_creation_a_traiter": {
+                  "type": "Terminate",
+                  "inputs": {
+                    "runStatus": "Succeeded"
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Statut_valide_el": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Verifier_creation": {
               "type": "Workflow",
               "inputs": {
@@ -433,14 +497,14 @@
                 }
               },
               "runAfter": {
-                "Si_IdHNCS_vide_el": [
+                "Si_aucune_transition_a_traiter": [
                   "Succeeded"
                 ]
               }
             },
             "Si_creation_refusee": {
               "type": "If",
-              "expression": "@and(not(equals(toLower(string(coalesce(body('Verifier_creation')?['Autorise'], false))), 'true')), empty(body('Lire_element')?['StatutPrecedent']))",
+              "expression": "@not(equals(toLower(string(coalesce(body('Verifier_creation')?['Autorise'], false))), 'true'))",
               "actions": {
                 "Annuler_creation": {
                   "type": "Workflow",
@@ -600,7 +664,7 @@
                     },
                     "parameters": {
                       "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                      "table": "01 — Recrutement",
+                      "table": "01 - Recrutement",
                       "parameters/path": "@{concat(formatDateTime(convertTimeZone(body('Lire_element')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '/', outputs('IdObjet_el'))}"
                     },
                     "authentication": "@parameters('$authentication')",
@@ -787,7 +851,7 @@
             },
             "Si_creation_non_historisee": {
               "type": "If",
-              "expression": "@empty(body('Lire_element')?['StatutPrecedent'])",
+              "expression": "@equals(outputs('Statut_valide_el'), '∅')",
               "actions": {
                 "Historiser_CAND_T01": {
                   "type": "Workflow",
@@ -974,7 +1038,7 @@
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                               "body/To": "@{join(union(body('DestOK_N03'), body('DestOK_N03')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-03] Candidature @{outputs('IdObjet_el')} à analyser",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-03] Candidature @{outputs('IdObjet_el')} à analyser</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>La candidature <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) vous est attribuée pour analyse.</p>\n<p>Sans traitement, une relance sera envoyée après @{coalesce(outputs('Parametres')?['Delai.RelanceAnalyseJours'], '5')} jours.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Candidatures/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la candidature</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-03] Candidature @{outputs('IdObjet_el')} à analyser</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>La candidature <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) vous est attribuée pour analyse.</p>\n<p>Sans traitement, une relance sera envoyée après @{coalesce(outputs('Parametres')?['Delai.RelanceAnalyseJours'], '5')} jours.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Candidatures/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la candidature</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -1181,7 +1245,7 @@
                       "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                       "body/To": "@{join(union(body('DestOK_N01'), body('DestOK_N01')), ';')}",
                       "body/Subject": "[HNCS-R&D][N-01] Nouvelle candidature @{outputs('IdObjet_el')}",
-                      "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-01] Nouvelle candidature @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Une nouvelle candidature <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) a été enregistrée et attend son analyse.</p>\n<ul><li>Canal d'origine : @{body('Lire_element')?['Canal']?['Value']}</li><li>Date de réception : @{if(empty(body('Lire_element')?['DateReception']), '', formatDateTime(convertTimeZone(body('Lire_element')?['DateReception'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy HH:mm'))}</li><li>Poste ou sujet visé : @{coalesce(body('Lire_element')?['PosteVise'], '—')}</li><li>Signalement de doublon : @{if(and(not(empty(trim(coalesce(body('Lire_element')?['Email'], '')))), greater(length(body('Doublons_cr')?['value']), 0)), concat('doublon potentiel de ', coalesce(first(body('Doublons_cr')?['value'])?['IdHNCS'], '')), 'aucun')}</li></ul>\n<p>Le doublon éventuel est seulement <em>signalé</em> : aucune fusion ni clôture n'est faite automatiquement.</p>\n<p>@{if(and(not(empty(trim(coalesce(body('Lire_element')?['Email'], '')))), not(startsWith(coalesce(body('Lire_element')?['Title'], ''), 'À qualifier'))), '', 'Identité à qualifier : le courriel provient d''une plateforme. Renseignez le nom et l''adresse du candidat à partir du message avant l''analyse (contrôle G_IDENTITE).')}</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Candidatures/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la candidature</a> — <a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Recrutement/', concat(formatDateTime(convertTimeZone(body('Lire_element')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '/', outputs('IdObjet_el')))}\">Ouvrir le dossier de candidature</a> (accès selon vos droits).</p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                      "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-01] Nouvelle candidature @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Une nouvelle candidature <strong>@{outputs('IdObjet_el')}</strong> (@{body('Lire_element')?['Title']}) a été enregistrée et attend son analyse.</p>\n<ul><li>Canal d'origine : @{body('Lire_element')?['Canal']?['Value']}</li><li>Date de réception : @{if(empty(body('Lire_element')?['DateReception']), '', formatDateTime(convertTimeZone(body('Lire_element')?['DateReception'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy HH:mm'))}</li><li>Poste ou sujet visé : @{coalesce(body('Lire_element')?['PosteVise'], '-')}</li><li>Signalement de doublon : @{if(and(not(empty(trim(coalesce(body('Lire_element')?['Email'], '')))), greater(length(body('Doublons_cr')?['value']), 0)), concat('doublon potentiel de ', coalesce(first(body('Doublons_cr')?['value'])?['IdHNCS'], '')), 'aucun')}</li></ul>\n<p>Le doublon éventuel est seulement <em>signalé</em> : aucune fusion ni clôture n'est faite automatiquement.</p>\n<p>@{if(and(not(empty(trim(coalesce(body('Lire_element')?['Email'], '')))), not(startsWith(coalesce(body('Lire_element')?['Title'], ''), 'À qualifier'))), '', 'Identité à qualifier : le courriel provient d''une plateforme. Renseignez le nom et l''adresse du candidat à partir du message avant l''analyse (contrôle G_IDENTITE).')}</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Candidatures/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir la candidature</a>, <a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Recrutement/', concat(formatDateTime(convertTimeZone(body('Lire_element')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '/', outputs('IdObjet_el')))}\">Ouvrir le dossier de candidature</a> (accès selon vos droits).</p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                       "body/Importance": "Normal"
                     },
                     "authentication": "@parameters('$authentication')",
@@ -1348,7 +1412,7 @@
                           "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                           "body/To": "@{join(union(body('DestOK_N02'), body('DestOK_N02')), ';')}",
                           "body/Subject": "[HNCS-R&D][N-02] Accusé de réception de votre candidature",
-                          "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-02] Accusé de réception de votre candidature</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour @{body('Lire_element')?['Title']},</p>\n<p>Nous accusons réception de votre candidature auprès du Département R&amp;D de HNCS Groupe. Elle sera étudiée avec attention et nous reviendrons vers vous.</p>\n<p><em>[Texte à valider avant activation — H-09 : information RGPD à compléter.]</em></p>\n<p style=\"color:#666666;font-size:12px\">HNCS Groupe — Département R&amp;D.</p>\n</body>\n</html>",
+                          "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-02] Accusé de réception de votre candidature</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour @{body('Lire_element')?['Title']},</p>\n<p>Nous accusons réception de votre candidature auprès du Département R&amp;D de HNCS Groupe. Elle sera étudiée avec attention et nous reviendrons vers vous.</p>\n<p><em>[Texte à valider avant activation : H-09 : information RGPD à compléter.]</em></p>\n<p style=\"color:#666666;font-size:12px\">HNCS Groupe, Département R&amp;D.</p>\n</body>\n</html>",
                           "body/Importance": "Normal"
                         },
                         "authentication": "@parameters('$authentication')",

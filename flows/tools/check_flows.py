@@ -14,7 +14,8 @@ Contrôles :
 10. les notifications citées existent et ont un modèle HTML (et inversement) ; données exposées respectées ;
 11. aucune action n'attache de fichier aux courriels ;
 12. connecteurs standard uniquement, références de connexion ``hncs_*``, appels de flux enfants valides ;
-13. socle : anti-boucle sur les déclencheurs SharePoint, portées Principal / Erreur, flux enfants avec réponse ;
+13. socle : anti-boucle sur les déclencheurs SharePoint (seule condition sur les listes à statut contrôlé), portées Principal / Erreur,
+    flux enfants avec réponse ; aucune lecture de StatutPrecedent ; aucun filtre OData sur une colonne Note ;
 14. noms d'actions uniques, ``runAfter`` cohérents, profondeur ≤ 8, ≤ 500 actions, aucun ``{{`` résiduel.
 
 Code de sortie 0 si aucune erreur.
@@ -64,6 +65,13 @@ def columns(lst):
     if o.get("titleColumn"):
         cols.add("Title")
     return cols | SYSTEM_FIELDS
+
+
+CONTROLLED = {p["list"] for p in MODEL["partition"]}
+
+
+def note_columns(lst):
+    return {c["name"] for c in objects[lst]["columns"] if c["type"] == "Note"}
 
 
 def status_enum(lst):
@@ -185,6 +193,14 @@ def check_workflow(tid, wf, entry, child_guids):
         err(f"{where} : profondeur d'imbrication {maxd} (> 8)")
     fields_used = entry["fieldsUsed"]
     has_response = False
+    # RX-02 : StatutPrecedent n'est jamais une source de décision (ni StatutAvant, ni condition de déclenchement)
+    # (seule lecture admise : la version précédente de l'élément, pour rétablir la colonne technique elle-même)
+    if re.search(r"(?<!\?\[1\])\?\['StatutPrecedent'\]|body/StatutPrecedent", text):
+        err(f"{where} : lecture de StatutPrecedent (le statut validé se lit dans HistoriqueStatuts, § 8.1)")
+    if kind in ("SharePointItem", "SharePointFile") and entry["trigger"]["list"] in CONTROLLED:
+        conds = [c.get("expression") for c in trig.get("conditions", [])]
+        if conds != [ANTI_LOOP]:
+            err(f"{where} : liste à statut contrôlé : la condition de déclenchement doit être l'anti-boucle seule (RX-02)")
     if re.search(r'"_[a-z]\w*"\s*:', text):
         err(f"{where} : clé interne du générateur présente dans la définition")
     # Références : action existante ; jamais une action interne à une boucle Foreach depuis l'extérieur
@@ -251,6 +267,17 @@ def check_workflow(tid, wf, entry, child_guids):
                 if not lst:
                     err(f"{where}/{name} : table « {tbl} » n'est pas un titre de liste du modèle")
                     continue
+                flt = p.get("$filter") or ""
+                for col in re.findall(r"\b([A-Za-z]\w*)\s+(?:eq|ne|lt|gt|le|ge)\b", flt):
+                    if col in note_columns(lst):
+                        err(f"{where}/{name} : filtre OData sur la colonne Note {lst}.{col} (non filtrable)")
+                for k, val in p.items():
+                    mc = re.fullmatch(r"item/([^/]+)/Value", k)
+                    if mc and isinstance(val, str) and not val.startswith("@") and mc.group(1) in columns(lst):
+                        col = next((c for c in objects[lst]["columns"] if c["name"] == mc.group(1)), None)
+                        enum = MODEL["enums"].get(col["enum"]) if col and col.get("enum") else None
+                        if enum is not None and val not in enum:
+                            err(f"{where}/{name} : valeur « {val} » hors énumération pour {lst}.{mc.group(1)}")
                 for k in p:
                     m = re.match(r"item/([^/]+)", k)
                     if m:
@@ -322,7 +349,7 @@ def main():
             err(f"{tid} : type « {m['type']} » invalide")
         if m["trigger"]["kind"] not in KINDS:
             err(f"{tid} : type de déclencheur invalide")
-        if not m["displayName"].startswith(f"HNCS-RD {m['code']} — "):
+        if not m["displayName"].startswith(f"HNCS-RD {m['code']} : "):
             err(f"{tid} : displayName non conforme à la convention § 2.2")
         lstt = m["trigger"]["list"]
         if lstt is not None and lstt not in objects:

@@ -256,6 +256,382 @@
                 ]
               }
             },
+            "Versions_element": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "parameters/method": "GET",
+                  "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/Livrables'), ''')/items(', string(triggerOutputs()?['body/ID']), ')/versions?$orderby=VersionId desc&$top=2')}",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata",
+                    "Content-Type": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Niveau_CSS": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_modification_humaine_a_verifier": {
+              "type": "If",
+              "expression": "@and(greater(length(coalesce(body('Versions_element')?['value'], createArray())), 1), not(equals(toLower(coalesce(first(body('Versions_element')?['value'])?['Editor']?['Email'], '')), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')))))",
+              "actions": {
+                "Modifications_depuis_version_precedente": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItemChanges"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Livrables",
+                      "id": "@triggerOutputs()?['body/ID']",
+                      "since": "@{string(body('Versions_element')?['value']?[1]?['VersionLabel'])}",
+                      "includeDrafts": false
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Colonnes_techniques_modifiees": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@createArray('IdHNCS', 'Sujet', 'VersionModele', 'EcheanceInitiale', 'DatePremierDepot', 'DateDepot', 'DateRevue', 'DecisionRevue', 'NbCorrections', 'Valideur', 'DateValidation', 'VersionValidee', 'DateArchivage', 'EnRetard', 'DernierRappel', 'EmpreinteRevue', 'EmpreinteCommentaire', 'StatutPrecedent', 'DateStatut')",
+                    "where": "@equals(string(coalesce(body('Modifications_depuis_version_precedente')?['ColumnHasChanged']?[item()], false)), 'True')"
+                  },
+                  "runAfter": {
+                    "Modifications_depuis_version_precedente": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Si_colonne_technique_modifiee": {
+                  "type": "If",
+                  "expression": "@greater(length(body('Colonnes_techniques_modifiees')), 0)",
+                  "actions": {
+                    "Type_entite_colonnes_techniques": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "HttpRequest"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "parameters/method": "GET",
+                          "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/Livrables'), ''')?$select=ListItemEntityTypeFullName')}",
+                          "parameters/headers": {
+                            "Accept": "application/json;odata=nometadata",
+                            "Content-Type": "application/json;odata=nometadata"
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Valeurs_techniques_precedentes": {
+                      "type": "Compose",
+                      "inputs": {
+                        "__metadata": {
+                          "type": "@{body('Type_entite_colonnes_techniques')?['ListItemEntityTypeFullName']}"
+                        },
+                        "IdHNCS": "@body('Versions_element')?['value']?[1]?['IdHNCS']",
+                        "SujetId": "@if(empty(body('Versions_element')?['value']?[1]?['Sujet']), null, body('Versions_element')?['value']?[1]?['Sujet']?['LookupId'])",
+                        "VersionModele": "@body('Versions_element')?['value']?[1]?['VersionModele']",
+                        "EcheanceInitiale": "@body('Versions_element')?['value']?[1]?['EcheanceInitiale']",
+                        "DatePremierDepot": "@body('Versions_element')?['value']?[1]?['DatePremierDepot']",
+                        "DateDepot": "@body('Versions_element')?['value']?[1]?['DateDepot']",
+                        "DateRevue": "@body('Versions_element')?['value']?[1]?['DateRevue']",
+                        "DecisionRevue": "@body('Versions_element')?['value']?[1]?['DecisionRevue']",
+                        "NbCorrections": "@body('Versions_element')?['value']?[1]?['NbCorrections']",
+                        "ValideurId": "@if(empty(body('Versions_element')?['value']?[1]?['Valideur']), null, body('Versions_element')?['value']?[1]?['Valideur']?['LookupId'])",
+                        "DateValidation": "@body('Versions_element')?['value']?[1]?['DateValidation']",
+                        "VersionValidee": "@body('Versions_element')?['value']?[1]?['VersionValidee']",
+                        "DateArchivage": "@body('Versions_element')?['value']?[1]?['DateArchivage']",
+                        "EnRetard": "@body('Versions_element')?['value']?[1]?['EnRetard']",
+                        "DernierRappel": "@body('Versions_element')?['value']?[1]?['DernierRappel']",
+                        "EmpreinteRevue": "@body('Versions_element')?['value']?[1]?['EmpreinteRevue']",
+                        "EmpreinteCommentaire": "@body('Versions_element')?['value']?[1]?['EmpreinteCommentaire']",
+                        "StatutPrecedent": "@body('Versions_element')?['value']?[1]?['StatutPrecedent']",
+                        "DateStatut": "@body('Versions_element')?['value']?[1]?['DateStatut']"
+                      },
+                      "runAfter": {
+                        "Type_entite_colonnes_techniques": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Retablir_colonnes_techniques": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "HttpRequest"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "parameters/method": "POST",
+                          "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/Livrables'), ''')/items(', string(triggerOutputs()?['body/ID']), ')')}",
+                          "parameters/headers": {
+                            "Accept": "application/json;odata=verbose",
+                            "Content-Type": "application/json;odata=verbose",
+                            "IF-MATCH": "*",
+                            "X-HTTP-Method": "MERGE"
+                          },
+                          "parameters/body": "@{outputs('Valeurs_techniques_precedentes')}"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Valeurs_techniques_precedentes": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Colonnes_techniques_retablies": {
+                      "type": "Workflow",
+                      "inputs": {
+                        "host": {
+                          "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                        },
+                        "body": {
+                          "CodeFlux": "PA-07",
+                          "Niveau": "Avertissement",
+                          "Liste": "Livrables",
+                          "ItemId": "@{string(coalesce(triggerOutputs()?['body/ID'], ''))}",
+                          "IdObjet": "@{coalesce(coalesce(triggerOutputs()?['body/IdHNCS'], ''), '')}",
+                          "Message": "@{concat('P-09 : colonne(s) technique(s) modifiée(s) hors flux, rétablie(s) : ', join(body('Colonnes_techniques_modifiees'), ', '))}",
+                          "DetailErreur": "@{string(coalesce('', ''))}",
+                          "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                        }
+                      },
+                      "runAfter": {
+                        "Retablir_colonnes_techniques": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Dest_N92": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
+                        "select": "@toLower(trim(item()))"
+                      },
+                      "runAfter": {
+                        "Colonnes_techniques_retablies": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "DestOK_N92": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Dest_N92')",
+                        "where": "@not(empty(item()))"
+                      },
+                      "runAfter": {
+                        "Dest_N92": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Si_destinataires_N92": {
+                      "type": "If",
+                      "expression": "@greater(length(body('DestOK_N92')), 0)",
+                      "actions": {
+                        "Envoyer_N92": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                              "connectionName": "shared_office365",
+                              "operationId": "SharedMailboxSendEmailV2"
+                            },
+                            "parameters": {
+                              "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                              "body/To": "@{join(union(body('DestOK_N92'), body('DestOK_N92')), ';')}",
+                              "body/Subject": "[HNCS-R&D][N-92] @{coalesce(triggerOutputs()?['body/IdHNCS'], '')} : modification d'un champ protégé annulée",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-92] @{coalesce(triggerOutputs()?['body/IdHNCS'], '')} : modification d'un champ protégé annulée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre modification de <strong>@{coalesce(triggerOutputs()?['body/IdHNCS'], '')}</strong> a été annulée : elle portait sur un champ protégé (P-09).</p>\n<ul><li>Champ(s) concerné(s) : @{join(body('Colonnes_techniques_modifiees'), ', ')}</li><li>Rôle habilité : @{'Aucun : colonne technique écrite uniquement par les flux (compte de service)'}</li><li>Valeur rétablie : la dernière valeur validée</li></ul>\n<p>Si la modification est nécessaire, demandez-la à une personne habilitée.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(triggerOutputs()?['body/ID']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Importance": "Normal"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "else": {
+                        "actions": {
+                          "Sans_destinataire_N92": {
+                            "type": "Workflow",
+                            "inputs": {
+                              "host": {
+                                "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                              },
+                              "body": {
+                                "CodeFlux": "PA-07",
+                                "Niveau": "Avertissement",
+                                "Liste": "",
+                                "ItemId": "@{string(coalesce('', ''))}",
+                                "IdObjet": "@{coalesce('', '')}",
+                                "Message": "@{'N-92 : aucun destinataire résolu, notification non envoyée'}",
+                                "DetailErreur": "@{string(coalesce('', ''))}",
+                                "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                              }
+                            },
+                            "runAfter": {}
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "DestOK_N92": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "TeamsDest_N92": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
+                        "where": "@not(empty(trim(item())))"
+                      },
+                      "runAfter": {
+                        "Si_destinataires_N92": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Si_teams_N92": {
+                      "type": "If",
+                      "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N92')), 0))",
+                      "actions": {
+                        "Pour_teams_N92": {
+                          "type": "Foreach",
+                          "foreach": "@union(body('TeamsDest_N92'), body('TeamsDest_N92'))",
+                          "actions": {
+                            "Teams_N92": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                                  "connectionName": "shared_teams",
+                                  "operationId": "PostMessageToConversation"
+                                },
+                                "parameters": {
+                                  "poster": "Flow bot",
+                                  "location": "Chat with Flow bot",
+                                  "body/recipient": "@{trim(items('Pour_teams_N92'))}",
+                                  "body/messageBody": "<p><strong>[HNCS-R&D][N-92] @{coalesce(triggerOutputs()?['body/IdHNCS'], '')} : modification d'un champ protégé annulée</strong></p><p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(triggerOutputs()?['body/ID']))}\">Ouvrir dans SharePoint</a></p>"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 1
+                            }
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "TeamsDest_N92": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Teams_echec_N92": {
+                      "type": "Workflow",
+                      "inputs": {
+                        "host": {
+                          "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                        },
+                        "body": {
+                          "CodeFlux": "PA-07",
+                          "Niveau": "Avertissement",
+                          "Liste": "",
+                          "ItemId": "@{string(coalesce('', ''))}",
+                          "IdObjet": "@{coalesce('', '')}",
+                          "Message": "@{'N-92 : échec de l''envoi Teams (le courriel est parti)'}",
+                          "DetailErreur": "@{string(coalesce('', ''))}",
+                          "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                        }
+                      },
+                      "runAfter": {
+                        "Si_teams_N92": [
+                          "Failed",
+                          "TimedOut"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Colonnes_techniques_modifiees": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Versions_element": [
+                  "Succeeded",
+                  "Failed"
+                ]
+              }
+            },
             "Lire_element": {
               "type": "OpenApiConnection",
               "inputs": {
@@ -277,7 +653,7 @@
                 }
               },
               "runAfter": {
-                "Niveau_CSS": [
+                "Si_modification_humaine_a_verifier": [
                   "Succeeded"
                 ]
               }
@@ -355,11 +731,51 @@
                 ]
               }
             },
-            "Statut_avant": {
-              "type": "Compose",
-              "inputs": "@if(empty(body('Lire_element')?['StatutPrecedent']), '∅', body('Lire_element')?['StatutPrecedent'])",
+            "Historique_el": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Historique des statuts",
+                  "$filter": "Liste eq 'Livrables' and ItemId eq @{body('Lire_element')?['ID']} and Resultat eq 'Acceptée'",
+                  "$orderby": "ID desc",
+                  "$top": 100
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
               "runAfter": {
                 "Si_IdHNCS_vide_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Transitions_acceptees_el": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Historique_el')?['value']",
+                "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+              },
+              "runAfter": {
+                "Historique_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Statut_valide_el": {
+              "type": "Compose",
+              "inputs": "@if(empty(body('Transitions_acceptees_el')), '∅', coalesce(first(body('Transitions_acceptees_el'))?['StatutApres'], '∅'))",
+              "runAfter": {
+                "Transitions_acceptees_el": [
                   "Succeeded"
                 ]
               }
@@ -386,7 +802,7 @@
                 }
               },
               "runAfter": {
-                "Statut_avant": [
+                "Statut_valide_el": [
                   "Succeeded"
                 ]
               }
@@ -520,7 +936,7 @@
                     ]
                   }
                 },
-                "Dest_N92": {
+                "Dest_N92_2": {
                   "type": "Select",
                   "inputs": {
                     "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
@@ -532,23 +948,23 @@
                     ]
                   }
                 },
-                "DestOK_N92": {
+                "DestOK_N92_2": {
                   "type": "Query",
                   "inputs": {
-                    "from": "@body('Dest_N92')",
+                    "from": "@body('Dest_N92_2')",
                     "where": "@not(empty(item()))"
                   },
                   "runAfter": {
-                    "Dest_N92": [
+                    "Dest_N92_2": [
                       "Succeeded"
                     ]
                   }
                 },
-                "Si_destinataires_N92": {
+                "Si_destinataires_N92_2": {
                   "type": "If",
-                  "expression": "@greater(length(body('DestOK_N92')), 0)",
+                  "expression": "@greater(length(body('DestOK_N92_2')), 0)",
                   "actions": {
-                    "Envoyer_N92": {
+                    "Envoyer_N92_2": {
                       "type": "OpenApiConnection",
                       "inputs": {
                         "host": {
@@ -558,9 +974,9 @@
                         },
                         "parameters": {
                           "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
-                          "body/To": "@{join(union(body('DestOK_N92'), body('DestOK_N92')), ';')}",
+                          "body/To": "@{join(union(body('DestOK_N92_2'), body('DestOK_N92_2')), ';')}",
                           "body/Subject": "[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée",
-                          "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre modification de <strong>@{outputs('IdObjet_el')}</strong> a été annulée : elle portait sur un champ protégé (P-09).</p>\n<ul><li>Champ(s) concerné(s) : @{join(union(body('Autres_champs_modifies'), body('DoD_modifies')), ', ')}</li><li>Rôle habilité : @{'Équipe R&D ou Direction R&D (échéance et critères de la Definition of Done : également le réviseur légitime ; réviseur : référent de l''affectation ou membre de la Direction R&D)'}</li><li>Valeur rétablie : la dernière valeur validée</li></ul>\n<p>Si la modification est nécessaire, demandez-la à une personne habilitée.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                          "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre modification de <strong>@{outputs('IdObjet_el')}</strong> a été annulée : elle portait sur un champ protégé (P-09).</p>\n<ul><li>Champ(s) concerné(s) : @{join(union(body('Autres_champs_modifies'), body('DoD_modifies')), ', ')}</li><li>Rôle habilité : @{'Équipe R&D ou Direction R&D (échéance et critères de la Definition of Done : également le réviseur légitime ; réviseur : référent de l''affectation ou membre de la Direction R&D)'}</li><li>Valeur rétablie : la dernière valeur validée</li></ul>\n<p>Si la modification est nécessaire, demandez-la à une personne habilitée.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                           "body/Importance": "Normal"
                         },
                         "authentication": "@parameters('$authentication')",
@@ -575,7 +991,7 @@
                   },
                   "else": {
                     "actions": {
-                      "Sans_destinataire_N92": {
+                      "Sans_destinataire_N92_2": {
                         "type": "Workflow",
                         "inputs": {
                           "host": {
@@ -597,32 +1013,32 @@
                     }
                   },
                   "runAfter": {
-                    "DestOK_N92": [
+                    "DestOK_N92_2": [
                       "Succeeded"
                     ]
                   }
                 },
-                "TeamsDest_N92": {
+                "TeamsDest_N92_2": {
                   "type": "Query",
                   "inputs": {
                     "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
                     "where": "@not(empty(trim(item())))"
                   },
                   "runAfter": {
-                    "Si_destinataires_N92": [
+                    "Si_destinataires_N92_2": [
                       "Succeeded"
                     ]
                   }
                 },
-                "Si_teams_N92": {
+                "Si_teams_N92_2": {
                   "type": "If",
-                  "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N92')), 0))",
+                  "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N92_2')), 0))",
                   "actions": {
-                    "Pour_teams_N92": {
+                    "Pour_teams_N92_2": {
                       "type": "Foreach",
-                      "foreach": "@union(body('TeamsDest_N92'), body('TeamsDest_N92'))",
+                      "foreach": "@union(body('TeamsDest_N92_2'), body('TeamsDest_N92_2'))",
                       "actions": {
-                        "Teams_N92": {
+                        "Teams_N92_2": {
                           "type": "OpenApiConnection",
                           "inputs": {
                             "host": {
@@ -633,7 +1049,7 @@
                             "parameters": {
                               "poster": "Flow bot",
                               "location": "Chat with Flow bot",
-                              "body/recipient": "@{trim(items('Pour_teams_N92'))}",
+                              "body/recipient": "@{trim(items('Pour_teams_N92_2'))}",
                               "body/messageBody": "<p><strong>[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</strong></p><p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir dans SharePoint</a></p>"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -658,12 +1074,12 @@
                     "actions": {}
                   },
                   "runAfter": {
-                    "TeamsDest_N92": [
+                    "TeamsDest_N92_2": [
                       "Succeeded"
                     ]
                   }
                 },
-                "Teams_echec_N92": {
+                "Teams_echec_N92_2": {
                   "type": "Workflow",
                   "inputs": {
                     "host": {
@@ -681,7 +1097,7 @@
                     }
                   },
                   "runAfter": {
-                    "Si_teams_N92": [
+                    "Si_teams_N92_2": [
                       "Failed",
                       "TimedOut"
                     ]
@@ -693,7 +1109,7 @@
                     "runStatus": "Succeeded"
                   },
                   "runAfter": {
-                    "Teams_echec_N92": [
+                    "Teams_echec_N92_2": [
                       "Succeeded",
                       "Skipped"
                     ]
@@ -711,7 +1127,7 @@
             },
             "Si_creation": {
               "type": "If",
-              "expression": "@and(empty(body('Lire_element')?['StatutPrecedent']), equals(body('Lire_element')?['Statut']?['Value'], 'À produire'))",
+              "expression": "@and(equals(outputs('Statut_valide_el'), '∅'), equals(body('Lire_element')?['Statut']?['Value'], 'À produire'))",
               "actions": {
                 "Modele_livrable": {
                   "type": "OpenApiConnection",
@@ -877,7 +1293,7 @@
                   "type": "If",
                   "expression": "@not(or(empty(toLower(coalesce(body('Lire_element')?['Reviseur']?['Email'], ''))), equals(toLower(coalesce(body('Lire_element')?['Reviseur']?['Email'], '')), toLower(coalesce(first(body('Referent_affectation')?['value'])?['Compte']?['Email'], '#'))), contains(split(join(body('Emails_G_DRD'), ';'), ';'), toLower(coalesce(body('Lire_element')?['Reviseur']?['Email'], '')))))",
                   "actions": {
-                    "Dest_N92_2": {
+                    "Dest_N92_3": {
                       "type": "Select",
                       "inputs": {
                         "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
@@ -885,23 +1301,23 @@
                       },
                       "runAfter": {}
                     },
-                    "DestOK_N92_2": {
+                    "DestOK_N92_3": {
                       "type": "Query",
                       "inputs": {
-                        "from": "@body('Dest_N92_2')",
+                        "from": "@body('Dest_N92_3')",
                         "where": "@not(empty(item()))"
                       },
                       "runAfter": {
-                        "Dest_N92_2": [
+                        "Dest_N92_3": [
                           "Succeeded"
                         ]
                       }
                     },
-                    "Si_destinataires_N92_2": {
+                    "Si_destinataires_N92_3": {
                       "type": "If",
-                      "expression": "@greater(length(body('DestOK_N92_2')), 0)",
+                      "expression": "@greater(length(body('DestOK_N92_3')), 0)",
                       "actions": {
-                        "Envoyer_N92_2": {
+                        "Envoyer_N92_3": {
                           "type": "OpenApiConnection",
                           "inputs": {
                             "host": {
@@ -911,9 +1327,9 @@
                             },
                             "parameters": {
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
-                              "body/To": "@{join(union(body('DestOK_N92_2'), body('DestOK_N92_2')), ';')}",
+                              "body/To": "@{join(union(body('DestOK_N92_3'), body('DestOK_N92_3')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre modification de <strong>@{outputs('IdObjet_el')}</strong> a été annulée : elle portait sur un champ protégé (P-09).</p>\n<ul><li>Champ(s) concerné(s) : @{'Reviseur'}</li><li>Rôle habilité : @{'Réviseur : référent de l''affectation ou membre de la Direction R&D'}</li><li>Valeur rétablie : la dernière valeur validée</li></ul>\n<p>Si la modification est nécessaire, demandez-la à une personne habilitée.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Votre modification de <strong>@{outputs('IdObjet_el')}</strong> a été annulée : elle portait sur un champ protégé (P-09).</p>\n<ul><li>Champ(s) concerné(s) : @{'Reviseur'}</li><li>Rôle habilité : @{'Réviseur : référent de l''affectation ou membre de la Direction R&D'}</li><li>Valeur rétablie : la dernière valeur validée</li></ul>\n<p>Si la modification est nécessaire, demandez-la à une personne habilitée.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir l'élément</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -928,7 +1344,7 @@
                       },
                       "else": {
                         "actions": {
-                          "Sans_destinataire_N92_2": {
+                          "Sans_destinataire_N92_3": {
                             "type": "Workflow",
                             "inputs": {
                               "host": {
@@ -950,32 +1366,32 @@
                         }
                       },
                       "runAfter": {
-                        "DestOK_N92_2": [
+                        "DestOK_N92_3": [
                           "Succeeded"
                         ]
                       }
                     },
-                    "TeamsDest_N92_2": {
+                    "TeamsDest_N92_3": {
                       "type": "Query",
                       "inputs": {
                         "from": "@split(concat(coalesce(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), '')), ';')",
                         "where": "@not(empty(trim(item())))"
                       },
                       "runAfter": {
-                        "Si_destinataires_N92_2": [
+                        "Si_destinataires_N92_3": [
                           "Succeeded"
                         ]
                       }
                     },
-                    "Si_teams_N92_2": {
+                    "Si_teams_N92_3": {
                       "type": "If",
-                      "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N92_2')), 0))",
+                      "expression": "@and(equals(coalesce(outputs('Parametres')?['Fonction.NotificationsTeams'], 'Non'), 'Oui'), greater(length(body('TeamsDest_N92_3')), 0))",
                       "actions": {
-                        "Pour_teams_N92_2": {
+                        "Pour_teams_N92_3": {
                           "type": "Foreach",
-                          "foreach": "@union(body('TeamsDest_N92_2'), body('TeamsDest_N92_2'))",
+                          "foreach": "@union(body('TeamsDest_N92_3'), body('TeamsDest_N92_3'))",
                           "actions": {
-                            "Teams_N92_2": {
+                            "Teams_N92_3": {
                               "type": "OpenApiConnection",
                               "inputs": {
                                 "host": {
@@ -986,7 +1402,7 @@
                                 "parameters": {
                                   "poster": "Flow bot",
                                   "location": "Chat with Flow bot",
-                                  "body/recipient": "@{trim(items('Pour_teams_N92_2'))}",
+                                  "body/recipient": "@{trim(items('Pour_teams_N92_3'))}",
                                   "body/messageBody": "<p><strong>[HNCS-R&D][N-92] @{outputs('IdObjet_el')} : modification d'un champ protégé annulée</strong></p><p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir dans SharePoint</a></p>"
                                 },
                                 "authentication": "@parameters('$authentication')",
@@ -1011,12 +1427,12 @@
                         "actions": {}
                       },
                       "runAfter": {
-                        "TeamsDest_N92_2": [
+                        "TeamsDest_N92_3": [
                           "Succeeded"
                         ]
                       }
                     },
-                    "Teams_echec_N92_2": {
+                    "Teams_echec_N92_3": {
                       "type": "Workflow",
                       "inputs": {
                         "host": {
@@ -1034,7 +1450,7 @@
                         }
                       },
                       "runAfter": {
-                        "Si_teams_N92_2": [
+                        "Si_teams_N92_3": [
                           "Failed",
                           "TimedOut"
                         ]
@@ -1062,7 +1478,7 @@
             },
             "Si_aucune_transition_a_traiter": {
               "type": "If",
-              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], coalesce(body('Lire_element')?['StatutPrecedent'], ''))), contains(createArray('À produire', 'En cours', 'Soumis à revue', 'En revue', 'Corrections demandées', 'Validé', 'Archivé / clôturé', 'Suspendu / abandonné'), body('Lire_element')?['Statut']?['Value'])))",
+              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))), contains(createArray('À produire', 'En cours', 'Soumis à revue', 'En revue', 'Corrections demandées', 'Validé', 'Archivé / clôturé', 'Suspendu / abandonné'), body('Lire_element')?['Statut']?['Value'])))",
               "actions": {
                 "Si_valide_non_archive": {
                   "type": "If",
@@ -1100,7 +1516,7 @@
                         },
                         "parameters": {
                           "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                          "table": "04 — Livrables R&D",
+                          "table": "04 - Livrables R&D",
                           "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                           "$top": 5000
                         },
@@ -1253,7 +1669,7 @@
                                 },
                                 "parameters": {
                                   "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                                  "table": "04 — Livrables R&D",
+                                  "table": "04 - Livrables R&D",
                                   "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                                   "$top": 5000
                                 },
@@ -1284,7 +1700,7 @@
                                     },
                                     "parameters": {
                                       "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                                      "table": "04 — Livrables R&D",
+                                      "table": "04 - Livrables R&D",
                                       "id": "@items('Pour_document_ref_flux')?['ID']",
                                       "item/StatutDocument/Value": "Référence"
                                     },
@@ -1497,7 +1913,7 @@
                 },
                 "body": {
                   "Objet": "Livrable",
-                  "StatutAvant": "@{outputs('Statut_avant')}",
+                  "StatutAvant": "@{outputs('Statut_valide_el')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
                   "ItemAuteurEmail": "@{coalesce(body('Lire_element')?['Proprietaire']?['Email'], '')}",
@@ -1553,7 +1969,7 @@
                 },
                 "parameters": {
                   "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                  "table": "04 — Livrables R&D",
+                  "table": "04 - Livrables R&D",
                   "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                   "$top": 5000
                 },
@@ -1580,7 +1996,7 @@
                 },
                 "parameters": {
                   "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                  "table": "04 — Livrables R&D",
+                  "table": "04 - Livrables R&D",
                   "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                   "$top": 5000
                 },
@@ -1633,7 +2049,7 @@
             "Controles_echec_el": {
               "type": "Query",
               "inputs": {
-                "from": "@createArray(if(and(contains(outputs('Controles_el'), 'G_CAPITALISATION'), not(and(not(empty(body('Lire_element')?['LienDocument'])), or(not(contains(toLower(coalesce(body('Lire_element')?['LienDocument'], '')), toLower(concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/LivrablesRD/')))), and(greater(length(body('Documents_cap_el')?['value']), 0), equals(length(body('Documents_incomplets_el')), 0))), or(not(contains(createArray('POC / démonstrateur', 'Plan de stratégie'), body('Lire_element')?['TypeLivrable']?['Value'])), and(equals(toLower(string(coalesce(body('Lire_element')?['DoD1Fonctionnel'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD2FicheMethodo'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD3Restitution'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD4SupportCom'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD5Enseignements'], false))), 'true')))))), concat('G_CAPITALISATION — ', concat(if(empty(body('Lire_element')?['LienDocument']), 'lien du document (LienDocument) manquant ; ', ''), if(or(not(contains(toLower(coalesce(body('Lire_element')?['LienDocument'], '')), toLower(concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/LivrablesRD/')))), and(greater(length(body('Documents_cap_el')?['value']), 0), equals(length(body('Documents_incomplets_el')), 0))), '', 'document de « 04 — Livrables R&D » sans Sujet ou Type de document ; '), if(or(not(contains(createArray('POC / démonstrateur', 'Plan de stratégie'), body('Lire_element')?['TypeLivrable']?['Value'])), and(equals(toLower(string(coalesce(body('Lire_element')?['DoD1Fonctionnel'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD2FicheMethodo'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD3Restitution'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD4SupportCom'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD5Enseignements'], false))), 'true'))), '', 'Definition of Done incomplète (5 critères requis pour un POC ou un plan) ; '))), ''), if(and(contains(outputs('Controles_el'), 'G_COMMENTAIRE_REVUE'), not(and(not(empty(trim(coalesce(body('Lire_element')?['CommentaireRevue'], '')))), not(equals(trim(coalesce(body('Lire_element')?['CommentaireRevue'], '')), trim(coalesce(body('Lire_element')?['EmpreinteCommentaire'], ''))))))), 'G_COMMENTAIRE_REVUE (CommentaireRevue non vide et différent de EmpreinteCommentaire (valeur lors de la décision précédente))', ''), if(and(contains(outputs('Controles_el'), 'G_DOCUMENT'), not(or(not(empty(body('Lire_element')?['LienDocument'])), greater(length(body('Documents_el')?['value']), 0)))), 'G_DOCUMENT (LienDocument renseigné, ou au moins un document de LivrablesRD rattaché (Livrable = l''élément))', ''), if(and(contains(outputs('Controles_el'), 'G_VALIDEUR_LEGITIME'), not(and(or(equals(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), toLower(coalesce(first(body('Referent_affectation')?['value'])?['Compte']?['Email'], '#'))), and(contains(split(join(body('Emails_G_DRD'), ';'), ';'), toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))), equals(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), toLower(coalesce(body('Lire_element')?['Reviseur']?['Email'], '#'))))), not(equals(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), toLower(coalesce(body('Lire_element')?['Proprietaire']?['Email'], '#'))))))), 'G_VALIDEUR_LEGITIME (L''acteur (ITEM_VALIDEUR) est le compte du référent de l''affectation (Affectation → Referent → Compte) ou un membre de DIRECTION_RD désigné comme réviseur, et il est différent de ITEM_AUTEUR. Un alternant ne peut jamais valider son propre travail)', ''))",
+                "from": "@createArray(if(and(contains(outputs('Controles_el'), 'G_CAPITALISATION'), not(and(not(empty(body('Lire_element')?['LienDocument'])), or(not(contains(toLower(coalesce(body('Lire_element')?['LienDocument'], '')), toLower(concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/LivrablesRD/')))), and(greater(length(body('Documents_cap_el')?['value']), 0), equals(length(body('Documents_incomplets_el')), 0))), or(not(contains(createArray('POC / démonstrateur', 'Plan de stratégie'), body('Lire_element')?['TypeLivrable']?['Value'])), and(equals(toLower(string(coalesce(body('Lire_element')?['DoD1Fonctionnel'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD2FicheMethodo'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD3Restitution'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD4SupportCom'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD5Enseignements'], false))), 'true')))))), concat('G_CAPITALISATION : ', concat(if(empty(body('Lire_element')?['LienDocument']), 'lien du document (LienDocument) manquant ; ', ''), if(or(not(contains(toLower(coalesce(body('Lire_element')?['LienDocument'], '')), toLower(concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/LivrablesRD/')))), and(greater(length(body('Documents_cap_el')?['value']), 0), equals(length(body('Documents_incomplets_el')), 0))), '', 'document de « 04 : Livrables R&D » sans Sujet ou Type de document ; '), if(or(not(contains(createArray('POC / démonstrateur', 'Plan de stratégie'), body('Lire_element')?['TypeLivrable']?['Value'])), and(equals(toLower(string(coalesce(body('Lire_element')?['DoD1Fonctionnel'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD2FicheMethodo'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD3Restitution'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD4SupportCom'], false))), 'true'), equals(toLower(string(coalesce(body('Lire_element')?['DoD5Enseignements'], false))), 'true'))), '', 'Definition of Done incomplète (5 critères requis pour un POC ou un plan) ; '))), ''), if(and(contains(outputs('Controles_el'), 'G_COMMENTAIRE_REVUE'), not(and(not(empty(trim(coalesce(body('Lire_element')?['CommentaireRevue'], '')))), not(equals(trim(coalesce(body('Lire_element')?['CommentaireRevue'], '')), trim(coalesce(body('Lire_element')?['EmpreinteCommentaire'], ''))))))), 'G_COMMENTAIRE_REVUE (CommentaireRevue non vide et différent de EmpreinteCommentaire (valeur lors de la décision précédente))', ''), if(and(contains(outputs('Controles_el'), 'G_DOCUMENT'), not(or(not(empty(body('Lire_element')?['LienDocument'])), greater(length(body('Documents_el')?['value']), 0)))), 'G_DOCUMENT (LienDocument renseigné, ou au moins un document de LivrablesRD rattaché (Livrable = l''élément))', ''), if(and(contains(outputs('Controles_el'), 'G_VALIDEUR_LEGITIME'), not(and(or(equals(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), toLower(coalesce(first(body('Referent_affectation')?['value'])?['Compte']?['Email'], '#'))), and(contains(split(join(body('Emails_G_DRD'), ';'), ';'), toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))), equals(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), toLower(coalesce(body('Lire_element')?['Reviseur']?['Email'], '#'))))), not(equals(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), toLower(coalesce(body('Lire_element')?['Proprietaire']?['Email'], '#'))))))), 'G_VALIDEUR_LEGITIME (L''acteur (ITEM_VALIDEUR) est le compte du référent de l''affectation (Affectation → Referent → Compte) ou un membre de DIRECTION_RD désigné comme réviseur, et il est différent de ITEM_AUTEUR. Un alternant ne peut jamais valider son propre travail)', ''))",
                 "where": "@not(empty(item()))"
               },
               "runAfter": {
@@ -1657,7 +2073,7 @@
                       "ItemId": "@int(body('Lire_element')?['ID'])",
                       "IdObjet": "@{outputs('IdObjet_el')}",
                       "Objet": "Livrable",
-                      "StatutAvant": "@{outputs('Statut_avant')}",
+                      "StatutAvant": "@{outputs('Statut_valide_el')}",
                       "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                       "Accepte": "@false",
                       "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
@@ -1737,7 +2153,7 @@
                         },
                         "parameters": {
                           "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                          "table": "04 — Livrables R&D",
+                          "table": "04 - Livrables R&D",
                           "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                           "$top": 5000
                         },
@@ -1768,7 +2184,7 @@
                             },
                             "parameters": {
                               "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                              "table": "04 — Livrables R&D",
+                              "table": "04 - Livrables R&D",
                               "id": "@items('Pour_document_soumis')?['ID']",
                               "item/StatutDocument/Value": "Soumis"
                             },
@@ -1833,7 +2249,7 @@
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                               "body/To": "@{join(union(body('DestOK_N25'), body('DestOK_N25')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-25] Livrable @{outputs('IdObjet_el')} soumis à revue",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-25] Livrable @{outputs('IdObjet_el')} soumis à revue</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le livrable <strong>@{outputs('IdObjet_el')}</strong> a été soumis à votre revue par @{coalesce(body('Lire_element')?['Proprietaire']?['DisplayName'], '')}.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a> — <a href=\"@{coalesce(body('Lire_element')?['LienDocument'], concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID'])))}\">Ouvrir le document</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-25] Livrable @{outputs('IdObjet_el')} soumis à revue</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le livrable <strong>@{outputs('IdObjet_el')}</strong> a été soumis à votre revue par @{coalesce(body('Lire_element')?['Proprietaire']?['DisplayName'], '')}.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a>, <a href=\"@{coalesce(body('Lire_element')?['LienDocument'], concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID'])))}\">Ouvrir le document</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -2306,7 +2722,7 @@
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                               "body/To": "@{join(union(body('DestOK_N26'), body('DestOK_N26')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-26] Corrections demandées sur @{outputs('IdObjet_el')}",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-26] Corrections demandées sur @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Des corrections sont demandées sur le livrable <strong>@{outputs('IdObjet_el')}</strong>.</p>\n<p>Commentaires du réviseur :</p><blockquote>@{replace(coalesce(body('Lire_element')?['CommentaireRevue'], ''), decodeUriComponent('%0A'), '<br/>')}</blockquote>\n<p>Action de correction : @{coalesce(first(body('Action_correction')?['value'])?['IdHNCS'], '')} — échéance @{if(empty(first(body('Action_correction')?['value'])?['Echeance']), '', formatDateTime(convertTimeZone(first(body('Action_correction')?['value'])?['Echeance'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}. La version précédente du document est conservée par le versioning.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-26] Corrections demandées sur @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Des corrections sont demandées sur le livrable <strong>@{outputs('IdObjet_el')}</strong>.</p>\n<p>Commentaires du réviseur :</p><blockquote>@{replace(coalesce(body('Lire_element')?['CommentaireRevue'], ''), decodeUriComponent('%0A'), '<br/>')}</blockquote>\n<p>Action de correction : @{coalesce(first(body('Action_correction')?['value'])?['IdHNCS'], '')} : échéance @{if(empty(first(body('Action_correction')?['value'])?['Echeance']), '', formatDateTime(convertTimeZone(first(body('Action_correction')?['value'])?['Echeance'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}. La version précédente du document est conservée par le versioning.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -2448,7 +2864,7 @@
                         },
                         "parameters": {
                           "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                          "table": "04 — Livrables R&D",
+                          "table": "04 - Livrables R&D",
                           "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                           "$top": 5000
                         },
@@ -2519,7 +2935,7 @@
                         },
                         "parameters": {
                           "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                          "table": "04 — Livrables R&D",
+                          "table": "04 - Livrables R&D",
                           "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                           "$top": 5000
                         },
@@ -2550,7 +2966,7 @@
                             },
                             "parameters": {
                               "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                              "table": "04 — Livrables R&D",
+                              "table": "04 - Livrables R&D",
                               "id": "@items('Pour_document_valide')?['ID']",
                               "item/StatutDocument/Value": "Validé"
                             },
@@ -2683,7 +3099,7 @@
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                               "body/To": "@{join(union(body('DestOK_N27'), body('DestOK_N27')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-27] Livrable @{outputs('IdObjet_el')} validé",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-27] Livrable @{outputs('IdObjet_el')} validé</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le livrable <strong>@{outputs('IdObjet_el')}</strong> a été validé.</p>\n<ul><li>Validé par : @{coalesce(triggerOutputs()?['body/Editor/DisplayName'], '')}</li><li>Date : @{if(empty(utcNow()), '', formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</li><li>Version validée : @{string(coalesce(first(body('Documents_valide')?['value'])?['{VersionNumber}'], '—'))}</li></ul>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-27] Livrable @{outputs('IdObjet_el')} validé</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le livrable <strong>@{outputs('IdObjet_el')}</strong> a été validé.</p>\n<ul><li>Validé par : @{coalesce(triggerOutputs()?['body/Editor/DisplayName'], '')}</li><li>Date : @{if(empty(utcNow()), '', formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</li><li>Version validée : @{string(coalesce(first(body('Documents_valide')?['value'])?['{VersionNumber}'], '-'))}</li></ul>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -2854,7 +3270,7 @@
                         },
                         "parameters": {
                           "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                          "table": "04 — Livrables R&D",
+                          "table": "04 - Livrables R&D",
                           "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                           "$top": 5000
                         },
@@ -2885,7 +3301,7 @@
                             },
                             "parameters": {
                               "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                              "table": "04 — Livrables R&D",
+                              "table": "04 - Livrables R&D",
                               "id": "@items('Pour_document_ref_man')?['ID']",
                               "item/StatutDocument/Value": "Référence"
                             },
@@ -2974,7 +3390,7 @@
                               "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                               "body/To": "@{join(union(body('DestOK_N29'), body('DestOK_N29')), ';')}",
                               "body/Subject": "[HNCS-R&D][N-29] Livrable @{outputs('IdObjet_el')} suspendu ou abandonné",
-                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-29] Livrable @{outputs('IdObjet_el')} suspendu ou abandonné</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le livrable <strong>@{outputs('IdObjet_el')}</strong> est passé au statut <strong>@{body('Lire_element')?['Statut']?['Value']}</strong>.</p>\n<ul><li>Motif : @{coalesce(body('Lire_element')?['MotifSuspension'], '—')}</li></ul>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-29] Livrable @{outputs('IdObjet_el')} suspendu ou abandonné</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le livrable <strong>@{outputs('IdObjet_el')}</strong> est passé au statut <strong>@{body('Lire_element')?['Statut']?['Value']}</strong>.</p>\n<ul><li>Motif : @{coalesce(body('Lire_element')?['MotifSuspension'], '-')}</li></ul>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                               "body/Importance": "Normal"
                             },
                             "authentication": "@parameters('$authentication')",
@@ -3039,7 +3455,7 @@
                   "ItemId": "@int(body('Lire_element')?['ID'])",
                   "IdObjet": "@{outputs('IdObjet_el')}",
                   "Objet": "Livrable",
-                  "StatutAvant": "@{outputs('Statut_avant')}",
+                  "StatutAvant": "@{outputs('Statut_valide_el')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "Accepte": "@true",
                   "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
@@ -3091,7 +3507,7 @@
                     },
                     "parameters": {
                       "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                      "table": "04 — Livrables R&D",
+                      "table": "04 - Livrables R&D",
                       "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                       "$top": 5000
                     },
@@ -3244,7 +3660,7 @@
                             },
                             "parameters": {
                               "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                              "table": "04 — Livrables R&D",
+                              "table": "04 - Livrables R&D",
                               "$filter": "LivrableId eq @{body('Lire_element')?['ID']}",
                               "$top": 5000
                             },
@@ -3275,7 +3691,7 @@
                                 },
                                 "parameters": {
                                   "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                                  "table": "04 — Livrables R&D",
+                                  "table": "04 - Livrables R&D",
                                   "id": "@items('Pour_document_ref_flux_2')?['ID']",
                                   "item/StatutDocument/Value": "Référence"
                                 },
@@ -3392,7 +3808,7 @@
                                 "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
                                 "body/To": "@{join(union(body('DestOK_N28'), body('DestOK_N28')), ';')}",
                                 "body/Subject": "[HNCS-R&D][N-28] Capitalisation incomplète pour @{outputs('IdObjet_el')}",
-                                "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-28] Capitalisation incomplète pour @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le livrable <strong>@{outputs('IdObjet_el')}</strong> est validé mais ne peut pas encore être archivé (capitalisation). Éléments manquants :</p>\n<p>@{concat(if(empty(body('Relire_livrable_2')?['LienDocument']), 'lien du document (LienDocument) manquant ; ', ''), if(or(not(contains(toLower(coalesce(body('Relire_livrable_2')?['LienDocument'], '')), toLower(concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/LivrablesRD/')))), and(greater(length(body('Documents_cap_post_2')?['value']), 0), equals(length(body('Documents_incomplets_post_2')), 0))), '', 'document de « 04 — Livrables R&D » sans Sujet ou Type de document ; '), if(or(not(contains(createArray('POC / démonstrateur', 'Plan de stratégie'), body('Relire_livrable_2')?['TypeLivrable']?['Value'])), and(equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD1Fonctionnel'], false))), 'true'), equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD2FicheMethodo'], false))), 'true'), equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD3Restitution'], false))), 'true'), equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD4SupportCom'], false))), 'true'), equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD5Enseignements'], false))), 'true'))), '', 'Definition of Done incomplète (5 critères requis pour un POC ou un plan) ; '))}</p>\n<p>Le livrable reste « Validé ». Complétez les éléments puis passez-le à « Archivé / clôturé ».</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS — ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                                "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-28] Capitalisation incomplète pour @{outputs('IdObjet_el')}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le livrable <strong>@{outputs('IdObjet_el')}</strong> est validé mais ne peut pas encore être archivé (capitalisation). Éléments manquants :</p>\n<p>@{concat(if(empty(body('Relire_livrable_2')?['LienDocument']), 'lien du document (LienDocument) manquant ; ', ''), if(or(not(contains(toLower(coalesce(body('Relire_livrable_2')?['LienDocument'], '')), toLower(concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/LivrablesRD/')))), and(greater(length(body('Documents_cap_post_2')?['value']), 0), equals(length(body('Documents_incomplets_post_2')), 0))), '', 'document de « 04 : Livrables R&D » sans Sujet ou Type de document ; '), if(or(not(contains(createArray('POC / démonstrateur', 'Plan de stratégie'), body('Relire_livrable_2')?['TypeLivrable']?['Value'])), and(equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD1Fonctionnel'], false))), 'true'), equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD2FicheMethodo'], false))), 'true'), equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD3Restitution'], false))), 'true'), equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD4SupportCom'], false))), 'true'), equals(toLower(string(coalesce(body('Relire_livrable_2')?['DoD5Enseignements'], false))), 'true'))), '', 'Definition of Done incomplète (5 critères requis pour un POC ou un plan) ; '))}</p>\n<p>Le livrable reste « Validé ». Complétez les éléments puis passez-le à « Archivé / clôturé ».</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Livrables/DispForm.aspx?ID=', string(body('Lire_element')?['ID']))}\">Ouvrir le livrable</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
                                 "body/Importance": "Normal"
                               },
                               "authentication": "@parameters('$authentication')",

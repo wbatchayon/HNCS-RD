@@ -1,11 +1,11 @@
-# PA-03b — Rappels d'entretien et demande de résultat
+# PA-03b : Rappels d'entretien et demande de résultat
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
 | Lot | 2 |
-| Type (spec) | Planifié (toutes les heures, 07:00–20:00) |
+| Type (spec) | Planifié (toutes les heures, 07:00 à 20:00) |
 | Définitions techniques | `PA-03b` |
 | Activé par défaut | Oui |
 
@@ -15,7 +15,7 @@ Rappeler les entretiens à venir et demander la saisie des résultats en retard.
 
 ## Déclencheur(s)
 
-- `PA-03b` : Récurrence — Toutes les heures de 07:00 à 20:00 (heure de Paris).
+- `PA-03b` : Récurrence : Toutes les heures de 07:00 à 20:00 (heure de Paris).
 
 ## Entrées
 

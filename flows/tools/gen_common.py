@@ -1,7 +1,7 @@
 """Briques métier partagées : contrôles G_*, squelette des flux de transition, créations idempotentes."""
 from __future__ import annotations
 
-from flowlib import (MODEL, SVC, SITE, TODAY, NOW, Seq, P, arr, at, compose, cond, create_with_id, ctl_msg, dfr,
+from flowlib import (item_changes, obj_srv, sp_http, MODEL, SVC, SITE, TODAY, NOW, Seq, P, arr, at, compose, cond, create_with_id, ctl_msg, dfr,
                      dloc, ensure_idhncs, eval_controls, filt, foreach, get_item, get_items, grant_item, historize,
                      ip, item_link, log, notify, odata, odq, patch_item, post_item, q, select, switch, tech_error_check,
                      terminate, truthy, verify, autorise, flux_transition, html_table)
@@ -92,7 +92,7 @@ def capitalisation_parts(s, flow, I, ID, tag):
     dod_ok = f"or(not({poc}), {dod})"
     ok = f"and(not(empty({I}?['LienDocument'])), {docs_ok}, {dod_ok})"
     detail = (f"concat(if(empty({I}?['LienDocument']), 'lien du document (LienDocument) manquant ; ', ''), "
-              f"if({docs_ok}, '', 'document de « 04 — Livrables R&D » sans Sujet ou Type de document ; '), "
+              f"if({docs_ok}, '', 'document de « 04 : Livrables R&D » sans Sujet ou Type de document ; '), "
               f"if({dod_ok}, '', 'Definition of Done incomplète (5 critères requis pour un POC ou un plan) ; '))")
     return ok, detail, d
 
@@ -256,23 +256,95 @@ class Env(dict):
     __getattr__ = dict.get
 
 
+HIST = "HistoriqueStatuts"
+
+
+def ref_status(s, lst, id_expr, tag):
+    """Statut validé de référence (P-09, § 8.1) : dernier `StatutApres` accepté dans `HistoriqueStatuts` pour l'élément
+    (Liste + ItemId ; entrées hors statut `REF-PRINCIPAL` exclues) ; à défaut d'historique : `∅`. Jamais `StatutPrecedent`."""
+    h = get_items(s, f"Historique_{tag}", HIST, filter_=f"Liste eq '{lst}' and ItemId eq @{{{id_expr}}} and Resultat eq {odata(MODEL.enums['RESULTAT_TRANSITION'][0])}",
+                  fields=("Liste", "ItemId", "Resultat", "StatutApres", "CodeTransition", "ID"), order="ID desc", top=100)
+    fl = filt(s, f"Transitions_acceptees_{tag}", f"body('{h}')?['value']", "not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))")
+    c = compose(s, f"Statut_valide_{tag}", at(f"if(empty(body('{fl}')), '∅', coalesce(first(body('{fl}'))?['StatutApres'], '∅'))"))
+    return f"outputs('{c}')"
+
+
+def flux_columns(lst):
+    return [(n, c["type"]) for n, c in MODEL.columns(lst).items() if c.get("flux")]
+
+
+MERGE_HEADERS = {"Accept": "application/json;odata=verbose", "Content-Type": "application/json;odata=verbose",
+                 "IF-MATCH": "*", "X-HTTP-Method": "MERGE"}
+
+
+def restore_flux_columns(s, lst, id_expr, idobj_expr, acteur):
+    """§ 8.1 « Colonnes techniques » : si la dernière modification (humaine) a changé une colonne `flux`, la rétablir à sa valeur
+    de la version précédente (API des versions), journaliser (Avertissement), N-92, puis poursuivre sur les valeurs rétablies."""
+    flow = s.flow
+    cols = flux_columns(lst)
+    flow.use(lst, *[n for n, _ in cols])
+    srv = obj_srv(lst)
+    base = f"concat('_api/web/GetList(''', {srv}, ''')/items(', string({id_expr}), ')"
+    vs = sp_http(s, "Versions_element", "GET", ip(f"{base}/versions?$orderby=VersionId desc&$top=2')"))
+    V = f"body('{vs}')?['value']"
+    cur, prev = f"first({V})", f"{V}?[1]"
+
+    def check(y):
+        ch = item_changes(y, "Modifications_depuis_version_precedente", lst, id_expr, since=f"string({prev}?['VersionLabel'])")
+        changed = filt(y, "Colonnes_techniques_modifiees", arr([n for n, _ in cols]),
+                       f"equals(string(coalesce(body('{ch}')?['ColumnHasChanged']?[item()], false)), 'True')")
+
+        def restore(z):
+            te = sp_http(z, "Type_entite_colonnes_techniques", "GET",
+                         ip(f"concat('_api/web/GetList(''', {srv}, ''')?$select=ListItemEntityTypeFullName')"))
+            body = {"__metadata": {"type": ip(f"body('{te}')?['ListItemEntityTypeFullName']")}}
+            for n, t in cols:
+                pv = f"{prev}?['{n}']"
+                if t in ("Lookup", "User"):
+                    body[f"{n}Id"] = at(f"if(empty({pv}), null, {pv}?['LookupId'])")
+                elif t == "URL":
+                    u = compose(z, f"Lien_{n}", {"__metadata": {"type": "SP.FieldUrlValue"},
+                                                 "Url": ip(f"coalesce({pv}?['Url'], string({pv}))"),
+                                                 "Description": ip(f"coalesce({pv}?['Description'], {pv}?['Url'], string({pv}))")})
+                    body[n] = at(f"if(empty({pv}), null, outputs('{u}'))")
+                else:
+                    body[n] = at(pv)
+            c = compose(z, "Valeurs_techniques_precedentes", body)
+            sp_http(z, "Retablir_colonnes_techniques", "POST", ip(f"{base}')"), body=ip(f"outputs('{c}')"), headers=dict(MERGE_HEADERS))
+            log(z, "Colonnes_techniques_retablies", "Avertissement",
+                f"concat('P-09 : colonne(s) technique(s) modifiée(s) hors flux, rétablie(s) : ', join(body('{changed}'), ', '))",
+                lst, id_expr, idobj_expr)
+            lien = f"concat({SITE}, '/{lst}')" if MODEL.is_library(lst) else item_link(lst, id_expr)
+            notify(z, "N-92", [acteur], {"IdHNCS": idobj_expr, "Champs": f"join(body('{changed}'), ', ')",
+                                         "RoleHabilite": q("Aucun : colonne technique écrite uniquement par les flux (compte de service)"),
+                                         "Lien": lien}, teams_to=[acteur])
+        cond(y, "Si_colonne_technique_modifiee", f"greater(length(body('{changed}')), 0)", restore)
+    cond(s, "Si_modification_humaine_a_verifier",
+         f"and(greater(length(coalesce({V}, createArray())), 1), not(equals(toLower(coalesce({cur}?['Editor']?['Email'], '')), toLower({SVC}))))",
+         check, after={vs: ["Succeeded", "Failed"]})
+
+
 def transition_body(s: Seq, flow, lst, objet, *, effects=None, pre=None, post=None, auteur=None, valideur=None,
-                    controls=None, with_id=True, effects_before_history=True, on_refuse=None):
+                    controls=None, with_id=True, effects_before_history=True, on_refuse=None, restore=True):
     """Corps standard (§ 8.1, § 6.1) :
 
     lecture fraîche de l'élément → événement obsolète ignoré → IdHNCS → [pré-traitement] →
-    si Statut ≠ StatutPrecedent et statut cible du flux : PA-00A → contrôles G_* → refus : PA-00B (annulation) et fin ;
+    colonnes techniques rétablies d'abord ; statut validé = dernière transition acceptée de l'historique ;
+    si Statut ≠ statut validé et statut cible du flux : PA-00A → contrôles G_* → refus : PA-00B (annulation) et fin ;
     acceptation : effets par statut cible → PA-00B (acceptée) → [post-traitement reprenable].
     """
     I = I_EL
-    flow.use(lst, "ID", "Statut", "StatutPrecedent")
+    flow.use(lst, "ID", "Statut")
+    if restore:
+        restore_flux_columns(s, lst, "triggerOutputs()?['body/ID']", "coalesce(triggerOutputs()?['body/IdHNCS'], '')",
+                             "toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))")
     get_item(s, "Lire_element", lst, "triggerOutputs()?['body/ID']")
     cond(s, "Si_evenement_obsolete", f"not(equals({I}?['Statut']?['Value'], triggerOutputs()?['body/Statut/Value']))",
          lambda y: terminate(y, "Fin_evenement_obsolete"))
     ID = f"{I}?['ID']"
     idobj = ensure_idhncs(s, lst, I, ID, "el") if (with_id and MODEL.obj(lst)["prefix"]) else f"string({ID})"
-    avant = compose(s, "Statut_avant", at(f"if(empty({I}?['StatutPrecedent']), '∅', {I}?['StatutPrecedent'])"))
-    env = Env(I=I, ID=ID, IDOBJ=idobj, AVANT=f"outputs('{avant}')", APRES=f"{I}?['Statut']?['Value']",
+    avant = ref_status(s, lst, ID, "el")
+    env = Env(I=I, ID=ID, IDOBJ=idobj, AVANT=avant, APRES=f"{I}?['Statut']?['Value']",
               ACTEUR="toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))", LIEN=item_link(lst, ID), LST=lst)
     if pre:
         pre(s, env)
@@ -281,7 +353,7 @@ def transition_body(s: Seq, flow, lst, objet, *, effects=None, pre=None, post=No
         if t["object"] == objet and t["to"] in targets:
             flow.trans(t["baseCode"])
 
-    a_traiter = f"and(not(equals({env.APRES}, coalesce({I}?['StatutPrecedent'], ''))), contains({arr(targets)}, {env.APRES}))"
+    a_traiter = f"and(not(equals({env.APRES}, {env.AVANT})), contains({arr(targets)}, {env.APRES}))"
 
     def nothing(y):
         if post:
@@ -405,7 +477,7 @@ def checklist_table(s, tag, filter_):
     a = get_items(s, f"Checklist_{tag}", "ActionsIntegration", filter_=filter_,
                   fields=("IdHNCS", "Title", "Responsable", "Echeance", "Statut", "Bloquante"), order="Echeance asc")
     t = html_table(s, f"Tableau_{tag}", f"body('{a}')?['value']", [
-        ("Action", "concat(coalesce(item()?['IdHNCS'], ''), ' — ', item()?['Title'])"),
+        ("Action", "concat(coalesce(item()?['IdHNCS'], ''), ' : ', item()?['Title'])"),
         ("Responsable", "coalesce(item()?['Responsable']?['DisplayName'], '')"),
         ("Échéance", dfr("item()?['Echeance']")),
         ("Bloquante", "if(equals(item()?['Bloquante'], true), 'Oui', 'Non')"),
@@ -455,7 +527,7 @@ def create_cr(s, tag, aff, alt, ref, deb, fin):
     ech = f"addDays({fin}, int({P('CR.DelaiRemiseJours', '2')}), 'yyyy-MM-dd')"
     vals = {"Affectation": at(f"{aff}?['ID']"), "Alternant": at(f"{aff}?['Alternant']?['Id']"),
             "PeriodeDebut": ip(deb), "PeriodeFin": ip(fin), "Echeance": ip(ech),
-            "Title": ip(f"concat('CR ', coalesce({aff}?['IdHNCS'], ''), ' — ', {deb}, ' au ', {fin})"), "Statut": "Attendu"}
+            "Title": ip(f"concat('CR ', coalesce({aff}?['IdHNCS'], ''), ' : ', {deb}, ' au ', {fin})"), "Statut": "Attendu"}
     p, idcalc = create_with_id(s, f"Creer_CR_{tag}", "ComptesRendus", vals)
     pid = f"body('{p}')?['ID']"
     valideur = f"{ref}?['Compte']?['Email']"
@@ -504,7 +576,7 @@ def fin_planifiee_effects(s, tag, A, AID, aidobj, send_n35=True):
 
 
 # --------------------------------------------------------------------------------------------
-# Empreintes des champs protégés (P-09) — format § 6.5 (JSON compact, clés dans l'ordre de la spec,
+# Empreintes des champs protégés (P-09) : format § 6.5 (JSON compact, clés dans l'ordre de la spec,
 # dates AAAA-MM-JJ, dates-heures ISO 8601 UTC, lookups = ID entier, personnes = e-mail en minuscules, absent = null)
 # --------------------------------------------------------------------------------------------
 DOD = ["DoD1Fonctionnel", "DoD2FicheMethodo", "DoD3Restitution", "DoD4SupportCom", "DoD5Enseignements"]

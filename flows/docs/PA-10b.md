@@ -1,6 +1,6 @@
-# PA-10b — Échéances des conventions et des écoles
+# PA-10b : Échéances des conventions et des écoles
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec (§ 8.4) — ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -15,7 +15,7 @@ Suivre les échéances des conventions et les prochaines actions des écoles.
 
 ## Déclencheur(s)
 
-- `PA-10b` : Récurrence — Quotidien 07:10 (heure de Paris).
+- `PA-10b` : Récurrence : Quotidien 07:10 (heure de Paris).
 
 ## Entrées
 
@@ -35,7 +35,7 @@ Suivre les échéances des conventions et les prochaines actions des écoles.
 
 | Code | De | Vers | Acteurs | Contrôles |
 | --- | --- | --- | --- | --- |
-| CONV-T04 | Signée / active | À renouveler | FLUX, ADMIN, ECOLES | — |
+| CONV-T04 | Signée / active | À renouveler | FLUX, ADMIN, ECOLES | - |
 | CONV-T05-01 | Signée / active | Expirée | FLUX, ADMIN, ECOLES | G_DATE_FIN_DEPASSEE |
 | CONV-T05-02 | À renouveler | Expirée | FLUX, ADMIN, ECOLES | G_DATE_FIN_DEPASSEE |
 
