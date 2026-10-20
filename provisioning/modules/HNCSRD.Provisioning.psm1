@@ -254,7 +254,7 @@ function Get-HNCSRDConfig {
     .SYNOPSIS
         Charge et contrôle la configuration du tenant (provisioning/config/tenant.json).
     .DESCRIPTION
-        Contrat partagé avec les autres agents : voir provisioning/config/tenant.sample.json.
+        Contrat partagé avec les autres lots : voir provisioning/config/tenant.sample.json.
     .PARAMETER Path
         Chemin du fichier. Par défaut : provisioning/config/tenant.json (relatif au module).
     #>
@@ -932,7 +932,7 @@ function Get-HNCSRDAttributionsAttendues {
         Attributions attendues au niveau d'une liste/bibliothèque d'après la matrice (§ 7.3).
     .DESCRIPTION
         Fonction pure. Retourne une table ordonnée nom du groupe -> code de niveau (FC, CSS, R).
-        « — » et « IL(x) » ne donnent aucune attribution au niveau de la liste (les permissions par
+        «, » et « IL(x) » ne donnent aucune attribution au niveau de la liste (les permissions par
         élément ou dossier sont posées par les flux, § 7.4) ; « R+IL(x) » donne R au niveau de la liste
         (le complément x par élément est posé par les flux).
     #>

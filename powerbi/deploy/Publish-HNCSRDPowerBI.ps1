@@ -316,7 +316,7 @@ function Publish-Item {
         return $item.id
     }
     if (-not $PSCmdlet.ShouldProcess("$Collection/$Name", 'Créer')) { return $null }
-    $corps = [ordered]@{ displayName = $Name; description = 'HNCS-RD — généré depuis powerbi/ (spec § 9)'; definition = [ordered]@{ parts = $Parts } }
+    $corps = [ordered]@{ displayName = $Name; description = 'HNCS-RD, généré depuis powerbi/ (spec § 9)'; definition = [ordered]@{ parts = $Parts } }
     $cree = Invoke-HncsApi -Method Post -Uri "$FabricApi/workspaces/$WorkspaceId/$Collection" -Body $corps -ReturnOperationResult
     if (-not $cree) {
         $cree = Get-HncsAll -Uri "$FabricApi/workspaces/$WorkspaceId/$Collection" | Where-Object { $_.displayName -eq $Name } | Select-Object -First 1
@@ -368,7 +368,7 @@ $partsModele = Get-DefinitionParts -Folder $ModelFolder -Overrides (Get-ModelOve
 
 if ($PreparationSeule) {
     if (-not $DossierSortie) { throw '-PreparationSeule exige -DossierSortie.' }
-    Write-Host "Préparation hors ligne (aucun appel d'API) — SiteUrl = $SiteUrl"
+    Write-Host "Préparation hors ligne (aucun appel d'API), SiteUrl = $SiteUrl"
     Save-Parts -Name $ModelName -Kind 'SemanticModel' -Parts $partsModele
     $partsRapport = Get-DefinitionParts -Folder $ReportFolder -Overrides (Get-ReportOverrides -ModelId '00000000-0000-0000-0000-000000000000' -WorkspaceDisplayName $WorkspaceName)
     Save-Parts -Name $ReportName -Kind 'Report' -Parts $partsRapport
@@ -396,6 +396,6 @@ Write-Host ''
 Write-Host 'Publication terminée. Étapes manuelles restantes (README.md § Publication) :'
 Write-Host '  1. Identifiants OAuth2 de la source SharePoint (compte de service, confidentialité Organisationnel).'
 Write-Host '  2. Actualisation planifiée quotidienne 06:00 si elle n''a pas été appliquée ci-dessus.'
-Write-Host '  3. Affectation des membres aux rôles RLS / OLS (Direction, PilotageRD, Administration, RelationEcoles, Referent) — une personne dans un seul rôle — H-16.'
+Write-Host '  3. Affectation des membres aux rôles RLS / OLS (Direction, PilotageRD, Administration, RelationEcoles, Referent), une personne dans un seul rôle, H-16.'
 Write-Host "  4. Accès à l'espace « $WorkspaceName » en lecture pour les publics du rapport (aucun alternant, H-19)."
-Write-Host "Modèle : $modelId — Rapport : $reportId"
+Write-Host "Modèle : $modelId, Rapport : $reportId"

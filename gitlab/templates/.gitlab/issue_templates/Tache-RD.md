@@ -1,7 +1,7 @@
 ## Tâche R&D
 
-**Sujet** : {{ID_SUJET}} — {{TITRE_SUJET}}
-**Livrable concerné** : LIV-aaaa-nnnn <!-- obligatoire : identifiant IdHNCS du livrable (spec § 10.2) -->
+**Sujet** : {{ID_SUJET}}, {{TITRE_SUJET}}
+**Livrable concerné** : LIV-aaaa-nnnn <!-- obligatoire : identifiant IdHNCS du livrable (spec section 10.2) -->
 
 ### Objectif
 

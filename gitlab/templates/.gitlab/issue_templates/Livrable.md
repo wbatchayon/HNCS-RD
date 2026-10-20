@@ -1,9 +1,9 @@
-## Livrable LIV-aaaa-nnnn — titre du livrable
+## Livrable LIV-aaaa-nnnn : titre du livrable
 
 <!-- Une issue « Livrable » par livrable ayant une composante technique ; elle est rattachée au jalon
-« LIV-aaaa-nnnn — <titre> » créé par New-GitlabProjetSujet.ps1 (échéance = Echeance du livrable). -->
+« LIV-aaaa-nnnn : <titre> » créé par New-GitlabProjetSujet.ps1 (échéance = Echeance du livrable). -->
 
-**Sujet** : {{ID_SUJET}} — {{TITRE_SUJET}}
+**Sujet** : {{ID_SUJET}}, {{TITRE_SUJET}}
 **Livrable** : LIV-aaaa-nnnn
 **Type** : <!-- POC / démonstrateur, plan de stratégie, document technique… (TypeLivrable) -->
 **Échéance** : <!-- reprise de SharePoint ; toute modification se fait d'abord dans la liste Livrables -->
@@ -16,13 +16,13 @@
 
 - [ ] …
 
-### Definition of Done (POC et plans de stratégie — cases DoD1 à DoD5 de la liste Livrables)
+### Definition of Done (POC et plans de stratégie : cases DoD1 à DoD5 de la liste Livrables)
 
-- [ ] DoD 1 — Fonctionnel et démontrable
-- [ ] DoD 2 — Fiche méthodologie rangée (bibliothèque « 04 — Livrables R&D »)
-- [ ] DoD 3 — Restitution présentée
-- [ ] DoD 4 — Support de communication prêt
-- [ ] DoD 5 — Enseignements et limites documentés
+- [ ] DoD 1 : Fonctionnel et démontrable
+- [ ] DoD 2 : Fiche méthodologie rangée (bibliothèque « 04 - Livrables R&D »)
+- [ ] DoD 3 : Restitution présentée
+- [ ] DoD 4 : Support de communication prêt
+- [ ] DoD 5 : Enseignements et limites documentés
 
 > Ces cases sont un aide-mémoire. Seules les cases DoD de l'élément SharePoint font foi ; la
 > soumission (« Soumis à revue ») et la validation se font dans SharePoint par les personnes
@@ -35,4 +35,4 @@
 
 /label ~"rd::sujet::{{ID_SUJET}}" ~"rd::pole::{{CODE_POLE}}"
 /label ~"rd::livrable::LIV-aaaa-nnnn"
-/milestone %"LIV-aaaa-nnnn — titre du livrable"
+/milestone %"LIV-aaaa-nnnn : titre du livrable"

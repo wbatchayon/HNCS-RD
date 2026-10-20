@@ -55,10 +55,10 @@ class FauxServeur:
             42: {
                 "id": 42, "path_with_namespace": "hncs-rd/suj-2026-0003-sauvegarde-pra",
                 "last_activity_at": "2026-10-13T16:45:12.345Z",
-                "issues": {None: (5, 7), "LIV-2026-0010 — Plan PRA": (2, 3), "Jalon libre": (1, 0)},
-                "mrs": {None: 3, "LIV-2026-0010 — Plan PRA": 1, "Jalon libre": 0},
+                "issues": {None: (5, 7), "LIV-2026-0010 : Plan PRA": (2, 3), "Jalon libre": (1, 0)},
+                "mrs": {None: 3, "LIV-2026-0010 : Plan PRA": 1, "Jalon libre": 0},
                 "jalons": [
-                    {"id": 901, "title": "LIV-2026-0010 — Plan PRA", "due_date": "2026-11-30", "state": "active"},
+                    {"id": 901, "title": "LIV-2026-0010 : Plan PRA", "due_date": "2026-11-30", "state": "active"},
                     {"id": 902, "title": "Jalon libre", "due_date": None, "state": "closed"},
                 ],
             },
@@ -198,7 +198,7 @@ def client(serveur, attentes=None):
 
 class TestExtractionEtCle(unittest.TestCase):
     def test_extraction_id_livrable(self):
-        self.assertEqual(sync.extraire_id_livrable("LIV-2026-0042 — Démonstrateur"), "LIV-2026-0042")
+        self.assertEqual(sync.extraire_id_livrable("LIV-2026-0042 : Démonstrateur"), "LIV-2026-0042")
         self.assertEqual(sync.extraire_id_livrable("Recette (LIV-2026-12345)"), "LIV-2026-12345")
         self.assertEqual(sync.extraire_id_livrable("LIV-2026-0001 puis LIV-2026-0002"), "LIV-2026-0001")
 
@@ -249,8 +249,8 @@ class TestConstructionDesLignes(unittest.TestCase):
             derniere_activite="2026-10-13T16:45:12Z", issues_ouvertes=5, issues_fermees=7, mrs_ouvertes=3,
             jalons=[
                 sync.Jalon(902, "Jalon libre", None, "closed", 1, 0, 0),
-                sync.Jalon(901, "LIV-2026-0010 — Plan PRA", "2026-12-15", "active", 2, 3, 1),
-                sync.Jalon(903, "LIV-2026-0099 — Inconnu", "2026-12-01", "active", 0, 0, 0),
+                sync.Jalon(901, "LIV-2026-0010 : Plan PRA", "2026-12-15", "active", 2, 3, 1),
+                sync.Jalon(903, "LIV-2026-0099 : Inconnu", "2026-12-01", "active", 0, 0, 0),
             ],
         )
 
@@ -292,7 +292,7 @@ class TestCalculDesOperations(unittest.TestCase):
     def lignes(self):
         return [{
             "Title": "hncs-rd/p", "CleSynchro": "42:901", "SujetLookupId": "3", "GitlabProjetId": 42,
-            "Milestone": "LIV-2026-0010 — Plan PRA", "MilestoneEcheance": "2026-11-30", "MilestoneEtat": "active",
+            "Milestone": "LIV-2026-0010 : Plan PRA", "MilestoneEcheance": "2026-11-30", "MilestoneEtat": "active",
             "IssuesOuvertes": 2, "IssuesFermees": 3, "MRsOuvertes": 1, "DerniereActivite": "2026-10-13T16:45:00Z",
             "IdLivrable": "LIV-2026-0010", "EcartEcheance": False, "Orpheline": False,
         }]
@@ -302,7 +302,7 @@ class TestCalculDesOperations(unittest.TestCase):
         # Valeurs telles que Graph les renvoie : flottants, lookup en chaîne, date seule en UTC.
         return {"id": "100", "fields": {
             "Title": "hncs-rd/p", "CleSynchro": "42:901", "SujetLookupId": "3", "GitlabProjetId": 42.0,
-            "Milestone": "LIV-2026-0010 — Plan PRA", "MilestoneEcheance": "2026-11-29T23:00:00Z",
+            "Milestone": "LIV-2026-0010 : Plan PRA", "MilestoneEcheance": "2026-11-29T23:00:00Z",
             "MilestoneEtat": "active", "IssuesOuvertes": 2.0, "IssuesFermees": 3.0, "MRsOuvertes": 1.0,
             "DerniereActivite": "2026-10-13T16:45:00Z", "IdLivrable": "LIV-2026-0010", "EcartEcheance": False,
             "DateSynchro": "2026-10-13T05:30:00Z",

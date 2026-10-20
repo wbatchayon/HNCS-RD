@@ -13,7 +13,7 @@
 #   GITLAB_TOKEN         jeton d'accès du groupe hncs-rd, rôle Reporter, portée read_api  MASQUÉE
 #   HNCS_TENANT_ID       identifiant du tenant Entra                                      non secret
 #   HNCS_CLIENT_ID       identifiant de l'application Entra                               non secret
-#                        (Lists.SelectedOperations.Selected recommandé, sinon Sites.Selected write — H-31)
+#                        (Lists.SelectedOperations.Selected recommandé, sinon Sites.Selected write : H-31)
 #   HNCS_CLIENT_SECRET   secret de l'application Entra                                    MASQUÉE
 #                        (inutile si l'identité fédérée OIDC ci-dessous est utilisée, recommandée)
 #   HNCS_SITE_URL        https://<tenant>.sharepoint.com/sites/HNCS-RD                    non secret
@@ -44,7 +44,7 @@ tests-synchro:
     - python --version
     - python -m unittest discover -s gitlab/sync/tests -v
 
-# Synchronisation planifiée (quotidien 05:30, avant l'actualisation Power BI de 06:00 — spec § 9.1).
+# Synchronisation planifiée (quotidien 05:30, avant l'actualisation Power BI de 06:00 : spec § 9.1).
 synchro-gitlab-sharepoint:
   stage: sync
   rules:

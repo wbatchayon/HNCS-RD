@@ -1,6 +1,6 @@
 # Mesures du modèle Power BI HNCS-RD
 
-> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` § 9.5 (qui prévaut), sans écart (spec v1.6.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, § 8.2 indicateurs recommandés) — document source non versionné (H-30).
+> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` [9.5](../spec.md#95-mesures) (qui prévaut), sans écart (spec v1.6.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, [8.2](../spec.md#82-partition-des-statuts-cibles) indicateurs recommandés), document source non versionné (H-30).
 
 Conventions communes :
 
@@ -14,7 +14,7 @@ Conventions communes :
 ### [Candidatures reçues]
 
 - **Définition** : Nombre de candidatures enregistrées dans `Candidatures` (filtrées par la date de réception via `Calendrier`).
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Inclut doublons signalés et candidatures clôturées ; la période suit `DateReceptionJour` (heure de Paris).
 
 ```dax
@@ -25,7 +25,7 @@ Candidatures reçues =
 ### [Candidatures actives]
 
 - **Définition** : Candidatures dont le statut n'est pas terminal (≠ Intégrée, Non retenue, Clôturée).
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Repose sur la colonne calculée `EstActive` ; toute évolution de STATUT_CANDIDATURE impose de la revoir.
 
 ```dax
@@ -36,7 +36,7 @@ Candidatures actives =
 ### [Seuil attente (j)]
 
 - **Définition** : Seuil (jours) au-delà duquel une candidature active est « en attente » : paramètre `Delai.SeuilAttenteCandidatureJours` (10 par défaut).
-- **Format** : `0` — dossier d'affichage « Recrutement »
+- **Format** : `0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Repli sur 10 si la clé est absente (valeur vide) ou non numérique. Pour les rôles Direction, RelationEcoles et Referent, la RLS ne laisse voir de `Parametres` que cette clé (RX-04) : la mesure reste juste.
 
 ```dax
@@ -48,7 +48,7 @@ Seuil attente (j) =
 ### [Candidatures en attente]
 
 - **Définition** : Candidatures actives restées dans leur statut (depuis `DateStatut`, à défaut `DateReception`) plus longtemps que le seuil.
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Cadrage : seuil à décider ; vues détaillées réservées aux acteurs habilités. `NOW ()` est en UTC dans le service (écart d'une à deux heures, sans effet sensible en jours).
 
 ```dax
@@ -60,7 +60,7 @@ Candidatures en attente =
 ### [Délai moyen de présélection (j)]
 
 - **Définition** : Moyenne de `DateDecisionPreselection − DateReception` en jours, sur les candidatures ayant une décision de présélection.
-- **Format** : `#,##0.0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0.0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Cadrage : définir début et fin exacts ; ne pas mélanger dossiers complets et incomplets. `DATEDIFF ( …, DAY )` compte les changements de jour calendaire.
 
 ```dax
@@ -71,7 +71,7 @@ Délai moyen de présélection (j) =
 ### [Délai moyen de traitement (j)]
 
 - **Définition** : Moyenne de la durée réception → intégration (ou clôture) des candidatures terminées.
-- **Format** : `#,##0.0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0.0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Les candidatures « Non retenue » sans `DateCloture` sont exclues ; PA-02 renseigne `DateCloture` aussi pour « Non retenue ».
 
 ```dax
@@ -82,7 +82,7 @@ Délai moyen de traitement (j) =
 ### [Candidatures analysées]
 
 - **Définition** : Candidatures ayant reçu une décision de présélection (positive ou négative).
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Comptée dès la décision de présélection (positive ou négative) ; une candidature encore « En cours d'analyse » n'est pas comptée.
 
 ```dax
@@ -93,7 +93,7 @@ Candidatures analysées =
 ### [Candidatures présélectionnées]
 
 - **Définition** : Candidatures transmises à l'administration (`DateTransmissionAdmin` renseignée).
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Une candidature « Présélectionnée » dont la transmission a échoué (reprise en attente) n'est pas encore comptée.
 
 ```dax
@@ -104,7 +104,7 @@ Candidatures présélectionnées =
 ### [Taux de présélection]
 
 - **Définition** : Présélectionnées ÷ analysées.
-- **Format** : `0.0%` — dossier d'affichage « Recrutement »
+- **Format** : `0.0%`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Indicateur de pilotage du sourcing, pas d'évaluation individuelle.
 
 ```dax
@@ -115,7 +115,7 @@ Taux de présélection =
 ### [Entretiens réalisés]
 
 - **Définition** : Nombre d'entretiens au statut « Réalisé ».
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Compte des entretiens, pas des candidatures (une candidature peut en avoir plusieurs) : l'entonnoir utilise [Candidatures avec entretien réalisé].
 
 ```dax
@@ -126,7 +126,7 @@ Entretiens réalisés =
 ### [Candidatures avec entretien réalisé]
 
 - **Définition** : Nombre de candidatures distinctes ayant au moins un entretien « Réalisé ».
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Étape « entretien » de l'entonnoir de recrutement ; suit la date de réception de la candidature (relation Entretiens → Candidatures).
 
 ```dax
@@ -137,7 +137,7 @@ Candidatures avec entretien réalisé =
 ### [Entretiens à venir]
 
 - **Définition** : Entretiens « Planifié » dont la date est postérieure à maintenant.
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : `NOW ()` en UTC dans le service, `DateHeure` en heure de Paris : décalage d'une à deux heures.
 
 ```dax
@@ -148,7 +148,7 @@ Entretiens à venir =
 ### [Candidatures retenues]
 
 - **Définition** : Candidatures ayant fait l'objet d'une décision finale favorable (Retenue, Formalités en cours, Intégrée).
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Décision humaine (P-01) ; une réouverture fait sortir la candidature du compte.
 
 ```dax
@@ -159,7 +159,7 @@ Candidatures retenues =
 ### [Candidatures intégrées]
 
 - **Définition** : Candidatures au statut « Intégrée ».
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Double barrière P-02 : ne compte que les intégrations dont les formalités ont été contrôlées par PA-04.
 
 ```dax
@@ -170,7 +170,7 @@ Candidatures intégrées =
 ### [Taux de transformation]
 
 - **Définition** : Intégrées ÷ reçues, sur la même période de réception.
-- **Format** : `0.0%` — dossier d'affichage « Recrutement »
+- **Format** : `0.0%`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Les candidatures récentes non encore traitées font baisser le taux de la période courante.
 
 ```dax
@@ -181,7 +181,7 @@ Taux de transformation =
 ### [Doublons signalés]
 
 - **Définition** : Candidatures marquées `DoublonPotentiel` par PA-01 et non encore vérifiées par la R&D (`DoublonVerifie` = Non).
-- **Format** : `#,##0` — dossier d'affichage « Recrutement »
+- **Format** : `#,##0`, dossier d'affichage « Recrutement »
 - **Point de vigilance** : Signalement uniquement : aucune fusion automatique ; une candidature cochée « Doublon vérifié » (faux positif) sort de l'indicateur, `DoublonPotentiel` restant tracé.
 
 ```dax
@@ -194,7 +194,7 @@ Doublons signalés =
 ### [Alternants actifs]
 
 - **Définition** : Fiches `Alternants` au statut « Actif » ou « Fin planifiée ».
-- **Format** : `#,##0` — dossier d'affichage « Effectifs »
+- **Format** : `#,##0`, dossier d'affichage « Effectifs »
 - **Point de vigilance** : Cadrage : ne pas compter les candidats retenus non encore intégrés (statut « À intégrer » exclu). Non filtrée par `Calendrier` (photo à la date du rapport).
 
 ```dax
@@ -205,7 +205,7 @@ Alternants actifs =
 ### [Alternants accueillis]
 
 - **Définition** : Alternants effectivement arrivés (tous statuts sauf « À intégrer »), hors alternances annulées avant leur début (`DateFinReelle` < `DateDebut`).
-- **Format** : `#,##0` — dossier d'affichage « Effectifs »
+- **Format** : `#,##0`, dossier d'affichage « Effectifs »
 - **Point de vigilance** : Comparée à la cible indicative (3) sans borne de période : cumul depuis l'origine ; non filtrée par `Calendrier`.
 
 ```dax
@@ -216,7 +216,7 @@ Alternants accueillis =
 ### [Alternants présents sur la période]
 
 - **Définition** : Alternants arrivés (hors « À intégrer » et hors alternances annulées avant leur début) dont la période [DateDebut ; DateFinReelle ou DateFin] chevauche la période sélectionnée dans `Calendrier`.
-- **Format** : `#,##0` — dossier d'affichage « Effectifs »
+- **Format** : `#,##0`, dossier d'affichage « Effectifs »
 - **Point de vigilance** : Sans sélection, la période est toute l'étendue du calendrier.
 
 ```dax
@@ -229,7 +229,7 @@ Alternants présents sur la période =
 ### [Affectations actives]
 
 - **Définition** : Affectations « Active », « À risque » ou « Bloquée ».
-- **Format** : `#,##0` — dossier d'affichage « Effectifs »
+- **Format** : `#,##0`, dossier d'affichage « Effectifs »
 - **Point de vigilance** : Base du taux de charge des référents.
 
 ```dax
@@ -240,7 +240,7 @@ Affectations actives =
 ### [Affectations sans référent]
 
 - **Définition** : Affectations non terminées sans référent.
-- **Format** : `#,##0` — dossier d'affichage « Effectifs »
+- **Format** : `#,##0`, dossier d'affichage « Effectifs »
 - **Point de vigilance** : Une affectation « Active » sans référent est impossible (G_AFFECTATION_COMPLETE) : concerne surtout « À préparer ».
 
 ```dax
@@ -251,7 +251,7 @@ Affectations sans référent =
 ### [Affectations incomplètes]
 
 - **Définition** : Affectations non terminées sans référent, sans date de fin ou sans livrable rattaché.
-- **Format** : `#,##0` — dossier d'affichage « Effectifs »
+- **Format** : `#,##0`, dossier d'affichage « Effectifs »
 - **Point de vigilance** : `RELATEDTABLE ( Livrables )` respecte les filtres de page sur les livrables (ex. période d'échéance).
 
 ```dax
@@ -268,7 +268,7 @@ Affectations incomplètes =
 ### [Alternants sans affectation active]
 
 - **Définition** : Alternants actifs n'ayant aucune affectation « Active », « À risque » ou « Bloquée ».
-- **Format** : `#,##0` — dossier d'affichage « Effectifs »
+- **Format** : `#,##0`, dossier d'affichage « Effectifs »
 - **Point de vigilance** : Utile en début d'alternance ; à surveiller au Comité R&D.
 
 ```dax
@@ -279,7 +279,7 @@ Alternants sans affectation active =
 ### [Taux de charge référent]
 
 - **Définition** : Nombre d'alternants distincts ayant une affectation « Active », « À risque » ou « Bloquée » ÷ somme des capacités indicatives des référents (dans le contexte).
-- **Format** : `0.0%` — dossier d'affichage « Effectifs »
+- **Format** : `0.0%`, dossier d'affichage « Effectifs »
 - **Point de vigilance** : Un alternant ayant deux affectations concomitantes (H-42) n'est compté qu'une fois ; au total, les affectations sans référent restent au numérateur ; capacité vide = 0.
 
 ```dax
@@ -292,7 +292,7 @@ Taux de charge référent =
 ### [Livrables]
 
 - **Définition** : Nombre de livrables.
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Filtrés par `Calendrier` via l'échéance (`Echeance`).
 
 ```dax
@@ -303,7 +303,7 @@ Livrables =
 ### [Livrables validés]
 
 - **Définition** : Livrables « Validé » ou « Archivé / clôturé ».
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Filtré par échéance (et non par date de validation) lorsque `Calendrier` est filtré.
 
 ```dax
@@ -314,7 +314,7 @@ Livrables validés =
 ### [Livrables soumis à revue]
 
 - **Définition** : Livrables ayant fait l'objet d'au moins un dépôt (`DatePremierDepot`).
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Dénominateur du taux de validation.
 
 ```dax
@@ -325,7 +325,7 @@ Livrables soumis à revue =
 ### [Taux de validation]
 
 - **Définition** : Validés ÷ soumis à revue.
-- **Format** : `0.0%` — dossier d'affichage « Livrables »
+- **Format** : `0.0%`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Les livrables soumis mais encore en revue font baisser le taux.
 
 ```dax
@@ -336,7 +336,7 @@ Taux de validation =
 ### [Livrables en retard]
 
 - **Définition** : Livrables « À produire », « En cours » ou « Corrections demandées » dont l'échéance est dépassée.
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Calcul indépendant de la colonne `EnRetard` (PA-06) ; `TODAY ()` est la date UTC dans le service (de 00:00 à 02:00 heure de Paris, J−1).
 
 ```dax
@@ -347,7 +347,7 @@ Livrables en retard =
 ### [Livrables arrivés à échéance]
 
 - **Définition** : Livrables non suspendus/abandonnés dont l'échéance est atteinte.
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Dénominateur du taux de remise à l'heure.
 
 ```dax
@@ -358,7 +358,7 @@ Livrables arrivés à échéance =
 ### [Taux de remise à l'heure]
 
 - **Définition** : Livrables échus déposés au plus tard à leur échéance ÷ livrables échus (hors suspendus/abandonnés).
-- **Format** : `0.0%` — dossier d'affichage « Livrables »
+- **Format** : `0.0%`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Cadrage : définir le traitement des échéances révisées. La mesure compare à l'échéance **courante** (`Echeance`), pas à `EcheanceInitiale`.
 
 ```dax
@@ -372,7 +372,7 @@ Taux de remise à l'heure =
 ### [Taux de validation au premier passage]
 
 - **Définition** : Livrables validés ou archivés sans aucune demande de corrections ÷ livrables soumis à revue (au moins un dépôt).
-- **Format** : `0.0%` — dossier d'affichage « Livrables »
+- **Format** : `0.0%`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Cadrage : à utiliser pour améliorer le processus, jamais comme mesure individuelle. Les livrables soumis non encore revus font baisser le taux.
 
 ```dax
@@ -386,7 +386,7 @@ Taux de validation au premier passage =
 ### [Taux de capitalisation]
 
 - **Définition** : Livrables archivés avec document lié (et DoD complète pour un POC ou un plan) ÷ livrables validés ou archivés.
-- **Format** : `0.0%` — dossier d'affichage « Livrables »
+- **Format** : `0.0%`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Cadrage : doit refléter la Definition of Done ; un livrable validé non encore archivé compte comme non capitalisé ; `ADocument` ne contrôle que la présence du lien.
 
 ```dax
@@ -400,7 +400,7 @@ Taux de capitalisation =
 ### [Corrections en cours]
 
 - **Définition** : Livrables au statut « Corrections demandées ».
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 
 ```dax
 Corrections en cours =
@@ -410,7 +410,7 @@ Corrections en cours =
 ### [Échéances à 14 jours]
 
 - **Définition** : Livrables non terminés dont l'échéance tombe dans les 14 prochains jours (aujourd'hui inclus).
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Alimente le Comité R&D (cohérent avec la synthèse PA-11).
 
 ```dax
@@ -421,7 +421,7 @@ Corrections en cours =
 ### [Livrables sans modèle]
 
 - **Définition** : Livrables actifs sans modèle du registre.
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Qualité des données / gouvernance des modèles.
 
 ```dax
@@ -432,7 +432,7 @@ Livrables sans modèle =
 ### [POC réalisés]
 
 - **Définition** : Livrables de type « POC / démonstrateur » archivés avec DoD complète.
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Cible indicative 5 (H-20) ; filtrés par échéance lorsque `Calendrier` est filtré.
 
 ```dax
@@ -443,7 +443,7 @@ POC réalisés =
 ### [Plans de stratégie formalisés]
 
 - **Définition** : Livrables de type « Plan de stratégie » archivés avec DoD complète.
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Cible indicative 4 (H-20).
 
 ```dax
@@ -454,7 +454,7 @@ Plans de stratégie formalisés =
 ### [Couverture des domaines cibles]
 
 - **Définition** : Domaines cibles actifs couverts par au moins un sujet ayant un livrable validé ou archivé ÷ domaines cibles actifs.
-- **Format** : `0.0%` — dossier d'affichage « Livrables »
+- **Format** : `0.0%`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Cadrage : le référentiel des domaines doit exister dans SharePoint. La mesure ignore tous les filtres (ALL) : indicateur global ; elle respecte la RLS (0 pour le rôle Administration).
 
 ```dax
@@ -468,7 +468,7 @@ Couverture des domaines cibles =
 ### [Sujets bloqués]
 
 - **Définition** : Sujets au statut « Bloqué » ou « À arbitrer ».
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 
 ```dax
 Sujets bloqués =
@@ -478,7 +478,7 @@ Sujets bloqués =
 ### [Sujets actifs]
 
 - **Définition** : Sujets au statut « Priorisé », « En cours » ou « Bloqué ».
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Photo à la date du rapport (non filtrée par `Calendrier`).
 
 ```dax
@@ -489,7 +489,7 @@ Sujets actifs =
 ### [Mobilisations commerciales]
 
 - **Définition** : Nombre de mobilisations d'un livrable (rendez-vous client, appel d'offres…).
-- **Format** : `#,##0` — dossier d'affichage « Livrables »
+- **Format** : `#,##0`, dossier d'affichage « Livrables »
 - **Point de vigilance** : Cible indicative 8. Datée par `DateMobilisation` (relation active vers `Calendrier`) ; la relation vers le livrable mobilisé est inactive.
 
 ```dax
@@ -502,7 +502,7 @@ Mobilisations commerciales =
 ### [Comptes rendus attendus]
 
 - **Définition** : Comptes rendus dont l'échéance de remise est atteinte.
-- **Format** : `#,##0` — dossier d'affichage « Comptes rendus »
+- **Format** : `#,##0`, dossier d'affichage « Comptes rendus »
 - **Point de vigilance** : Dénominateur du taux de remise des comptes rendus.
 
 ```dax
@@ -513,7 +513,7 @@ Comptes rendus attendus =
 ### [Comptes rendus manquants]
 
 - **Définition** : Comptes rendus « Non remis », ou « Attendu » / « En rédaction » échus.
-- **Format** : `#,##0` — dossier d'affichage « Comptes rendus »
+- **Format** : `#,##0`, dossier d'affichage « Comptes rendus »
 - **Point de vigilance** : Plus réactif que le statut « Non remis » posé par PA-08b après le délai de grâce.
 
 ```dax
@@ -524,7 +524,7 @@ Comptes rendus manquants =
 ### [Taux de remise des comptes rendus]
 
 - **Définition** : Comptes rendus échus remis au plus tard à l'échéance ÷ comptes rendus échus.
-- **Format** : `0.0%` — dossier d'affichage « Comptes rendus »
+- **Format** : `0.0%`, dossier d'affichage « Comptes rendus »
 - **Point de vigilance** : `DateRemise` (heure de Paris) est ramenée à la date par `DATE ( YEAR, MONTH, DAY )`.
 
 ```dax
@@ -538,7 +538,7 @@ Taux de remise des comptes rendus =
 ### [Blocages signalés]
 
 - **Définition** : Comptes rendus où l'alternant a coché « Blocage signalé ».
-- **Format** : `#,##0` — dossier d'affichage « Comptes rendus »
+- **Format** : `#,##0`, dossier d'affichage « Comptes rendus »
 - **Point de vigilance** : Compte des comptes rendus, pas des blocages distincts.
 
 ```dax
@@ -549,7 +549,7 @@ Blocages signalés =
 ### [Avancement moyen (dernier CR)]
 
 - **Définition** : Moyenne, par affectation, de l'avancement déclaré dans le dernier compte rendu remis, validé ou à compléter.
-- **Format** : `#,##0.0` — dossier d'affichage « Comptes rendus »
+- **Format** : `#,##0.0`, dossier d'affichage « Comptes rendus »
 - **Point de vigilance** : Avancement estimé par l'alternant (0-100) ; une affectation sans compte rendu remis est ignorée.
 
 ```dax
@@ -566,7 +566,7 @@ Avancement moyen (dernier CR) =
 ### [Partenariats académiques actifs]
 
 - **Définition** : Conventions de partenariat ou de sponsoring au statut « Signée / active » (H-25).
-- **Format** : `#,##0` — dossier d'affichage « Écoles »
+- **Format** : `#,##0`, dossier d'affichage « Écoles »
 - **Point de vigilance** : Cadrage : une école ayant accueilli un alternant n'est pas automatiquement partenaire. Cible indicative 3.
 
 ```dax
@@ -577,7 +577,7 @@ Partenariats académiques actifs =
 ### [Conventions à renouveler]
 
 - **Définition** : Conventions au statut « À renouveler » (PA-10b).
-- **Format** : `#,##0` — dossier d'affichage « Écoles »
+- **Format** : `#,##0`, dossier d'affichage « Écoles »
 
 ```dax
 Conventions à renouveler =
@@ -587,7 +587,7 @@ Conventions à renouveler =
 ### [Établissements collaborants]
 
 - **Définition** : Établissements « Établissement d'accueil », « Partenariat à évaluer » ou « Partenaire actif ».
-- **Format** : `#,##0` — dossier d'affichage « Écoles »
+- **Format** : `#,##0`, dossier d'affichage « Écoles »
 
 ```dax
 Établissements collaborants =
@@ -597,7 +597,7 @@ Conventions à renouveler =
 ### [Partenariats à évaluer]
 
 - **Définition** : Établissements signalés « Partenariat à évaluer » (bilan favorable, PA-09).
-- **Format** : `#,##0` — dossier d'affichage « Écoles »
+- **Format** : `#,##0`, dossier d'affichage « Écoles »
 - **Point de vigilance** : Signal de revue, pas une décision (P-01).
 
 ```dax
@@ -608,7 +608,7 @@ Partenariats à évaluer =
 ### [Bilans réalisés]
 
 - **Définition** : Bilans d'alternance au statut « Réalisé ».
-- **Format** : `#,##0` — dossier d'affichage « Écoles »
+- **Format** : `#,##0`, dossier d'affichage « Écoles »
 
 ```dax
 Bilans réalisés =
@@ -620,7 +620,7 @@ Bilans réalisés =
 ### [Communications publiées]
 
 - **Définition** : Communications **externes** au statut « Publiée ».
-- **Format** : `#,##0` — dossier d'affichage « Communications »
+- **Format** : `#,##0`, dossier d'affichage « Communications »
 - **Point de vigilance** : Cible indicative 30 (publications valorisant HNCS). Datée par `DateEffective` (relation active vers `Calendrier`) ; les synthèses internes publiées ne sont pas comptées.
 
 ```dax
@@ -631,7 +631,7 @@ Communications publiées =
 ### [Communications en préparation]
 
 - **Définition** : Communications de l'idée à la programmation (hors publiées et suspendues/refusées).
-- **Format** : `#,##0` — dossier d'affichage « Communications »
+- **Format** : `#,##0`, dossier d'affichage « Communications »
 
 ```dax
 Communications en préparation =
@@ -641,7 +641,7 @@ Communications en préparation =
 ### [Livrables valorisés]
 
 - **Définition** : Nombre de livrables distincts ayant au moins une communication publiée (interne ou externe).
-- **Format** : `#,##0` — dossier d'affichage « Communications »
+- **Format** : `#,##0`, dossier d'affichage « Communications »
 - **Point de vigilance** : `DISTINCTCOUNTNOBLANK` : une communication sans livrable source n'est pas comptée. La relation vers `Livrables` est inactive : les segments sur les livrables ne filtrent pas cette mesure.
 
 ```dax
@@ -654,7 +654,7 @@ Livrables valorisés =
 ### [Actions en retard]
 
 - **Définition** : Actions d'intégration / checklists non terminées dont l'échéance est dépassée.
-- **Format** : `#,##0` — dossier d'affichage « Qualité »
+- **Format** : `#,##0`, dossier d'affichage « Qualité »
 - **Point de vigilance** : La relation `ActionsIntegration[AlternantId]` → `Alternants` est active : un filtre sur les alternants (pôle, établissement) écarte les actions rattachées à une seule candidature. RLS : le rôle Referent ne voit que les actions des alternants de ses affectations (RX-05) ; RelationEcoles n'en voit aucune.
 
 ```dax
@@ -664,19 +664,19 @@ Actions en retard =
 
 ### [Transitions refusées]
 
-- **Définition** : Transitions de statut annulées par les flux (`Refusée — annulée` dans `HistoriqueStatuts`).
-- **Format** : `#,##0` — dossier d'affichage « Qualité »
+- **Définition** : Transitions de statut annulées par les flux (`Refusée et annulée` dans `HistoriqueStatuts`).
+- **Format** : `#,##0`, dossier d'affichage « Qualité »
 - **Point de vigilance** : Indicateur de qualité du processus, pas de faute individuelle (H-17). Vide pour les rôles Direction, RelationEcoles et Referent (`HistoriqueStatuts` : `FALSE ()`, RX-04).
 
 ```dax
 Transitions refusées =
-    CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = "Refusée — annulée" )
+    CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = "Refusée et annulée" )
 ```
 
 ### [Écarts d'échéance GitLab]
 
 - **Définition** : Jalons GitLab non orphelins dont l'échéance diffère de celle du livrable rattaché (lot 5).
-- **Format** : `#,##0` — dossier d'affichage « Qualité »
+- **Format** : `#,##0`, dossier d'affichage « Qualité »
 - **Point de vigilance** : Les lignes orphelines (jalon supprimé, sujet détaché : `Orpheline` = Oui) sont conservées dans `GitlabSync` mais exclues (RX-07) ; vide tant que la synchronisation GitLab (lot 5) n'est pas déployée.
 
 ```dax
@@ -689,7 +689,7 @@ Transitions refusées =
 ### [Cible]
 
 - **Définition** : Valeur cible de la table `Objectifs` pour l'indicateur sélectionné.
-- **Format** : `#,##0.##` — dossier d'affichage « Objectifs »
+- **Format** : `#,##0.##`, dossier d'affichage « Objectifs »
 - **Point de vigilance** : Vide si plusieurs indicateurs sont dans le contexte : chaque jauge filtre `Objectifs[Indicateur]`.
 
 ```dax
@@ -702,8 +702,8 @@ Cible =
 ### [Dernière actualisation]
 
 - **Définition** : Horodatage (heure de Paris) de la dernière actualisation du modèle : maximum de la colonne masquée `Mesures[DerniereActualisation]`, calculée en Power Query (`DateTimeZone.FixedUtcNow` converti en heure de Paris).
-- **Format** : `dd/MM/yyyy HH:mm` — dossier d'affichage « Technique »
-- **Point de vigilance** : Affichée sur chaque page (specs/powerbi-rapport.md) ; section « Technique » de § 9.5.
+- **Format** : `dd/MM/yyyy HH:mm`, dossier d'affichage « Technique »
+- **Point de vigilance** : Affichée sur chaque page (specs/powerbi-rapport.md) ; section « Technique » de [9.5](../spec.md#95-mesures).
 
 ```dax
 Dernière actualisation =

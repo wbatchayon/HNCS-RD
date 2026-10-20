@@ -1,12 +1,12 @@
-# Guide utilisateur — Administration
+# Guide utilisateur : Administration
 
-> Public : équipe administrative habilitée, par exemple **Karine** (groupe SharePoint `HNCS-RD-Administration`). Règles communes
+> Public : équipe administrative habilitée, par exemple **Carine** (groupe SharePoint `HNCS-RD-Administration`). Règles communes
 > (statuts refusés, champs protégés, validations, notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides).
 > Référence : `spec.md` 1.6.0.
 
 ## 1. Votre rôle dans le processus
 
-L'administration prend le relais de la R&D dès qu'un profil est **présélectionné** et transmis (RACI § 7.6 : « R » sur les
+L'administration prend le relais de la R&D dès qu'un profil est **présélectionné** et transmis (RACI [7.6](../../spec.md#76-matrice-raci-et-implémentation) : « R » sur les
 entretiens, la sélection et les formalités) :
 
 - elle **planifie les entretiens** et **saisit leur résultat** ;
@@ -17,19 +17,19 @@ entretiens, la sélection et les formalités) :
 - elle gère les **conventions** avec les écoles et constate leur signature avec preuve.
 
 Groupe SharePoint : `HNCS-RD-Administration` (rôle `ADMIN` dans la spec). Le destinataire par défaut des transmissions est
-l'adresse du paramètre `Destinataires.Administration` (Karine, H-05). Les acteurs support (RH, juridique, finance)
+l'adresse du paramètre `Destinataires.Administration` (Carine, H-05). Les acteurs support (RH, juridique, finance)
 interviennent hors outil ou par l'intermédiaire de l'administration (H-32).
 
 ## 2. Ce que vous voyez et ne voyez pas
 
-D'après la matrice d'accès (spec § 7.3) et les permissions posées par les flux (§ 7.4).
+D'après la matrice d'accès (spec [7.3](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
 
 | Accès | Listes et bibliothèques |
 | --- | --- |
-| Modification | Entretiens, « 02 — Administration », Écoles et établissements, Conventions et partenariats, Échanges avec les écoles, Alternants, Actions d'intégration et checklists, Modèles de checklists, « 06 — Écoles et partenariats » |
-| Modification, **élément par élément** | Candidatures et leur dossier CV dans « 01 — Recrutement » : uniquement les candidatures **transmises**. Selon le paramètre `Recrutement.PartageTransmission`, l'accès est ouvert à toute l'équipe administrative (valeur initiale « Groupe ») ou au seul destinataire de la transmission (« Destinataire », H-45) |
-| Lecture seule | Offres, Pôles R&D, Référents, Sujets R&D, Affectations, Registre des modèles R&D, Communications R&D, Domaines cibles, Paramètres, Transitions de statuts, Historique des statuts, « 03 — Modèles R&D » |
-| Aucun accès | Livrables, Comptes rendus de suivi, Bilans d'alternance, Ressources techniques, Mobilisations commerciales, Journal des flux, Synchronisation GitLab, « 04 — Livrables R&D », « 05 — Suivi des alternants » |
+| Modification | Entretiens, « 02 - Administration », Écoles et établissements, Conventions et partenariats, Échanges avec les écoles, Alternants, Actions d'intégration et checklists, Modèles de checklists, « 06 - Écoles et partenariats » |
+| Modification, **élément par élément** | Candidatures et leur dossier CV dans « 01 - Recrutement » : uniquement les candidatures **transmises**. Selon le paramètre `Recrutement.PartageTransmission`, l'accès est ouvert à toute l'équipe administrative (valeur initiale « Groupe ») ou au seul destinataire de la transmission (« Destinataire », H-45) |
+| Lecture seule | Offres, Pôles R&D, Référents, Sujets R&D, Affectations, Registre des modèles R&D, Communications R&D, Domaines cibles, Paramètres, Transitions de statuts, Historique des statuts, « 03 - Modèles R&D » |
+| Aucun accès | Livrables, Comptes rendus de suivi, Bilans d'alternance, Ressources techniques, Mobilisations commerciales, Journal des flux, Synchronisation GitLab, « 04 - Livrables R&D », « 05 - Suivi des alternants » |
 
 **Pourquoi ?** Cloisonnement des CV et des données personnelles (P-04) :
 
@@ -38,7 +38,7 @@ D'après la matrice d'accès (spec § 7.3) et les permissions posées par les fl
 - à l'inverse, vos **commentaires d'entretien** et grilles d'évaluation ne sont visibles que de l'administration : la R&D n'a
   pas accès à la liste Entretiens (hormis les participants désignés, qui lisent l'entretien concerné, évaluation comprise) et reçoit seulement
   le statut (N-11, sans commentaire, H-28) ;
-- la bibliothèque **« 02 — Administration »** (contrats, conventions, pièces administratives, grilles d'entretien) vous est
+- la bibliothèque **« 02 - Administration »** (contrats, conventions, pièces administratives, grilles d'entretien) vous est
   réservée ; seul le sous-dossier `Alternants/ALT-…/Operationnel` est lisible par la R&D, pour ses besoins opérationnels ;
 - le travail de production R&D (livrables, comptes rendus, bilans) ne relève pas de votre rôle.
 
@@ -77,11 +77,11 @@ l'administration » (`CAND-T08`) et vous recevez **N-04**.
 
 1. Ouvrez la vue **« Résultats à saisir »** (entretiens planifiés dont la date est passée). Deux heures après l'heure prévue,
    **N-14** vous le rappelle.
-2. Sur l'entretien : posez le statut **« Réalisé »** et choisissez le **« Résultat »** : Favorable, Défavorable, Réservé —
+2. Sur l'entretien : posez le statut **« Réalisé »** et choisissez le **« Résultat »** : Favorable, Défavorable, Réservé -
    entretien complémentaire. Sans résultat, SharePoint refuse l'enregistrement (« Le résultat est obligatoire lorsque
    l'entretien est réalisé »).
 3. Complétez « Prochaine action », « Commentaire (restreint) » et « Grille d'évaluation » (lien vers le document déposé dans
-   « 02 — Administration », « Type de document » = Grille d'évaluation d'entretien, dans le dossier
+   « 02 - Administration », « Type de document » = Grille d'évaluation d'entretien, dans le dossier
    `Candidatures/CAND-…/` créé dès la transmission). Les participants désignés liront aussi l'entretien et son évaluation
    (H-28) : rédigez en conséquence.
 
@@ -118,17 +118,17 @@ Posez **« Formalités en cours »** (`CAND-T13`) sur une candidature « Retenue
 (décision humaine).
 
 Ce que fait le système (PA-04) : il génère la checklist « Formalités d'intégration » à partir des modèles de checklists, vérifie
-le dossier `02 — Administration/Candidatures/CAND-…/` (créé dès la transmission) et vous envoie **N-15** (liste des actions, responsables, échéances).
+le dossier `02 - Administration/Candidatures/CAND-…/` (créé dès la transmission) et vous envoie **N-15** (liste des actions, responsables, échéances).
 Chaque responsable obtient le droit de modifier son action.
 
 | Code | Action | Responsable | Échéance | Bloquante | Preuve attendue |
 | --- | --- | --- | --- | --- | --- |
 | FORM-01 | Confirmer la décision et la date de démarrage avec le candidat | Administration | J+3 | Oui | Courriel de confirmation enregistré dans le dossier administratif |
 | FORM-02 | Obtenir les informations de l'école (formation, calendrier, contact) | Administration | J+7 | Oui | Fiche école ou courriel de l'école |
-| FORM-03 | Établir le contrat ou la convention et la faire signer | Administration | J+14 | Oui | Document signé dans « 02 — Administration » |
-| FORM-04 | Collecter les pièces administratives requises | Administration | J+14 | Oui | Pièces déposées dans « 02 — Administration » |
+| FORM-03 | Établir le contrat ou la convention et la faire signer | Administration | J+14 | Oui | Document signé dans « 02 - Administration » |
+| FORM-04 | Collecter les pièces administratives requises | Administration | J+14 | Oui | Pièces déposées dans « 02 - Administration » |
 | FORM-05 | Confirmer le pôle, le référent pressenti et le sujet pressenti | Responsable d'analyse (R&D) | J+10 | Oui | Champs renseignés sur la candidature |
-| FORM-06 | Informer le référent pressenti de l'arrivée | Responsable d'analyse (R&D) | J+10 | Non | — |
+| FORM-06 | Informer le référent pressenti de l'arrivée | Responsable d'analyse (R&D) | J+10 | Non | - |
 
 Ce contenu est une proposition à valider par l'administration et la Direction R&D (H-23). Vous pouvez l'ajuster vous-même dans
 la liste **« Modèles de checklists »** (droit de modification), sans développement ; une modification vaut pour les checklists
@@ -139,19 +139,19 @@ générées ensuite.
 1. Liste **Actions d'intégration et checklists**, vue **« Mes actions »** (ou « Actions ouvertes », regroupée par contexte).
 2. Pour chaque action : passez le statut à « En cours » puis :
    - **« Terminée »** : pour une action **bloquante**, renseignez **« Preuve / lien »** (lien vers le document déposé dans
-     `02 — Administration/Candidatures/CAND-…/`) ;
+     `02 - Administration/Candidatures/CAND-…/`) ;
    - **« Non applicable »** : pour une action bloquante, renseignez obligatoirement « Commentaire » (justification) ;
    - « Bloquée » si vous êtes empêché.
-3. Déposez les pièces dans « 02 — Administration » (« Type de document » : Contrat, Convention, Pièce administrative…). La
+3. Déposez les pièces dans « 02 - Administration » (« Type de document » : Contrat, Convention, Pièce administrative…). La
    « Description » d'une action ne contient **aucune donnée sensible** : les pièces restent dans la bibliothèque. Ne déposez
-   jamais de pièce dans la bibliothèque « Documents » par défaut du site, lisible par tous les groupes (spec § 7.2).
+   jamais de pièce dans la bibliothèque « Documents » par défaut du site, lisible par tous les groupes (spec [7.2](../../spec.md#72-niveaux-dautorisation)).
 
 **Champs protégés** (`G_ACTION_FORMALITE`, P-09) : pour les formalités d'intégration, **seule l'administration** peut décocher
 « Bloquante pour l'étape » ou passer une action bloquante en « Non applicable » ; le passage à « Terminée » est possible par
 l'administration ou par le responsable désigné. Toute autre modification est rétablie et signalée (N-92).
 
 Rappels : **N-19** deux jours avant l'échéance (`Delai.RappelActionJours`) puis chaque jour en cas de retard (au-delà, l'action
-apparaît dans la synthèse du Comité R&D, § 7.7). Quand toutes les actions bloquantes sont terminées ou justifiées, **N-17**
+apparaît dans la synthèse du Comité R&D, [7.7](../../spec.md#77-circuit-descalade)). Quand toutes les actions bloquantes sont terminées ou justifiées, **N-17**
 vous invite à confirmer l'intégration. Aucun statut ne change automatiquement : la confirmation reste votre décision.
 
 ### 3.7 Confirmer l'intégration
@@ -161,7 +161,7 @@ vous invite à confirmer l'intégration. Aucun statut ne change automatiquement 
    - « École / établissement » et « Pôle pressenti » (et si possible « Référent pressenti », « Sujet pressenti »).
 2. Posez **« Intégrée »** (`CAND-T14`).
 
-**Pourquoi le passage à « Intégrée » peut être refusé** — double barrière (P-02) :
+**Pourquoi le passage à « Intégrée » peut être refusé**, double barrière (P-02) :
 
 | Barrière | Moment | Ce qui est vérifié | Ce que vous voyez |
 | --- | --- | --- | --- |
@@ -172,7 +172,7 @@ Cas le plus fréquent : une action bloquante terminée sans lien de preuve. Comp
 
 Ce que fait le système si tout est conforme (PA-04) : il crée la fiche **Alternants** (statut « À intégrer », dates, école,
 pôle, référent principal = référent pressenti), renseigne « Identifiant alternant » et « Date d'intégration » sur la
-candidature, crée les dossiers `05 — Suivi des alternants/ALT-…/` (et `_Evaluations`) et `02 — Administration/Alternants/ALT-…/`
+candidature, crée les dossiers `05 - Suivi des alternants/ALT-…/` (et `_Evaluations`) et `02 - Administration/Alternants/ALT-…/`
 (avec son sous-dossier `Operationnel` lisible par la R&D), donne au référent la lecture de la fiche, génère la checklist
 « Accueil » (création du compte, groupes, poste, présentation du cadrage, affectation), passe l'école à « Établissement
 d'accueil » si elle était « Prospect » ou « Contact établi » (simple constat, pas un partenariat, H-39) et envoie **N-16** à
@@ -193,13 +193,13 @@ la R&D, au référent pressenti et à vous. À la date de début, l'alternant pa
 
 **Échanges avec les écoles** : enregistrez chaque échange (« Objet de l'échange », « Établissement », « Date »,
 « Interlocuteur », « Type d'échange », « Résumé », « Prochaine action » et son échéance, « Document associé » rangé dans
-« 06 — Écoles et partenariats »). Le flux PA-10 met à jour « Dernière interaction » et la prochaine action de l'école ; **N-41**
+« 06 - Écoles et partenariats »). Le flux PA-10 met à jour « Dernière interaction » et la prochaine action de l'école ; **N-41**
 prévient le responsable HNCS à l'échéance.
 
 **Conventions et partenariats** :
 
 1. **Nouveau** (`CONV-T01`) : « Objet de la convention », « Établissement », « Type » (Convention de stage, Contrat
-   d'alternance — volet école, Convention de partenariat, Sponsoring, Autre), « Alternant concerné », « Début », « Fin »,
+   d'alternance, volet école, Convention de partenariat, Sponsoring, Autre), « Alternant concerné », « Début », « Fin »,
    « Responsable HNCS », « Renouvellement ».
 2. Faites avancer le statut : À préparer → En discussion → En validation → À signer (`CONV-T02`).
 3. Pour **« Signée / active »** (`CONV-T03`) :
@@ -271,7 +271,7 @@ historisée dans **« Historique des statuts »** (lecture pour vous), en plus d
 
 ## 6. Vos vues Power BI
 
-Rôle Power BI **Administration** : pages 2, 3 et 5 (audience de l'application, spec § 9.7). Les candidatures sont limitées à celles qui vous ont été
+Rôle Power BI **Administration** : pages 2, 3 et 5 (audience de l'application, spec [9.7](../../spec.md#97-pages-du-rapport)). Les candidatures sont limitées à celles qui vous ont été
 **transmises** ; les données de livrables, comptes rendus, mobilisations et GitLab sont masquées pour ce rôle.
 
 | Page | Usage pour vous |
@@ -331,7 +331,7 @@ décision.
 
 ### Comment prouver la signature d'une convention ?
 
-Déposez le document signé (dans « 06 — Écoles et partenariats » ou « 02 — Administration » selon le cas) et collez son lien
+Déposez le document signé (dans « 06 - Écoles et partenariats » ou « 02 - Administration » selon le cas) et collez son lien
 dans « Preuve de signature », avec la « Date de signature ».
 
 ### Un entretien est décalé d'une semaine : faut-il en créer un nouveau ?

@@ -1,4 +1,4 @@
-# Guide utilisateur — Équipe R&D
+# Guide utilisateur : Équipe R&D
 
 > Public : membres de l'équipe R&D (groupe SharePoint `HNCS-RD-EquipeRD`). La Direction R&D, souvent membre de ce groupe,
 > lit aussi le guide [Direction](direction.md). Règles communes (statuts refusés, champs protégés, validations,
@@ -6,7 +6,7 @@
 
 ## 1. Votre rôle dans le processus
 
-L'équipe R&D est la porte d'entrée et le chef d'orchestre du parcours (RACI § 7.6 : « R » sur l'enregistrement, l'analyse,
+L'équipe R&D est la porte d'entrée et le chef d'orchestre du parcours (RACI [7.6](../../spec.md#76-matrice-raci-et-implémentation) : « R » sur l'enregistrement, l'analyse,
 la présélection et l'affectation, sous la responsabilité de la Direction R&D) :
 
 - **Recrutement côté R&D** : vous enregistrez les candidatures reçues, qualifiez l'identité du candidat, les attribuez, les
@@ -17,31 +17,31 @@ la présélection et l'affectation, sous la responsabilité de la Direction R&D)
 - **Portefeuille** : vous proposez et suivez les sujets R&D (leur arbitrage revient à la Direction), les livrables, les
   comptes rendus, la fin et l'éventuelle prolongation des alternances.
 
-Groupe SharePoint : `HNCS-RD-EquipeRD` (rôle `RD` dans les transitions de la spec § 6).
+Groupe SharePoint : `HNCS-RD-EquipeRD` (rôle `RD` dans les transitions de la spec [6](../../spec.md#6-statuts-et-transitions-autorisées)).
 
 ## 2. Ce que vous voyez et ne voyez pas
 
-D'après la matrice d'accès (spec § 7.3) et les permissions posées par les flux (§ 7.4). « Modification » = niveau « HNCS -
+D'après la matrice d'accès (spec [7.3](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)). « Modification » = niveau « HNCS -
 Contribution sans suppression » : vous créez et modifiez, vous ne supprimez pas.
 
 | Accès | Listes et bibliothèques |
 | --- | --- |
-| Modification | Candidatures, « 01 — Recrutement » (CV), Offres, Écoles et établissements, Conventions et partenariats, Échanges avec les écoles, Alternants, Référents, Sujets R&D, Affectations, Livrables, Comptes rendus de suivi, Actions d'intégration et checklists, Bilans d'alternance, Communications R&D, Ressources techniques, Mobilisations commerciales, « 04 — Livrables R&D » |
-| Lecture seule | Pôles R&D, Registre des modèles R&D, « 03 — Modèles R&D », Modèles de checklists, Domaines cibles, Paramètres, Transitions de statuts, Historique des statuts, Synchronisation GitLab, « 05 — Suivi des alternants » (hors sous-dossiers `_Evaluations`), « 06 — Écoles et partenariats » |
-| Lecture, au cas par cas | Dans « 02 — Administration », le seul sous-dossier `Alternants/ALT-…/Operationnel` (« accès R&D limité aux besoins opérationnels ») ; dans « Entretiens », les entretiens dont vous êtes participant, évaluation comprise (H-28) |
-| Aucun accès | Liste Entretiens (en dehors de vos participations), reste de « 02 — Administration », Journal des flux, sous-dossiers d'évaluation `_Evaluations` |
+| Modification | Candidatures, « 01 - Recrutement » (CV), Offres, Écoles et établissements, Conventions et partenariats, Échanges avec les écoles, Alternants, Référents, Sujets R&D, Affectations, Livrables, Comptes rendus de suivi, Actions d'intégration et checklists, Bilans d'alternance, Communications R&D, Ressources techniques, Mobilisations commerciales, « 04 - Livrables R&D » |
+| Lecture seule | Pôles R&D, Registre des modèles R&D, « 03 - Modèles R&D », Modèles de checklists, Domaines cibles, Paramètres, Transitions de statuts, Historique des statuts, Synchronisation GitLab, « 05 - Suivi des alternants » (hors sous-dossiers `_Evaluations`), « 06 - Écoles et partenariats » |
+| Lecture, au cas par cas | Dans « 02 - Administration », le seul sous-dossier `Alternants/ALT-…/Operationnel` (« accès R&D limité aux besoins opérationnels ») ; dans « Entretiens », les entretiens dont vous êtes participant, évaluation comprise (H-28) |
+| Aucun accès | Liste Entretiens (en dehors de vos participations), reste de « 02 - Administration », Journal des flux, sous-dossiers d'évaluation `_Evaluations` |
 
 **Pourquoi ces limites ?** Les CV et les données personnelles sont cloisonnés (P-04) :
 
 - la liste **Entretiens** et les grilles d'évaluation restent à l'administration, sauf pour les participants désignés d'un
   entretien, qui le lisent (évaluation comprise) : vous voyez le statut de la candidature et
   recevez N-11 « Entretien réalisé », sans commentaire (H-28) ;
-- la bibliothèque **« 02 — Administration »** (contrats, pièces administratives) est réservée à l'administration ;
-- les **évaluations** d'un alternant (`05 — Suivi des alternants/ALT-…/_Evaluations`) ne sont visibles que des référents
+- la bibliothèque **« 02 - Administration »** (contrats, pièces administratives) est réservée à l'administration ;
+- les **évaluations** d'un alternant (`05 - Suivi des alternants/ALT-…/_Evaluations`) ne sont visibles que des référents
   concernés et de la Direction R&D ;
 - en sens inverse, l'administration ne voit une candidature et son CV **qu'à partir de sa transmission** (H-29).
 
-Les modèles R&D ne sont modifiables que par leur propriétaire et la Direction R&D (§ 7.4, PA-00F).
+Les modèles R&D ne sont modifiables que par leur propriétaire et la Direction R&D ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux), PA-00F).
 
 ## 3. Vos tâches pas à pas
 
@@ -49,7 +49,7 @@ Les modèles R&D ne sont modifiables que par leur propriétaire et la Direction 
 
 Il n'existe **aucune connexion directe** avec LinkedIn ou France Travail (P-06, H-04). Deux façons d'enregistrer :
 
-#### Option A — Saisie manuelle
+#### Option A : Saisie manuelle
 
 1. Ouvrez la liste **Candidatures** > **Nouveau**.
 2. Renseignez :
@@ -67,17 +67,17 @@ Il n'existe **aucune connexion directe** avec LinkedIn ou France Travail (P-06, 
 5. Enregistrez. Ne touchez pas aux champs remplis par les flux (« Début d'analyse », « Doublon potentiel », dates…).
 
 Ce que fait le système (PA-01a) : il attribue l'identifiant `CAND-AAAA-NNNN`, vérifie les doublons, crée le dossier sécurisé
-`01 — Recrutement/AAAA/CAND-…/` (accessible à la R&D et à la Direction R&D uniquement) et y fait pointer « CV (lien
+`01 - Recrutement/AAAA/CAND-…/` (accessible à la R&D et à la Direction R&D uniquement) et y fait pointer « CV (lien
 sécurisé) », historise la création (`CAND-T01`) et envoie **N-01** au responsable d'analyse (ou à toute l'équipe R&D). Si un
 responsable est renseigné et l'identité complète, la candidature passe d'elle-même à « À analyser » (`CAND-T02`) et le
 responsable reçoit **N-03**.
 
 **Dernière étape** : ouvrez le lien « CV (lien sécurisé) » et déposez-y le CV et les pièces, avec « Type de document » = CV
-(ou Lettre de motivation, Portfolio…) et « Candidature » = l'identifiant. Ne rangez jamais un CV ailleurs — en particulier
-pas dans la bibliothèque « Documents » par défaut du site, lisible par tous (spec § 7.2) — et ne l'envoyez jamais en pièce
+(ou Lettre de motivation, Portfolio…) et « Candidature » = l'identifiant. Ne rangez jamais un CV ailleurs, en particulier
+pas dans la bibliothèque « Documents » par défaut du site, lisible par tous (spec [7.2](../../spec.md#72-niveaux-dautorisation)), et ne l'envoyez jamais en pièce
 jointe.
 
-#### Option B — Boîte mail R&D
+#### Option B : Boîte mail R&D
 
 1. Faites arriver le courriel dans le dossier **`Candidatures`** de la boîte partagée R&D : par une règle Outlook (les règles
    sont définies par la R&D) ou en y déplaçant le message. Le formulaire du site HNCS y envoie un courriel balisé
@@ -88,7 +88,7 @@ jointe.
 3. Identité du candidat :
    - courriel envoyé par le candidat : nom = nom affiché de l'expéditeur, e-mail = son adresse ;
    - **courriel de plateforme (LinkedIn, France Travail)** : l'expéditeur n'est pas le candidat. La fiche est créée avec un nom
-     « À qualifier – … » et un e-mail vide, et N-01 vous demande de **qualifier l'identité**.
+     « À qualifier : … » et un e-mail vide, et N-01 vous demande de **qualifier l'identité**.
 4. Les pièces jointes `.pdf`, `.doc`, `.docx`, `.odt` sont enregistrées dans le dossier de la candidature (type CV par
    défaut). Une pièce d'un autre format n'est pas enregistrée (la candidature est créée quand même). Un même courriel traité
    deux fois ne crée pas de doublon.
@@ -218,7 +218,7 @@ poser « En cours » (`SUJ-T04`, depuis « Priorisé » ou « Bloqué »), « Bl
 « Terminé » (`SUJ-T08`).
 
 Projet GitLab : à la demande du référent du sujet, un membre de l'équipe R&D propriétaire du groupe GitLab `hncs-rd` lance le
-script de création de projet (spec § 10.3), avec son jeton personnel (jamais stocké) ; il reporte l'URL et l'identifiant dans « Projet GitLab » et « ID projet GitLab ». Nom
+script de création de projet (spec [10.3](../../spec.md#103-composants-livrés)), avec son jeton personnel (jamais stocké) ; il reporte l'URL et l'identifiant dans « Projet GitLab » et « ID projet GitLab ». Nom
 du projet : `suj-aaaa-nnnn-<slug>` dans le groupe `hncs-rd`.
 
 ### 3.11 Créer et activer une affectation
@@ -232,15 +232,15 @@ du projet : `suj-aaaa-nnnn-<slug>` dans le groupe `hncs-rd`.
    - « Cadence des comptes rendus » : laissez « Selon paramètre global » (Quinzaine, H-08) ou choisissez Hebdomadaire,
      Mensuelle, Par jalon ;
    - laissez « Affectation remplacée » vide pour une première affectation.
-3. Enregistrez : statut « À préparer » (`AFF-T01`), libellé automatique `ALT-… – SUJ-…`.
+3. Enregistrez : statut « À préparer » (`AFF-T01`), libellé automatique `ALT-…, SUJ-…`.
 4. Posez **« Active »** (`AFF-T02`). Contrôle `G_AFFECTATION_COMPLETE` : alternant, sujet, référent, date de début
    renseignés ; alternant « À intégrer » ou « Actif » avec « Compte Microsoft 365 » renseigné ; référent « Actif » dans la
    liste Référents.
 
 Ce que fait le système (PA-05) : il **verrouille** l'alternant, le sujet, le référent et la date de début ; crée le dossier
-`04 — Livrables R&D/SUJ-…/` et y donne accès à l'alternant ; lui donne la lecture sur l'affectation ; donne au référent l'accès
+`04 - Livrables R&D/SUJ-…/` et y donne accès à l'alternant ; lui donne la lecture sur l'affectation ; donne au référent l'accès
 au dossier de suivi et à la fiche ; met à jour le **« Référent principal »** de la fiche alternant (dérivé de l'affectation
-active la plus récente — ne le modifiez pas à la main, la modification serait annulée avec N-91) ; propose les livrables « À
+active la plus récente, ne le modifiez pas à la main, la modification serait annulée avec N-91) ; propose les livrables « À
 produire » issus des modèles **approuvés** du registre (propriétaire = compte de l'alternant, réviseur = référent) ; crée le premier compte rendu « Attendu » (à partir du lot 3, sauf
 cadence « Par jalon ») ; envoie **N-20** à l'alternant et au référent.
 
@@ -279,7 +279,7 @@ Autres changements d'état d'une affectation :
 | Statut | Qui | Condition / effet |
 | --- | --- | --- |
 | « À risque » / « Bloquée » (`AFF-T03`) | Vous ou le référent | N-21 à la Direction R&D |
-| Retour à « Active » (`AFF-T04`) | Vous ou le référent | — |
+| Retour à « Active » (`AFF-T04`) | Vous ou le référent | - |
 | « Terminée » (`AFF-T05`) | Vous | « Date de fin » obligatoire (`G_DATE_FIN`) ; N-22 avec les livrables encore ouverts |
 | « Clôturée » (`AFF-T06`) | Vous | Aucun livrable ouvert (`G_LIVRABLES_CLOS`) |
 | « À préparer » → « Clôturée » (`AFF-T07`) | Vous | Affectation abandonnée avant activation |
@@ -328,8 +328,8 @@ Le **retrait des accès** n'est jamais automatique : c'est l'action CLO-06 de la
 
 ### 3.16 Communications et mobilisations
 
-- **Communications R&D** : créez l'élément (« Titre de la communication », « Canal », « Auteur » — un alternant peut être
-  auteur —, « Communication externe », « Livrable source », « Sujet », « Date prévue », « Approbateur proposé »,
+- **Communications R&D** : créez l'élément (« Titre de la communication », « Canal », « Auteur », un alternant peut être
+  auteur -, « Communication externe », « Livrable source », « Sujet », « Date prévue », « Approbateur proposé »,
   « Autorisations des tiers »). Parcours : Idée / À préparer → En rédaction → **En revue** (N-44 à l'approbateur proposé s'il
   est membre de la Direction R&D ou de la Direction, sinon à la Direction R&D) → **Validée** (Direction R&D ou Direction
   Générale uniquement, H-11) → Programmée (« Date prévue » obligatoire) → Publiée (« Date de publication » et, pour une
@@ -393,7 +393,7 @@ origine « Humain », résultat), en plus du versioning de l'élément. Vous con
 
 ## 6. Vos vues Power BI
 
-Rôle Power BI **PilotageRD** (Direction R&D et équipe R&D) : aucune restriction de lignes, accès aux 8 pages (spec § 9.7).
+Rôle Power BI **PilotageRD** (Direction R&D et équipe R&D) : aucune restriction de lignes, accès aux 8 pages (spec [9.7](../../spec.md#97-pages-du-rapport)).
 
 | Page | Usage pour vous |
 | --- | --- |
@@ -426,7 +426,7 @@ quotidienne à 06:00.
 Non. Aucune API n'est utilisée (P-06, H-04). Saisissez la candidature (3.1, option A) avec le bon « Canal d'origine », ou
 faites arriver le courriel dans le dossier `Candidatures` de la boîte R&D (option B) puis qualifiez l'identité.
 
-### Pourquoi une candidature reçue de LinkedIn s'appelle-t-elle « À qualifier – … » ?
+### Pourquoi une candidature reçue de LinkedIn s'appelle-t-elle « À qualifier : … » ?
 
 Le courriel vient de la plateforme, pas du candidat : le système ne devine pas son identité. Lisez le message, renseignez le
 nom et l'e-mail du candidat ; l'analyse est bloquée tant que ce n'est pas fait (`G_IDENTITE`).

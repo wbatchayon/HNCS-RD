@@ -320,7 +320,7 @@ table Mesures
 		displayFolder: Qualité
 		lineageTag: 3a16227b-9a82-5b4c-b241-399670dbc29c
 
-	measure 'Transitions refusées' = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = "Refusée — annulée" )
+	measure 'Transitions refusées' = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = "Refusée et annulée" )
 		formatString: #,##0
 		displayFolder: Qualité
 		lineageTag: e02298d6-45ea-5356-8327-756b2fddb9d9

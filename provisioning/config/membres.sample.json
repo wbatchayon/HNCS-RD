@@ -2,7 +2,7 @@
   "G_PROP": ["admin@contoso.onmicrosoft.com", "svc-hncs-rd@contoso.onmicrosoft.com"],
   "G_DRD": ["direction.rd@contoso.onmicrosoft.com"],
   "G_RD": ["direction.rd@contoso.onmicrosoft.com", "analyste.rd@contoso.onmicrosoft.com"],
-  "G_ADM": ["administration@contoso.onmicrosoft.com", "karine.admin@contoso.onmicrosoft.com"],
+  "G_ADM": ["administration@contoso.onmicrosoft.com", "carine.admin@contoso.onmicrosoft.com"],
   "G_REF": ["referent.p1@contoso.onmicrosoft.com", "referent.p2@contoso.onmicrosoft.com"],
   "G_ALT": ["alternant.un@contoso.onmicrosoft.com"],
   "G_DIR": ["direction@contoso.onmicrosoft.com"],

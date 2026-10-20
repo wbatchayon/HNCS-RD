@@ -1,6 +1,6 @@
 ## Anomalie
 
-**Sujet** : {{ID_SUJET}} — {{TITRE_SUJET}}
+**Sujet** : {{ID_SUJET}}, {{TITRE_SUJET}}
 **Livrable concerné** : LIV-aaaa-nnnn <!-- identifiant IdHNCS du livrable impacté, s'il y en a un -->
 **Environnement** : <!-- ex. démonstrateur Proxmox, poste local ; nom de la ressource dans RessourcesTechniques, sans identifiant -->
 

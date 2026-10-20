@@ -9,7 +9,7 @@
       2. crée dans GitLab, par l'API REST, le projet suj-aaaa-nnnn-<slug> dans le groupe hncs-rd (ou dans
          le sous-groupe de pôle indiqué), description commençant par l'IdHNCS du sujet ;
       3. crée les labels rd::sujet::SUJ-…, rd::livrable::LIV-…, rd::pole::P1…P4, rd::type::poc/plan/doc ;
-      4. crée un jalon par livrable : titre « LIV-aaaa-nnnn — <titre> », échéance = Echeance du livrable ;
+      4. crée un jalon par livrable : titre « LIV-aaaa-nnnn : <titre> », échéance = Echeance du livrable ;
       5. (option -DeposerModeles) dépose le README et les modèles d'issues / de MR (gitlab/templates) ;
       6. reporte GitlabProjetUrl et GitlabProjetId sur le sujet (seule écriture SharePoint du script).
 
@@ -88,7 +88,7 @@ param(
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-$script:Tiret = [string][char]0x2014          # « — » des titres de jalons (spec § 10.2)
+$script:Tiret = [string][char]0x2014          # «, » des titres de jalons (spec § 10.2)
 $script:RegexLivrable = 'LIV-\d{4}-\d{4,}'
 $script:CouleursLabels = @{ sujet = '#1F6FEB'; livrable = '#D29922'; pole = '#8957E5'; type = '#2DA44E' }
 

@@ -1,4 +1,4 @@
-# Guide utilisateur — Référent
+# Guide utilisateur : Référent
 
 > Public : experts référents des pôles (groupe SharePoint `HNCS-RD-Referents`). Règles communes (statuts refusés, champs
 > protégés, validations, notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides). Référence :
@@ -6,7 +6,7 @@
 
 ## 1. Votre rôle dans le processus
 
-Le référent encadre un ou plusieurs alternants sur un sujet R&D. Au RACI (§ 7.6), vous êtes « A/R » de la production et de la
+Le référent encadre un ou plusieurs alternants sur un sujet R&D. Au RACI ([7.6](../../spec.md#76-matrice-raci-et-implémentation)), vous êtes « A/R » de la production et de la
 validation des livrables. Concrètement :
 
 - vous êtes désigné sur une **affectation** (alternant + sujet + référent) par l'équipe R&D ;
@@ -24,15 +24,15 @@ Groupe SharePoint : `HNCS-RD-Referents` (rôle `REFERENT`). La validation d'un l
 
 ## 2. Ce que vous voyez et ne voyez pas
 
-D'après la matrice d'accès (spec § 7.3) et les permissions posées par les flux (§ 7.4).
+D'après la matrice d'accès (spec [7.3](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
 
 | Accès | Listes et bibliothèques |
 | --- | --- |
-| Modification | Sujets R&D, Affectations, Livrables (hors champs protégés), Communications R&D, Ressources techniques, « 04 — Livrables R&D » |
-| Modification, élément par élément | Comptes rendus dont vous êtes valideur ; bilans d'alternance dont vous êtes le référent ; actions de checklist dont vous êtes responsable ; modèles R&D dont vous êtes propriétaire (registre et fichiers) ; dossiers `05 — Suivi des alternants/ALT-…/` des alternants que vous encadrez, **y compris** leur sous-dossier `_Evaluations` |
+| Modification | Sujets R&D, Affectations, Livrables (hors champs protégés), Communications R&D, Ressources techniques, « 04 - Livrables R&D » |
+| Modification, élément par élément | Comptes rendus dont vous êtes valideur ; bilans d'alternance dont vous êtes le référent ; actions de checklist dont vous êtes responsable ; modèles R&D dont vous êtes propriétaire (registre et fichiers) ; dossiers `05 - Suivi des alternants/ALT-…/` des alternants que vous encadrez, **y compris** leur sous-dossier `_Evaluations` |
 | Lecture, élément par élément | Fiches « Alternants » des alternants dont vous êtes référent principal ou référent d'une affectation |
-| Lecture seule | Offres, Écoles et établissements, Pôles R&D, Référents, Registre des modèles R&D, « 03 — Modèles R&D », Actions d'intégration et checklists, Modèles de checklists, Domaines cibles, Mobilisations commerciales, Transitions de statuts, Synchronisation GitLab |
-| Aucun accès | Candidatures, « 01 — Recrutement » (CV), Entretiens, « 02 — Administration », Conventions et partenariats, Échanges avec les écoles, Paramètres, Historique des statuts, Journal des flux, « 06 — Écoles et partenariats » |
+| Lecture seule | Offres, Écoles et établissements, Pôles R&D, Référents, Registre des modèles R&D, « 03 - Modèles R&D », Actions d'intégration et checklists, Modèles de checklists, Domaines cibles, Mobilisations commerciales, Transitions de statuts, Synchronisation GitLab |
+| Aucun accès | Candidatures, « 01 - Recrutement » (CV), Entretiens, « 02 - Administration », Conventions et partenariats, Échanges avec les écoles, Paramètres, Historique des statuts, Journal des flux, « 06 - Écoles et partenariats » |
 
 **Pourquoi ?** Les CV, les avis d'analyse et les évaluations d'entretien restent cloisonnés au recrutement (P-04) : vous
 découvrez l'alternant à son intégration (N-16), pas pendant la sélection. Le sous-dossier `_Evaluations` du dossier de suivi
@@ -100,11 +100,11 @@ cochées sur l'élément :
 
 | Case | Critère |
 | --- | --- |
-| « DoD 1 — Fonctionnel et démontrable (POC) ou applicable (plan) » | Le démonstrateur fonctionne et peut être présenté ; pour un plan, il est applicable (H-36) |
-| « DoD 2 — Fiche méthodologie rangée » | Fiche méthodologie rangée dans « 04 — Livrables R&D », dossier du sujet |
-| « DoD 3 — Restitution présentée » | Restitution faite au référent ou au Comité R&D |
-| « DoD 4 — Support de communication prêt » | Support réutilisable pour la valorisation |
-| « DoD 5 — Enseignements et limites documentés » | Retour d'expérience, limites, suites possibles |
+| « DoD 1 : Fonctionnel et démontrable (POC) ou applicable (plan) » | Le démonstrateur fonctionne et peut être présenté ; pour un plan, il est applicable (H-36) |
+| « DoD 2 : Fiche méthodologie rangée » | Fiche méthodologie rangée dans « 04 - Livrables R&D », dossier du sujet |
+| « DoD 3 : Restitution présentée » | Restitution faite au référent ou au Comité R&D |
+| « DoD 4 : Support de communication prêt » | Support réutilisable pour la valorisation |
+| « DoD 5 : Enseignements et limites documentés » | Retour d'expérience, limites, suites possibles |
 
 Ces cases sont des **champs protégés** (P-09) : seuls vous (réviseur légitime), l'équipe R&D et la Direction R&D pouvez les
 cocher ; une case cochée par l'alternant est décochée et signalée (N-92). Si une case manque, SharePoint refuse l'archivage
@@ -118,7 +118,7 @@ formalisés ». Pour les autres types de livrables, appuyez-vous sur « Critère
 Juste après votre validation, le système vérifie le contrôle `G_CAPITALISATION` :
 
 - « Document (SharePoint) » renseigné ;
-- si le document est dans « 04 — Livrables R&D » : « Sujet » et « Type de document » renseignés sur le document ;
+- si le document est dans « 04 - Livrables R&D » : « Sujet » et « Type de document » renseignés sur le document ;
 - Definition of Done complète pour un POC ou un plan de stratégie.
 
 **Si tout est conforme** : le livrable passe seul en **« Archivé / clôturé »** (`LIV-T08`), le document devient « Référence »
@@ -151,7 +151,7 @@ l'équipe R&D et la Direction R&D peuvent les changer, P-09). Un compte rendu no
 
 1. Liste **Affectations**, ouvrez l'affectation concernée.
 2. Posez **« À risque »** ou **« Bloquée »** (`AFF-T03`). La Direction R&D reçoit **N-21** ; l'affectation apparaît ensuite
-   dans la synthèse du Comité R&D, puis au Point Direction si besoin (escalade § 7.7).
+   dans la synthèse du Comité R&D, puis au Point Direction si besoin (escalade [7.7](../../spec.md#77-circuit-descalade)).
 3. Quand la situation est rétablie, reposez **« Active »** (`AFF-T04`).
 
 Seuls l'équipe R&D et le référent de l'affectation peuvent poser ces statuts.
@@ -163,7 +163,7 @@ Seuls l'équipe R&D et le référent de l'affectation peuvent poser ces statuts.
   validation ». Le « Réviseur » est par défaut le référent de l'affectation ; c'est un champ protégé : seul vous-même ou un membre de la Direction R&D pouvez être désigné, et seules l'équipe R&D et la
   Direction R&D peuvent le changer).
 - **Projet GitLab** : demandez sa création à l'équipe R&D ; un de ses membres, propriétaire du groupe `hncs-rd`, lance le
-  script de création à votre demande (§ 10.3).
+  script de création à votre demande ([10.3](../../spec.md#103-composants-livrés)).
 - **Échéance** : c'est un champ protégé ; en tant que réviseur légitime, vous pouvez la déplacer (comme l'équipe R&D et la
   Direction R&D), pas l'alternant ; « Échéance initiale » garde la valeur d'origine. S'il existe un jalon GitLab
   `LIV-…`, alignez-le **après** la modification SharePoint ; l'outillage ne modifie jamais un jalon, il signale l'écart.
@@ -178,10 +178,10 @@ référent du sujet, vous recevez **N-47** avec la décision et son motif.
 ### 3.9 Suivre l'alternant
 
 - **Fiche alternant** (lecture) : dates, école, pôle, référent principal.
-- **Dossier de suivi** `05 — Suivi des alternants/ALT-…/` : plan de travail, consignes, bilans de mission (partagés avec
+- **Dossier de suivi** `05 - Suivi des alternants/ALT-…/` : plan de travail, consignes, bilans de mission (partagés avec
   l'alternant). Rangez les **évaluations confidentielles** dans `_Evaluations` (« Type de document » = Évaluation
   (confidentielle)) : l'alternant n'y a pas accès. Ne déposez aucun document métier dans la bibliothèque « Documents » par
-  défaut du site ni dans les fichiers de l'équipe Teams : ils ne sont pas protégés par les droits du système (spec § 7.2).
+  défaut du site ni dans les fichiers de l'équipe Teams : ils ne sont pas protégés par les droits du système (spec [7.2](../../spec.md#72-niveaux-dautorisation)).
 - **Livrables** : vues « Livrables en cours », « En retard ». En cas de retard, vous recevez **N-24** avec l'alternant.
 
 ### 3.10 Fin d'alternance, bilan et recommandation
@@ -192,8 +192,8 @@ référent du sujet, vous recevez **N-47** avec la décision et son motif.
    | Code | Action | Bloquante | Preuve attendue |
    | --- | --- | --- | --- |
    | CLO-01 | Vérifier la clôture ou la suspension de tous les livrables | Oui | Aucun livrable ouvert |
-   | CLO-02 | Capitaliser la documentation dans « 04 — Livrables R&D » | Oui | Versions de référence présentes |
-   | CLO-03 | Organiser le transfert de connaissances | Non | — |
+   | CLO-02 | Capitaliser la documentation dans « 04 - Livrables R&D » | Oui | Versions de référence présentes |
+   | CLO-03 | Organiser le transfert de connaissances | Non | - |
    | CLO-05 | Réaliser le bilan d'alternance | Oui | Bilan « Réalisé » |
 
 3. **Bilan** : liste **Bilans d'alternance**, ouvrez le bilan « À réaliser » créé par le système (alternant, école, référent
@@ -279,7 +279,7 @@ résultat) et chaque élément est versionné.
 Rôle Power BI **Referent** : les données sont **limitées aux affectations et aux alternants que vous encadrez** ; aucune donnée
 de recrutement (candidatures, entretiens) n'est visible. Vous voyez en revanche les **actions d'intégration et de clôture de vos
 alternants** (page 7, actions en retard). Pages de votre audience dans l'application
-(spec § 9.7) :
+(spec [9.7](../../spec.md#97-pages-du-rapport)) :
 
 | Page | Usage pour vous |
 | --- | --- |

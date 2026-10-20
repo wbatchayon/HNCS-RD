@@ -1,7 +1,7 @@
 ## Merge request R&D
 
-**Sujet** : {{ID_SUJET}} — {{TITRE_SUJET}}
-**Livrable** : LIV-aaaa-nnnn <!-- obligatoire : identifiant IdHNCS du livrable (spec § 10.2) -->
+**Sujet** : {{ID_SUJET}}, {{TITRE_SUJET}}
+**Livrable** : LIV-aaaa-nnnn <!-- obligatoire : identifiant IdHNCS du livrable (spec section 10.2) -->
 **Issues** : Closes #… <!-- ou « Relates to #… » -->
 
 ### Résumé des changements

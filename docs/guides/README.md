@@ -1,4 +1,4 @@
-# Guides utilisateurs — Système de suivi R&D HNCS
+# Guides utilisateurs : Système de suivi R&D HNCS
 
 Ces guides expliquent, rôle par rôle, comment utiliser le système de suivi R&D de HNCS Groupe :
 
@@ -19,7 +19,7 @@ Ces guides expliquent, rôle par rôle, comment utiliser le système de suivi R&
 | Vous êtes… | Groupe SharePoint | Guide |
 | --- | --- | --- |
 | Membre de l'équipe R&D (analyse des candidatures, affectations, portefeuille) | `HNCS-RD-EquipeRD` | [Équipe R&D](equipe-rd.md) |
-| Membre de l'administration (par exemple Karine) | `HNCS-RD-Administration` | [Administration](administration.md) |
+| Membre de l'administration (par exemple Carine) | `HNCS-RD-Administration` | [Administration](administration.md) |
 | Expert référent d'un pôle (encadrement, revue des livrables) | `HNCS-RD-Referents` | [Référent](referent.md) |
 | Alternant ou stagiaire | `HNCS-RD-Alternants` | [Alternant](alternant.md) |
 | Direction R&D | `HNCS-RD-DirectionRD` (souvent aussi `HNCS-RD-EquipeRD`) | [Direction](direction.md), partie « Direction R&D » |
@@ -27,8 +27,8 @@ Ces guides expliquent, rôle par rôle, comment utiliser le système de suivi R&
 | Responsable de la relation écoles (pôle 4) | `HNCS-RD-RelationEcoles` | Pas de guide dédié dans cette version : les sections « Écoles, conventions » du guide [Administration](administration.md) s'appliquent (mêmes droits sur les écoles, conventions et échanges) ; rôle Power BI `RelationEcoles` (pages 3 et 5) |
 | Administrateur de la plateforme / IT, support | `HNCS-RD-Proprietaires` | Documentation d'exploitation (`docs/exploitation.md`) |
 
-Une même personne peut appartenir à plusieurs groupes (spec § 7.1) : elle cumule alors les droits et lit plusieurs guides.
-En revanche, dans Power BI, une personne ne relève que d'**un seul** rôle (§ 9.6).
+Une même personne peut appartenir à plusieurs groupes (spec [7.1](../../spec.md#71-groupes-sharepoint)) : elle cumule alors les droits et lit plusieurs guides.
+En revanche, dans Power BI, une personne ne relève que d'**un seul** rôle ([9.6](../../spec.md#96-sécurité-du-modèle-rls--ols)).
 
 ## Le parcours en un coup d'œil
 
@@ -49,21 +49,21 @@ flowchart LR
 
 ## Qui fait quoi
 
-### Matrice RACI (spec § 7.6)
+### Matrice RACI (spec [7.6](../../spec.md#76-matrice-raci-et-implémentation))
 
 R = réalise ; A = responsable final / approbateur ; C = consulté ; I = informé. Matrice indicative reprise du cadrage (§ 9.2).
 
 | Activité | Dir. Générale | Dir. R&D | Équipe R&D | Admin. | Référent | Alternant | IT / Support | Où le système la matérialise |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Valider la cible et le budget | A | R | C | C | C | I | C | Lot 0, hypothèses § 13 (hors outil) |
-| Enregistrer et analyser les candidatures | I | A | R | C | C | — | C | CAND-T01 à T03, PA-01, PA-02 |
-| Présélectionner et transférer le dossier | I | A | R | C | C | — | I | CAND-T04, T05, T06 ; PA-02 ; N-05 |
-| Planifier les entretiens et saisir l'issue | A/C | C | C | R | C | — | I | Liste Entretiens ; CAND-T07 à T10 ; PA-03 |
-| Valider la sélection et les formalités | A* | C | C | R | C | — | C | CAND-T11 à T14, T17 ; `G_INTEGRATION` ; PA-04 |
+| Valider la cible et le budget | A | R | C | C | C | I | C | Lot 0, hypothèses [13](../../spec.md#13-hypothèses-et-décisions-à-confirmer) (hors outil) |
+| Enregistrer et analyser les candidatures | I | A | R | C | C | - | C | CAND-T01 à T03, PA-01, PA-02 |
+| Présélectionner et transférer le dossier | I | A | R | C | C | - | I | CAND-T04, T05, T06 ; PA-02 ; N-05 |
+| Planifier les entretiens et saisir l'issue | A/C | C | C | R | C | - | I | Liste Entretiens ; CAND-T07 à T10 ; PA-03 |
+| Valider la sélection et les formalités | A* | C | C | R | C | - | C | CAND-T11 à T14, T17 ; `G_INTEGRATION` ; PA-04 |
 | Suivre école et convention | A/C | A | C | R/C | I | I | I | Écoles, conventions, échanges ; PA-10 |
 | Affecter alternant, référent et sujet | I | A | R | C | C | I | I | AFF-T02 ; PA-05 |
-| Produire et valider un livrable | I | C | C | — | A/R | R | I | LIV-T01 à T10 ; `G_VALIDEUR_LEGITIME` ; PA-07 |
-| Valider une communication externe | A* | A/R | C | C | C | I | — | COM-T05 ; PA-12 |
+| Produire et valider un livrable | I | C | C | - | A/R | R | I | LIV-T01 à T10 ; `G_VALIDEUR_LEGITIME` ; PA-07 |
+| Valider une communication externe | A* | A/R | C | C | C | I | - | COM-T05 ; PA-12 |
 | Gérer les droits et maintenir la plateforme | I | C | I | C | I | I | A/R | Provisioning, supervision PA-00E |
 | Publier le reporting de gouvernance | I | A/R | C | C | C | I | C | PA-11 (N-42 ; N-43 relayée par la Direction R&D) ; Power BI |
 
@@ -71,7 +71,7 @@ R = réalise ; A = responsable final / approbateur ; C = consulté ; I = inform�
 
 ### Étape par étape
 
-« Agit / décide » désigne la personne qui change le statut ; le système ne fait qu'exécuter les conséquences (§ 6, § 8.4).
+« Agit / décide » désigne la personne qui change le statut ; le système ne fait qu'exécuter les conséquences ([6](../../spec.md#6-statuts-et-transitions-autorisées), [8.4](../../spec.md#84-contrats-détaillés)).
 
 | Étape | Agit / décide | Ce que fait le système | Qui est informé |
 | --- | --- | --- | --- |
@@ -92,7 +92,7 @@ R = réalise ; A = responsable final / approbateur ; C = consulté ; I = inform�
 | Rédiger et remettre un compte rendu | Alternant | PA-08b : crée les comptes rendus attendus, relance, constate « Non remis » | N-30, N-31, N-32, N-33 |
 | **Valider** un compte rendu ou demander un complément | Référent de l'affectation (valideur) | PA-08 : date de validation | N-34 |
 | Signaler une affectation « À risque » / « Bloquée » | Référent ou équipe R&D | PA-05 : escalade | N-21 : Direction R&D |
-| Prolonger une alternance | Équipe R&D ou administration | PA-04 : contrôle `G_DATE_FIN_REPORTEE` | — |
+| Prolonger une alternance | Équipe R&D ou administration | PA-04 : contrôle `G_DATE_FIN_REPORTEE` | - |
 | Enregistrer la **fin effective** d'une alternance | Équipe R&D ou administration | PA-09 : termine les affectations, checklist de clôture, bilan | N-35, N-37, N-22 |
 | Bilan d'alternance et **recommandation** de partenariat | Référent | PA-09 : action d'évaluation PART-01, école « Partenariat à évaluer » si recommandée | N-38 |
 | **Décision de partenariat ou de sponsoring** | Direction R&D ou Direction Générale | PA-10 : trace le décideur et la date, rétablit toute modification non autorisée | N-39 |
@@ -102,7 +102,7 @@ R = réalise ; A = responsable final / approbateur ; C = consulté ; I = inform�
 | Rouvrir une candidature clôturée ou non retenue | Direction R&D uniquement | PA-02 : retour à « À analyser » | N-03 |
 | Gouvernance (Comité R&D, Point Direction, revue trimestrielle) | Direction R&D (prépare et relaie), Direction Générale ; le Comité R&D réunit Direction R&D, équipe R&D et référents (H-53) | PA-11 : synthèses automatiques | N-42, N-43 |
 
-### Circuit d'escalade (spec § 7.7)
+### Circuit d'escalade (spec [7.7](../../spec.md#77-circuit-descalade))
 
 | Situation | Niveau 1 | Niveau 2 | Niveau 3 |
 | --- | --- | --- | --- |
@@ -111,13 +111,13 @@ R = réalise ; A = responsable final / approbateur ; C = consulté ; I = inform�
 | Blocage signalé dans un compte rendu | Référent (N-32) | Direction R&D (N-33) | Point Direction si arbitrage requis (N-43) |
 | Affectation « À risque » / « Bloquée » | Direction R&D (N-21) | Comité R&D (N-42) | Point Direction (N-43) |
 | Candidature sans traitement | Responsable d'analyse (N-09) | Équipe R&D (N-09 sans responsable) | Comité R&D (compteurs N-42) |
-| Action de checklist en retard | Responsable (N-19) | Comité R&D (N-42) | — |
-| Erreur de flux | Support (N-99) | Support et propriétaires (N-98 quotidien) | — |
+| Action de checklist en retard | Responsable (N-19) | Comité R&D (N-42) | - |
+| Erreur de flux | Support (N-99) | Support et propriétaires (N-98 quotidien) | - |
 
 ### Les décisions humaines (jamais automatisées)
 
 Principe P-01 : aucun flux ne prend ces décisions. Les flux notifient, tracent et n'exécutent que les conséquences d'une
-décision enregistrée par une personne habilitée (spec § 6.1, tableau `DECISIONS_HUMAINES`).
+décision enregistrée par une personne habilitée (spec [6.1](../../spec.md#61-règles-générales), tableau `DECISIONS_HUMAINES`).
 
 | Décision | Objet et statut | Qui décide |
 | --- | --- | --- |
@@ -145,7 +145,7 @@ décision enregistrée par une personne habilitée (spec § 6.1, tableau `DECISI
 Chaque élément reçoit un identifiant métier stable (colonne `IdHNCS`) au format `PRÉFIXE-AAAA-NNNN` : `CAND-2026-0042`
 (candidature), `ALT-…` (alternant), `SUJ-…` (sujet), `AFF-…` (affectation), `LIV-…` (livrable), `CR-…` (compte rendu),
 `ACT-…` (action), `CONV-…` (convention), `COM-…` (communication). Les dossiers documentaires sont nommés par cet identifiant,
-jamais par le nom d'une personne. Les colonnes de recherche affichent l'identifiant de la cible (spec § 2.2).
+jamais par le nom d'une personne. Les colonnes de recherche affichent l'identifiant de la cible (spec [2.2](../../spec.md#22-conventions-de-nommage)).
 
 ### Changer un statut, c'est agir
 
@@ -158,7 +158,7 @@ après** l'enregistrement (SharePoint n'empêche pas la saisie, H-17) :
   « Changement de statut refusé » (statut demandé, motif du refus, marche à suivre). Vos autres saisies sont conservées :
   seul le statut est rétabli. Actualisez la page pour voir le statut réel ;
 - si c'est une **création** qui est refusée (par exemple un rôle non habilité à créer ce type d'élément), l'élément est placé
-  dans la **corbeille du site** (récupérable pendant 93 jours) et vous recevez N-90 (§ 6.1-3 bis).
+  dans la **corbeille du site** (récupérable pendant 93 jours) et vous recevez N-90 ([6.1-3](../../spec.md#61-règles-générales) bis).
 
 ### Les champs protégés (P-09)
 
@@ -194,16 +194,16 @@ chaque nouveau commentaire s'ajoute aux précédents, qui restent visibles.
 - Expéditeur : la boîte partagée R&D ; objet `[HNCS-R&D][N-xx] …` ; doublées d'un message Teams pour les destinataires
   nominatifs lorsque le paramètre `Fonction.NotificationsTeams` vaut Oui (valeur initiale).
 - Elles contiennent toujours un **lien** vers l'élément SharePoint. **Jamais** de CV ni de document confidentiel en pièce
-  jointe, ni de recopie d'un avis ou d'un commentaire d'évaluation : l'accès passe par les droits SharePoint (spec § 7.5).
+  jointe, ni de recopie d'un avis ou d'un commentaire d'évaluation : l'accès passe par les droits SharePoint (spec [7.5](../../spec.md#75-sécurité-des-données-personnelles)).
 - Les notifications envoyées à des groupes larges (Direction, comité) ne contiennent que des identifiants, des statuts et des
   agrégats.
 
 ### Où ranger les documents
 
-Chaque document métier a sa bibliothèque numérotée (« 01 — Recrutement » à « 06 — Écoles et partenariats »), rangé dans le
+Chaque document métier a sa bibliothèque numérotée (« 01 - Recrutement » à « 06 - Écoles et partenariats »), rangé dans le
 dossier nommé par l'identifiant de l'objet. **Aucun document métier ne doit être déposé dans la bibliothèque « Documents »
 créée par défaut avec le site** (ni dans les autres listes système comme « Pages du site ») : ces espaces sont lisibles par
-tous les groupes et ne sont pas protégés par les droits du système (spec § 7.2). Les fichiers de l'équipe Teams ne sont pas
+tous les groupes et ne sont pas protégés par les droits du système (spec [7.2](../../spec.md#72-niveaux-dautorisation)). Les fichiers de l'équipe Teams ne sont pas
 non plus la référence (H-44).
 
 ### Données personnelles
@@ -219,9 +219,9 @@ automatiquement tant qu'elle n'est pas validée (H-10).
 
 Rapport « HNCS-RD », publié comme application dans l'espace « HNCS-R&D Pilotage », actualisé **chaque jour à 06:00** (la date de dernière actualisation
 est affichée sur la vue exécutive) : une modification faite dans la journée apparaît le lendemain. Les données visibles dépendent
-de votre rôle (`Direction`, `PilotageRD`, `Administration`, `RelationEcoles`, `Referent`, § 9.6) ; les **pages** visibles
+de votre rôle (`Direction`, `PilotageRD`, `Administration`, `RelationEcoles`, `Referent`, [9.6](../../spec.md#96-sécurité-du-modèle-rls--ols)) ; les **pages** visibles
 dépendent de votre audience dans l'application (Direction : 1, 3, 4, 5, 6 ; Administration : 2, 3, 5 ; RelationEcoles : 3, 5 ;
-Referent : 3, 4, 7 ; PilotageRD : toutes, § 9.7). Les alternants n'ont pas accès au rapport (H-19).
+Referent : 3, 4, 7 ; PilotageRD : toutes, [9.7](../../spec.md#97-pages-du-rapport)). Les alternants n'ont pas accès au rapport (H-19).
 
 ### Disponibilité par lot
 

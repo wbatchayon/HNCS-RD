@@ -66,7 +66,7 @@ ROLE_GROUPS = {
     "RelationEcoles": ["G_ECO"],
     "Referent": ["G_REF"],
 }
-# Filtres de visuel exigés : (page, table, colonne, valeur littérale) — RX-07 : jalons orphelins exclus.
+# Filtres de visuel exigés : (page, table, colonne, valeur littérale) : RX-07 : jalons orphelins exclus.
 REQUIRED_VISUAL_FILTERS = [(4, "GitlabSync", "Orpheline", "false")]
 
 errors: list[str] = []
@@ -711,7 +711,7 @@ def check_roles(model: dict, tables: dict) -> None:
         r = roles.get(name)
         if not r:
             continue
-        no_access = any(matrix.get(g, "—") in ("—", "", None) for g in groups)
+        no_access = any(matrix.get(g, "-") in ("-", "", None) for g in groups)
         masked = r["tables"].get("Alternants", {}).get("columns", {}).get("NomAffichage") == "none"
         if no_access and not masked:
             err(f"Rôle {name} : groupe sans accès SharePoint à Alternants ({', '.join(groups)}) → "
@@ -936,7 +936,7 @@ def main() -> int:
     n_measures = len(tables.get(MEASURES_TABLE, {}).get("measures", {}))
     n_visuals = len(list(RDEF.glob("pages/*/visuals/*/visual.json")))
     print(f"check_pbip : {len(tables)} tables, {n_measures} mesures, {n_visuals} visuels, "
-          f"{len(docs)} fichiers JSON — {len(errors)} erreur(s).")
+          f"{len(docs)} fichiers JSON, {len(errors)} erreur(s).")
     return 1 if errors else 0
 
 

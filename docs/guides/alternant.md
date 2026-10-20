@@ -1,4 +1,4 @@
-# Guide utilisateur — Alternant
+# Guide utilisateur : Alternant
 
 > Public : alternants et stagiaires actifs (groupe SharePoint `HNCS-RD-Alternants`). Règles communes (statuts refusés,
 > champs protégés, validations, notifications) : voir l'[index des guides](README.md#repères-communs-à-tous-les-guides).
@@ -24,19 +24,19 @@ au canal Teams « Alternants » de l'équipe « HNCS R&D », poste de travail et
 
 ## 2. Ce que vous voyez et ne voyez pas
 
-D'après la matrice d'accès (spec § 7.3) et les permissions posées pour vous par les flux (§ 7.4).
+D'après la matrice d'accès (spec [7.3](../../spec.md#73-matrice-daccès)) et les permissions posées pour vous par les flux ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
 
 | Accès | Ce que c'est |
 | --- | --- |
 | **Votre** affectation (lecture) | Liste « Affectations » : seulement la vôtre, ouverte à son activation |
 | **Vos** livrables (modification) | Liste « Livrables » : seulement ceux dont vous êtes propriétaire |
 | **Vos** comptes rendus (modification) | Liste « Comptes rendus de suivi » : seulement les vôtres |
-| Dossier du sujet (modification) | `04 — Livrables R&D/SUJ-…/` du sujet de votre affectation |
-| Votre dossier de suivi (modification) | `05 — Suivi des alternants/ALT-…/` (plan de travail, consignes) — **sans** le sous-dossier `_Evaluations` |
+| Dossier du sujet (modification) | `04 - Livrables R&D/SUJ-…/` du sujet de votre affectation |
+| Votre dossier de suivi (modification) | `05 - Suivi des alternants/ALT-…/` (plan de travail, consignes), **sans** le sous-dossier `_Evaluations` |
 | Vos actions de correction (modification) | Dans « Actions d'intégration et checklists », les actions « Correction livrable » dont vous êtes responsable |
 | Vos communications (modification) | Dans « Communications R&D », celles dont vous êtes l'auteur |
-| Lecture seule | Offres, Pôles R&D, Référents, Sujets R&D, Registre des modèles R&D, « 03 — Modèles R&D », Communications R&D, Domaines cibles, Ressources techniques, Transitions de statuts |
-| Aucun accès | Candidatures et CV, Entretiens, Alternants (fiches), Écoles, Conventions, autres actions de checklist, Bilans d'alternance, Paramètres, Historiques, « 02 — Administration », « 06 — Écoles et partenariats », rapport Power BI |
+| Lecture seule | Offres, Pôles R&D, Référents, Sujets R&D, Registre des modèles R&D, « 03 - Modèles R&D », Communications R&D, Domaines cibles, Ressources techniques, Transitions de statuts |
+| Aucun accès | Candidatures et CV, Entretiens, Alternants (fiches), Écoles, Conventions, autres actions de checklist, Bilans d'alternance, Paramètres, Historiques, « 02 - Administration », « 06 - Écoles et partenariats », rapport Power BI |
 
 **Pourquoi ?** Chacun ne voit que ce dont il a besoin (P-04) : les dossiers de recrutement, les données administratives et les
 évaluations sont cloisonnés, y compris vis-à-vis de vous. Les autres alternants ne voient pas vos éléments « Livrables » ni
@@ -59,7 +59,7 @@ référent ou l'équipe R&D, ou proposés par le système (H-49).
    cadence, cadence des comptes rendus, plan de travail.
 3. **Votre sujet** : liste **Sujets R&D** (identifiant `SUJ-…`) : description et périmètre, valeur attendue, jalons, critères
    d'acceptation, risques, lien vers le projet GitLab.
-4. **Les modèles** : liste « Registre des modèles R&D », vue « Modèles en vigueur », et bibliothèque « 03 — Modèles R&D ».
+4. **Les modèles** : liste « Registre des modèles R&D », vue « Modèles en vigueur », et bibliothèque « 03 - Modèles R&D ».
 
 ### 3.2 Voir vos livrables
 
@@ -82,7 +82,7 @@ dépassée (à vous et au référent). Un livrable soumis à revue n'est plus co
 
 ### 3.3 Déposer un document
 
-1. Ouvrez la bibliothèque **« 04 — Livrables R&D »**, dossier de votre sujet `SUJ-…`.
+1. Ouvrez la bibliothèque **« 04 - Livrables R&D »**, dossier de votre sujet `SUJ-…`.
 2. Déposez votre fichier, puis renseignez ses propriétés :
    - **« Livrable »** : l'identifiant `LIV-…` concerné (indispensable : c'est ce qui rattache le document au livrable) ;
    - **« Type de document »** (POC / démonstrateur, Plan de stratégie, Fiche méthodologie, Document technique…) : nécessaire à
@@ -93,8 +93,8 @@ dépassée (à vous et au référent). Un livrable soumis à revue n'est plus co
 
 Ne déposez **jamais** un document de travail dans la bibliothèque « Documents » créée par défaut avec le site, ni dans les
 fichiers de l'équipe Teams : elles ne sont pas protégées par les droits du système et ne doivent contenir aucune donnée
-métier (spec § 7.2, H-44). Votre seul espace de dépôt est le dossier de votre sujet dans « 04 — Livrables R&D » (et votre
-dossier de suivi dans « 05 — Suivi des alternants »).
+métier (spec [7.2](../../spec.md#72-niveaux-dautorisation), H-44). Votre seul espace de dépôt est le dossier de votre sujet dans « 04 - Livrables R&D » (et votre
+dossier de suivi dans « 05 - Suivi des alternants »).
 
 Ce que fait le système (PA-07b) : il complète l'identifiant et le sujet du document et, si le champ « Document (SharePoint) »
 du livrable est vide, il le renseigne. **Le dépôt ne soumet pas le livrable** : votre référent n'est pas prévenu tant que vous
@@ -164,7 +164,7 @@ des validations (P-05).
 | Élément | Convention |
 | --- | --- |
 | Projet | Un projet par sujet, dans le groupe `hncs-rd`, nommé `suj-aaaa-nnnn-<slug>` |
-| Jalon | Un jalon par livrable technique, titré `LIV-aaaa-nnnn — <titre>`, échéance = échéance du livrable |
+| Jalon | Un jalon par livrable technique, titré `LIV-aaaa-nnnn : <titre>`, échéance = échéance du livrable |
 | Issue | Modèles « Tache-RD », « Anomalie » ou « Livrable » ; la description cite l'identifiant `LIV-aaaa-nnnn` du livrable concerné |
 | Merge request | Modèle « MR-RD » ; la description cite `LIV-aaaa-nnnn` |
 | Étiquettes | `rd::sujet::SUJ-aaaa-nnnn`, `rd::livrable::LIV-aaaa-nnnn`, `rd::pole::P1` à `P4`, `rd::type::poc` / `plan` / `doc` |
@@ -190,7 +190,7 @@ vous désignant « Auteur » (publication LinkedIn HNCS, article…). Vous obten
 
 - Trente jours avant la fin, une checklist de clôture est lancée côté référent et R&D. Attendez-vous à :
   - finaliser, soumettre ou faire suspendre **tous vos livrables** (aucun ne doit rester ouvert) ;
-  - ranger votre documentation dans « 04 — Livrables R&D » pour qu'elle soit capitalisée ;
+  - ranger votre documentation dans « 04 - Livrables R&D » pour qu'elle soit capitalisée ;
   - un **transfert de connaissances** et un **retour d'expérience** recueilli par la R&D ;
   - le **bilan d'alternance** réalisé par votre référent.
 - À la fin effective, vous recevez **N-22 « Affectation terminée »**. Si votre alternance est prolongée, l'équipe R&D ou
@@ -271,7 +271,7 @@ l'ancienne affectation est conservé.
 
 ### Où ranger les identifiants de ma machine virtuelle de démonstration ?
 
-Nulle part dans SharePoint, GitLab ou les documents : aucun secret n'y est stocké (spec § 10.1). Suivez les consignes de
+Nulle part dans SharePoint, GitLab ou les documents : aucun secret n'y est stocké (spec [10.1](../../spec.md#101-principes)). Suivez les consignes de
 l'équipe technique.
 
 ### Qui voit mes comptes rendus ?
@@ -288,7 +288,7 @@ Non : ce sont des champs protégés, réservés à votre référent (et à l'éq
 
 ### Puis-je ranger mes documents dans « Documents » ou dans l'équipe Teams ?
 
-Non. Ces espaces ne sont pas la référence et ne doivent contenir aucune donnée métier. Utilisez « 04 — Livrables R&D ».
+Non. Ces espaces ne sont pas la référence et ne doivent contenir aucune donnée métier. Utilisez « 04 - Livrables R&D ».
 
 ### Comment dois-je nommer ma merge request ?
 

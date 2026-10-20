@@ -2,7 +2,7 @@
 """Synchronisation GitLab -> liste SharePoint `GitlabSync` (spec § 10.3, lot 5).
 
 Lecture seule côté GitLab ; écriture **uniquement** dans la liste technique `GitlabSync`
-(jamais dans `SujetsRD`, `Livrables` ni dans un statut métier — spec § 10.1).
+(jamais dans `SujetsRD`, `Livrables` ni dans un statut métier, spec § 10.1).
 
 Pour chaque sujet de `SujetsRD` ayant un `GitlabProjetId` :
   * une ligne de niveau projet (clé `<projetId>:0`) : issues ouvertes / fermées du projet,
@@ -762,7 +762,7 @@ def resoudre_cibles(graph: ClientGraph, config: Config) -> tuple[str, dict[str, 
     except ErreurHttp as erreur:
         if erreur.statut in (401, 403):
             raise ErreurConfig(
-                f"{erreur} — accès refusé au niveau du site : avec Lists.SelectedOperations.Selected, "
+                f"{erreur}, accès refusé au niveau du site : avec Lists.SelectedOperations.Selected, "
                 "renseigner HNCS_SITE_ID et HNCS_LISTE_ID_SUJETSRD / _LIVRABLES / _GITLABSYNC."
             ) from erreur
         raise

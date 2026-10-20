@@ -73,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Analyse syntaxique — Windows PowerShell 5.1
+      - name: Analyse syntaxique, Windows PowerShell 5.1
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -86,7 +86,7 @@ jobs:
               $enErreur++
               foreach ($e in $erreurs) { Write-Host ("::error file={0},line={1}::{2}" -f $f.FullName, $e.Extent.StartLineNumber, $e.Message) }
             }
-            # Windows PowerShell 5.1 lit un fichier sans BOM en ANSI : accents et « — » y deviennent des caractères parasites.
+            # Windows PowerShell 5.1 lit un fichier sans BOM en ANSI : accents et «, » y deviennent des caractères parasites.
             $octets = [System.IO.File]::ReadAllBytes($f.FullName)
             $bom = $octets.Length -ge 3 -and $octets[0] -eq 0xEF -and $octets[1] -eq 0xBB -and $octets[2] -eq 0xBF
             if (-not $bom -and @($octets | Where-Object { $_ -gt 0x7F }).Count -gt 0) {
@@ -96,7 +96,7 @@ jobs:
           Write-Host ("{0} fichier(s) analysé(s) avec PowerShell {1}, {2} en erreur." -f $fichiers.Count, $PSVersionTable.PSVersion, $enErreur)
           if ($enErreur -gt 0) { exit 1 }
 
-      - name: Analyse syntaxique — PowerShell 7
+      - name: Analyse syntaxique, PowerShell 7
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
