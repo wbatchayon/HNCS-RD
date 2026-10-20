@@ -37,15 +37,17 @@ La **source de vérité** du projet est [`spec.md`](spec.md). Toute évolution c
 | `testdata/` | Jeu de données fictif et script d'import |
 | `tests/` | Tests hors ligne (Python) et tests de bout en bout (Pester), scénarios de recette, réconciliation |
 | `docs/` | Installation, exploitation, architecture et guides d'utilisation par rôle |
+| `requises.md` | Prérequis du projet, de l'organisation au poste d'installation |
 | `BILAN.md` | État du projet : terminé, à valider, décisions ouvertes |
 
 ## Démarrage rapide
 
-1. Lire [`docs/installation.md`](docs/installation.md) (prérequis, comptes, licences, ordre des lots).
-2. Préparer `provisioning/config/tenant.json` et `membres.json` à partir des fichiers `*.sample.json`.
-3. Déployer le socle : `pwsh ./provisioning/Deploy-HNCSRD.ps1 -ConfigPath ./provisioning/config/tenant.json -Lot 1`.
-4. Contrôler : `pwsh ./provisioning/Test-HNCSRDDeploiement.ps1`.
-5. Poursuivre lot par lot (flux, Power BI, GitLab) selon le guide d'installation.
+1. Réunir les prérequis listés dans [`requises.md`](requises.md) (organisation, licences, comptes, applications, outils, configuration).
+2. Lire [`docs/installation.md`](docs/installation.md) (ordre des lots et commandes).
+3. Préparer `provisioning/config/tenant.json` et `membres.json` à partir des fichiers `*.sample.json`.
+4. Déployer le socle : `pwsh ./provisioning/Deploy-HNCSRD.ps1 -ConfigPath ./provisioning/config/tenant.json -Lot 1`.
+5. Contrôler : `pwsh ./provisioning/Test-HNCSRDDeploiement.ps1`.
+6. Poursuivre lot par lot (flux, Power BI, GitLab) selon le guide d'installation.
 
 ## Vérifications hors ligne
 
@@ -62,6 +64,7 @@ Ces contrôles sont exécutés par l'intégration continue (`.github/workflows/c
 
 ## Documentation
 
+- [Prérequis du projet](requises.md)
 - [Guide d'installation](docs/installation.md)
 - [Guide d'exploitation](docs/exploitation.md)
 - [Architecture](docs/architecture.md)
