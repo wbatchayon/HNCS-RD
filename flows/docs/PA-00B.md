@@ -25,7 +25,7 @@ Appliquer (acceptation) ou annuler (refus) une transition et l'historiser.
 
 1. Lire les paramètres (boîte R&D, notifications Teams).
 2. Acceptée : `StatutPrecedent` = `StatutApres` (copie de commodité pour les vues), `DateStatut` = maintenant (REST `MERGE`, liste désignée par son nom interne via `GetList`) ; l'entrée d'historique créée devient le statut validé de référence.
-3. Refusée : statut validé = dernier `StatutApres` accepté de `HistoriqueStatuts` pour l'élément (entrées `REF-PRINCIPAL` exclues ; à défaut, `StatutAvant` reçu) ; `Statut` rétabli à cette valeur (et `StatutPrecedent`, simple copie), jamais à partir de `StatutPrecedent` ; puis N-90 à l'acteur. Refus d'une création (statut validé `∅`, [6.1](../../spec.md#61-règles-générales), règle 3 bis) : l'élément est envoyé à la corbeille du site (`recycle`, récupérable 93 jours, jamais supprimé définitivement), puis N-90.
+3. Refusée : statut validé = dernier `StatutApres` accepté de `HistoriqueStatuts` pour l'élément (entrées `REF-PRINCIPAL` exclues ; à défaut, `StatutAvant` reçu) ; `Statut` rétabli à cette valeur (et `StatutPrecedent`, simple copie), jamais à partir de `StatutPrecedent` ; puis N-90 à l'acteur. Refus d'une création (statut validé `∅`, [6.1](../../spec.md#61-règles-générales), règle 3 bis) : l'élément est envoyé à la corbeille du site (`recycle`, récupérable 93 jours, jamais supprimé définitivement), puis N-90 ; un élément qui a plus d'une version n'est jamais envoyé à la corbeille ([6.1](../../spec.md#61-règles-générales), règle 3 ter).
 4. Dans les deux cas : création d'un élément `HistoriqueStatuts` (`Acceptée` ou `Refusée et annulée`).
 
 ## Sorties

@@ -12,6 +12,7 @@ utilisé par les actions « Exécuter un flux enfant » (``workflowReferenceName
 Usage :
     python flows/build/build_solution.py            # construit le zip
     python flows/build/build_solution.py --check    # valide sans rien écrire (code 1 en cas d'erreur)
+    python flows/build/build_solution.py --brouillon  # tous les flux en brouillon (activation par lot à l'import)
 
 Bibliothèque standard uniquement.
 """
@@ -50,7 +51,7 @@ CONNECTORS = {
     "hncs_teams": ("shared_teams", "HNCS-RD Microsoft Teams"),
     "hncs_o365users": ("shared_office365users", "HNCS-RD Office 365 Utilisateurs"),
 }
-# Variables d'environnement (texte). Les deux dernières sont un écart signalé à la spec (déclencheur de PA-01b).
+# Variables d'environnement (texte), liste de la ligne « Conditionnement » de la spec 8.1.
 ENV_VARS = {
     "hncs_SiteUrl": ("URL du site SharePoint HNCS-R&D", "URL du site, sans barre finale (ex. https://contoso.sharepoint.com/sites/HNCS-RD)"),
     "hncs_ServiceAccountEmail": ("Compte de service des flux", "Adresse du compte de service (rôle FLUX, anti-boucle)"),
@@ -163,11 +164,11 @@ def solution_xml(flows, version):
 '''
 
 
-def customizations_xml(flows, files):
+def customizations_xml(flows, files, brouillon=False):
     wfs = []
     for m, _ in flows:
         g = workflow_guid(m["id"])
-        state, status = ("1", "2") if m["enabledByDefault"] else ("0", "1")
+        state, status = ("1", "2") if (m["enabledByDefault"] and not brouillon) else ("0", "1")
         wfs.append(f'''    <Workflow WorkflowId="{{{g}}}" Name={quoteattr(m["displayName"])}>
       <JsonFileName>/Workflows/{escape(files[m["id"]])}</JsonFileName>
       <Type>1</Type>
@@ -238,7 +239,7 @@ def customizations_xml(flows, files):
 '''
 
 
-def build(check: bool) -> int:
+def build(check: bool, brouillon: bool = False) -> int:
     errors: list = []
     flows = load(errors)
     validate(flows, errors)
@@ -247,7 +248,7 @@ def build(check: bool) -> int:
     if len(set(files.values())) != len(files):
         errors.append("noms de fichiers Workflows en double")
     parts = {"[Content_Types].xml": content_types(), "solution.xml": solution_xml(flows, version),
-             "customizations.xml": customizations_xml(flows, files)}
+             "customizations.xml": customizations_xml(flows, files, brouillon)}
     for name, xml in parts.items():
         try:
             minidom.parseString(xml.encode("utf-8"))
@@ -281,7 +282,8 @@ def build(check: bool) -> int:
     out.write_bytes(buf.getvalue())
     (DIST / "workflows.json").write_text(json.dumps(
         [{"id": m["id"], "displayName": m["displayName"], "workflowId": workflow_guid(m["id"]), "enabledByDefault": m["enabledByDefault"],
-          "childFlow": m["trigger"]["kind"] == "ChildFlow"} for m, _ in flows], ensure_ascii=False, indent=2), encoding="utf-8")
+          "childFlow": m["trigger"]["kind"] == "ChildFlow", "lot": m["lot"], "code": m["code"], "brouillon": brouillon}
+         for m, _ in flows], ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Écrit : {out.relative_to(ROOT)}")
     return 0
 
@@ -289,7 +291,10 @@ def build(check: bool) -> int:
 def main():
     ap = argparse.ArgumentParser(description="Assemble la solution Power Platform HNCSRDSuivi")
     ap.add_argument("--check", action="store_true", help="valide sans écrire")
-    return build(ap.parse_args().check)
+    ap.add_argument("--brouillon", action="store_true",
+                    help="tous les flux à l'état Brouillon (aucune activation à l'import ; activation par lot avec Import-HNCSRDFlows.ps1)")
+    a = ap.parse_args()
+    return build(a.check, a.brouillon)
 
 
 if __name__ == "__main__":

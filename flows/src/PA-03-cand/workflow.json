@@ -331,9 +331,18 @@
                 ]
               }
             },
+            "Statut_reference": {
+              "type": "Compose",
+              "inputs": "@if(and(equals(outputs('Statut_valide_el'), '∅'), not(equals(string(triggerOutputs()?['body/Created']), string(triggerOutputs()?['body/Modified']))), not(empty(body('Lire_element')?['Statut']?['Value']))), body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))",
+              "runAfter": {
+                "Statut_valide_el": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Si_aucune_transition_a_traiter": {
               "type": "If",
-              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))), contains(createArray('Entretien planifié', 'Entretien réalisé', 'En attente de décision', 'Retenue'), body('Lire_element')?['Statut']?['Value'])))",
+              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_reference'))), contains(createArray('Entretien planifié', 'Entretien réalisé', 'En attente de décision', 'Retenue'), body('Lire_element')?['Statut']?['Value'])))",
               "actions": {
                 "Fin_sans_transition": {
                   "type": "Terminate",
@@ -347,7 +356,7 @@
                 "actions": {}
               },
               "runAfter": {
-                "Statut_valide_el": [
+                "Statut_reference": [
                   "Succeeded"
                 ]
               }
@@ -360,7 +369,7 @@
                 },
                 "body": {
                   "Objet": "Candidature",
-                  "StatutAvant": "@{outputs('Statut_valide_el')}",
+                  "StatutAvant": "@{outputs('Statut_reference')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
                   "ItemAuteurEmail": "@{coalesce('', '')}",
@@ -517,7 +526,7 @@
                       "ItemId": "@int(body('Lire_element')?['ID'])",
                       "IdObjet": "@{outputs('IdObjet_el')}",
                       "Objet": "Candidature",
-                      "StatutAvant": "@{outputs('Statut_valide_el')}",
+                      "StatutAvant": "@{outputs('Statut_reference')}",
                       "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                       "Accepte": "@false",
                       "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
@@ -858,7 +867,7 @@
                   "ItemId": "@int(body('Lire_element')?['ID'])",
                   "IdObjet": "@{outputs('IdObjet_el')}",
                   "Objet": "Candidature",
-                  "StatutAvant": "@{outputs('Statut_valide_el')}",
+                  "StatutAvant": "@{outputs('Statut_reference')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "Accepte": "@true",
                   "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",

@@ -30,6 +30,14 @@
             "schemaName": "hncs_SiteUrl",
             "description": "URL du site SharePoint HNCS-R&D (sans barre finale)"
           }
+        },
+        "hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)": {
+          "defaultValue": "svc-hncs-rd@contoso.com",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_ServiceAccountEmail",
+            "description": "Adresse du compte de service des flux (rôle FLUX)"
+          }
         }
       },
       "triggers": {
@@ -69,6 +77,23 @@
           },
           "runAfter": {
             "Initialiser_NbIdentifiants": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Initialiser_NbReprises": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "NbReprises",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialiser_NbEmpreintes": [
               "Succeeded"
             ]
           }
@@ -2791,26 +2816,8 @@
               }
             },
             "Lot2_actif": {
-              "type": "OpenApiConnection",
-              "inputs": {
-                "host": {
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-                  "connectionName": "shared_sharepointonline",
-                  "operationId": "GetItems"
-                },
-                "parameters": {
-                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                  "table": "Historique des statuts",
-                  "$filter": "Origine eq 'Flux'",
-                  "$top": 1
-                },
-                "authentication": "@parameters('$authentication')",
-                "retryPolicy": {
-                  "type": "exponential",
-                  "count": 4,
-                  "interval": "PT10S"
-                }
-              },
+              "type": "Compose",
+              "inputs": "@equals(coalesce(outputs('Parametres')?['Fonction.Lot2Actif'], 'Non'), 'Oui')",
               "runAfter": {
                 "Si_identifiants_attribues": [
                   "Succeeded",
@@ -2821,8 +2828,1651 @@
             },
             "Si_lot2_actif": {
               "type": "If",
-              "expression": "@greater(length(coalesce(body('Lot2_actif')?['value'], createArray())), 0)",
+              "expression": "@equals(string(outputs('Lot2_actif')), 'True')",
               "actions": {
+                "Reprise_Affectations": {
+                  "type": "Scope",
+                  "actions": {
+                    "Elements_reprise_Affectations": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Affectations",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Historique_reprise_Affectations": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Historique des statuts",
+                          "$filter": "Liste eq 'Affectations' and Resultat eq 'Acceptée'",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_reprise_Affectations": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Acceptees_reprise_Affectations": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Historique_reprise_Affectations')?['value']",
+                        "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+                      },
+                      "runAfter": {
+                        "Historique_reprise_Affectations": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Elements_historises_Affectations": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@body('Acceptees_reprise_Affectations')",
+                        "select": "@int(item()?['ItemId'])"
+                      },
+                      "runAfter": {
+                        "Acceptees_reprise_Affectations": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Pour_element_reprise_Affectations": {
+                      "type": "Foreach",
+                      "foreach": "@body('Elements_reprise_Affectations')?['value']",
+                      "actions": {
+                        "Si_sans_transition_acceptee_Affectations": {
+                          "type": "If",
+                          "expression": "@and(not(contains(body('Elements_historises_Affectations'), int(items('Pour_element_reprise_Affectations')?['ID']))), not(empty(items('Pour_element_reprise_Affectations')?['Statut']?['Value'])), less(ticks(items('Pour_element_reprise_Affectations')?['Created']), ticks(addMinutes(utcNow(), -30))))",
+                          "actions": {
+                            "Historiser_reprise_Affectations": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PostItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Historique des statuts",
+                                  "item/Title": "@{coalesce(items('Pour_element_reprise_Affectations')?['IdHNCS'], string(items('Pour_element_reprise_Affectations')?['ID']))}",
+                                  "item/Objet/Value": "Affectation",
+                                  "item/Liste": "Affectations",
+                                  "item/ItemId": "@int(items('Pour_element_reprise_Affectations')?['ID'])",
+                                  "item/StatutAvant": "∅",
+                                  "item/StatutApres": "@{items('Pour_element_reprise_Affectations')?['Statut']?['Value']}",
+                                  "item/CodeTransition": "REPRISE",
+                                  "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/DateChangement": "@{utcNow()}",
+                                  "item/Origine/Value": "Flux",
+                                  "item/Resultat/Value": "Acceptée",
+                                  "item/Motif": "Reprise de l'existant",
+                                  "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "Compter_reprise_Affectations": {
+                              "type": "IncrementVariable",
+                              "inputs": {
+                                "name": "NbReprises",
+                                "value": 1
+                              },
+                              "runAfter": {
+                                "Historiser_reprise_Affectations": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_historises_Affectations": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Erreur_reprise_Affectations": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Erreur",
+                      "Liste": "Affectations",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'PA-00D : échec de l''écriture des entrées REPRISE (Affectations)'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {
+                    "Reprise_Affectations": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  }
+                },
+                "Reprise_Alternants": {
+                  "type": "Scope",
+                  "actions": {
+                    "Elements_reprise_Alternants": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Alternants",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Historique_reprise_Alternants": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Historique des statuts",
+                          "$filter": "Liste eq 'Alternants' and Resultat eq 'Acceptée'",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_reprise_Alternants": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Acceptees_reprise_Alternants": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Historique_reprise_Alternants')?['value']",
+                        "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+                      },
+                      "runAfter": {
+                        "Historique_reprise_Alternants": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Elements_historises_Alternants": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@body('Acceptees_reprise_Alternants')",
+                        "select": "@int(item()?['ItemId'])"
+                      },
+                      "runAfter": {
+                        "Acceptees_reprise_Alternants": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Pour_element_reprise_Alternants": {
+                      "type": "Foreach",
+                      "foreach": "@body('Elements_reprise_Alternants')?['value']",
+                      "actions": {
+                        "Si_sans_transition_acceptee_Alternants": {
+                          "type": "If",
+                          "expression": "@and(not(contains(body('Elements_historises_Alternants'), int(items('Pour_element_reprise_Alternants')?['ID']))), not(empty(items('Pour_element_reprise_Alternants')?['Statut']?['Value'])), less(ticks(items('Pour_element_reprise_Alternants')?['Created']), ticks(addMinutes(utcNow(), -30))))",
+                          "actions": {
+                            "Historiser_reprise_Alternants": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PostItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Historique des statuts",
+                                  "item/Title": "@{coalesce(items('Pour_element_reprise_Alternants')?['IdHNCS'], string(items('Pour_element_reprise_Alternants')?['ID']))}",
+                                  "item/Objet/Value": "Alternant",
+                                  "item/Liste": "Alternants",
+                                  "item/ItemId": "@int(items('Pour_element_reprise_Alternants')?['ID'])",
+                                  "item/StatutAvant": "∅",
+                                  "item/StatutApres": "@{items('Pour_element_reprise_Alternants')?['Statut']?['Value']}",
+                                  "item/CodeTransition": "REPRISE",
+                                  "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/DateChangement": "@{utcNow()}",
+                                  "item/Origine/Value": "Flux",
+                                  "item/Resultat/Value": "Acceptée",
+                                  "item/Motif": "Reprise de l'existant",
+                                  "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "Compter_reprise_Alternants": {
+                              "type": "IncrementVariable",
+                              "inputs": {
+                                "name": "NbReprises",
+                                "value": 1
+                              },
+                              "runAfter": {
+                                "Historiser_reprise_Alternants": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_historises_Alternants": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Erreur_reprise_Affectations": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Erreur_reprise_Alternants": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Erreur",
+                      "Liste": "Alternants",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'PA-00D : échec de l''écriture des entrées REPRISE (Alternants)'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {
+                    "Reprise_Alternants": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  }
+                },
+                "Reprise_Candidatures": {
+                  "type": "Scope",
+                  "actions": {
+                    "Elements_reprise_Candidatures": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Candidatures",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Historique_reprise_Candidatures": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Historique des statuts",
+                          "$filter": "Liste eq 'Candidatures' and Resultat eq 'Acceptée'",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_reprise_Candidatures": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Acceptees_reprise_Candidatures": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Historique_reprise_Candidatures')?['value']",
+                        "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+                      },
+                      "runAfter": {
+                        "Historique_reprise_Candidatures": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Elements_historises_Candidatures": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@body('Acceptees_reprise_Candidatures')",
+                        "select": "@int(item()?['ItemId'])"
+                      },
+                      "runAfter": {
+                        "Acceptees_reprise_Candidatures": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Pour_element_reprise_Candidatures": {
+                      "type": "Foreach",
+                      "foreach": "@body('Elements_reprise_Candidatures')?['value']",
+                      "actions": {
+                        "Si_sans_transition_acceptee_Candidatures": {
+                          "type": "If",
+                          "expression": "@and(not(contains(body('Elements_historises_Candidatures'), int(items('Pour_element_reprise_Candidatures')?['ID']))), not(empty(items('Pour_element_reprise_Candidatures')?['Statut']?['Value'])), less(ticks(items('Pour_element_reprise_Candidatures')?['Created']), ticks(addMinutes(utcNow(), -30))))",
+                          "actions": {
+                            "Historiser_reprise_Candidatures": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PostItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Historique des statuts",
+                                  "item/Title": "@{coalesce(items('Pour_element_reprise_Candidatures')?['IdHNCS'], string(items('Pour_element_reprise_Candidatures')?['ID']))}",
+                                  "item/Objet/Value": "Candidature",
+                                  "item/Liste": "Candidatures",
+                                  "item/ItemId": "@int(items('Pour_element_reprise_Candidatures')?['ID'])",
+                                  "item/StatutAvant": "∅",
+                                  "item/StatutApres": "@{items('Pour_element_reprise_Candidatures')?['Statut']?['Value']}",
+                                  "item/CodeTransition": "REPRISE",
+                                  "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/DateChangement": "@{utcNow()}",
+                                  "item/Origine/Value": "Flux",
+                                  "item/Resultat/Value": "Acceptée",
+                                  "item/Motif": "Reprise de l'existant",
+                                  "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "Compter_reprise_Candidatures": {
+                              "type": "IncrementVariable",
+                              "inputs": {
+                                "name": "NbReprises",
+                                "value": 1
+                              },
+                              "runAfter": {
+                                "Historiser_reprise_Candidatures": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_historises_Candidatures": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Erreur_reprise_Alternants": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Erreur_reprise_Candidatures": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Erreur",
+                      "Liste": "Candidatures",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'PA-00D : échec de l''écriture des entrées REPRISE (Candidatures)'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {
+                    "Reprise_Candidatures": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  }
+                },
+                "Reprise_CommunicationsRD": {
+                  "type": "Scope",
+                  "actions": {
+                    "Liste_deployee_rep_CommunicationsRD": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "HttpRequest"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "parameters/method": "GET",
+                          "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/CommunicationsRD'), ''')?$select=Id')}",
+                          "parameters/headers": {
+                            "Accept": "application/json;odata=nometadata",
+                            "Content-Type": "application/json;odata=nometadata"
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Liste_presente_rep_CommunicationsRD": {
+                      "type": "Compose",
+                      "inputs": "@not(empty(body('Liste_deployee_rep_CommunicationsRD')?['Id']))",
+                      "runAfter": {
+                        "Liste_deployee_rep_CommunicationsRD": [
+                          "Succeeded",
+                          "Failed"
+                        ]
+                      }
+                    },
+                    "Si_liste_deployee_reprise_CommunicationsRD": {
+                      "type": "If",
+                      "expression": "@equals(string(outputs('Liste_presente_rep_CommunicationsRD')), 'True')",
+                      "actions": {
+                        "Elements_reprise_CommunicationsRD": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Communications R&D",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Historique_reprise_CommunicationsRD": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Historique des statuts",
+                              "$filter": "Liste eq 'CommunicationsRD' and Resultat eq 'Acceptée'",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {
+                            "Elements_reprise_CommunicationsRD": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Acceptees_reprise_CommunicationsRD": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('Historique_reprise_CommunicationsRD')?['value']",
+                            "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+                          },
+                          "runAfter": {
+                            "Historique_reprise_CommunicationsRD": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Elements_historises_CommunicationsRD": {
+                          "type": "Select",
+                          "inputs": {
+                            "from": "@body('Acceptees_reprise_CommunicationsRD')",
+                            "select": "@int(item()?['ItemId'])"
+                          },
+                          "runAfter": {
+                            "Acceptees_reprise_CommunicationsRD": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Pour_element_reprise_CommunicationsRD": {
+                          "type": "Foreach",
+                          "foreach": "@body('Elements_reprise_CommunicationsRD')?['value']",
+                          "actions": {
+                            "Si_sans_transition_acceptee_CommunicationsRD": {
+                              "type": "If",
+                              "expression": "@and(not(contains(body('Elements_historises_CommunicationsRD'), int(items('Pour_element_reprise_CommunicationsRD')?['ID']))), not(empty(items('Pour_element_reprise_CommunicationsRD')?['Statut']?['Value'])), less(ticks(items('Pour_element_reprise_CommunicationsRD')?['Created']), ticks(addMinutes(utcNow(), -30))))",
+                              "actions": {
+                                "Historiser_reprise_CommunicationsRD": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                      "connectionName": "shared_sharepointonline",
+                                      "operationId": "PostItem"
+                                    },
+                                    "parameters": {
+                                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                      "table": "Historique des statuts",
+                                      "item/Title": "@{coalesce(items('Pour_element_reprise_CommunicationsRD')?['IdHNCS'], string(items('Pour_element_reprise_CommunicationsRD')?['ID']))}",
+                                      "item/Objet/Value": "Communication",
+                                      "item/Liste": "CommunicationsRD",
+                                      "item/ItemId": "@int(items('Pour_element_reprise_CommunicationsRD')?['ID'])",
+                                      "item/StatutAvant": "∅",
+                                      "item/StatutApres": "@{items('Pour_element_reprise_CommunicationsRD')?['Statut']?['Value']}",
+                                      "item/CodeTransition": "REPRISE",
+                                      "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                      "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                      "item/DateChangement": "@{utcNow()}",
+                                      "item/Origine/Value": "Flux",
+                                      "item/Resultat/Value": "Acceptée",
+                                      "item/Motif": "Reprise de l'existant",
+                                      "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                },
+                                "Compter_reprise_CommunicationsRD": {
+                                  "type": "IncrementVariable",
+                                  "inputs": {
+                                    "name": "NbReprises",
+                                    "value": 1
+                                  },
+                                  "runAfter": {
+                                    "Historiser_reprise_CommunicationsRD": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                }
+                              },
+                              "else": {
+                                "actions": {}
+                              },
+                              "runAfter": {}
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 1
+                            }
+                          },
+                          "runAfter": {
+                            "Elements_historises_CommunicationsRD": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Liste_presente_rep_CommunicationsRD": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Erreur_reprise_Candidatures": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Erreur_reprise_CommunicationsRD": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Erreur",
+                      "Liste": "CommunicationsRD",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'PA-00D : échec de l''écriture des entrées REPRISE (CommunicationsRD)'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {
+                    "Reprise_CommunicationsRD": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  }
+                },
+                "Reprise_ComptesRendus": {
+                  "type": "Scope",
+                  "actions": {
+                    "Liste_deployee_rep_ComptesRendus": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "HttpRequest"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "parameters/method": "GET",
+                          "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/ComptesRendus'), ''')?$select=Id')}",
+                          "parameters/headers": {
+                            "Accept": "application/json;odata=nometadata",
+                            "Content-Type": "application/json;odata=nometadata"
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Liste_presente_rep_ComptesRendus": {
+                      "type": "Compose",
+                      "inputs": "@not(empty(body('Liste_deployee_rep_ComptesRendus')?['Id']))",
+                      "runAfter": {
+                        "Liste_deployee_rep_ComptesRendus": [
+                          "Succeeded",
+                          "Failed"
+                        ]
+                      }
+                    },
+                    "Si_liste_deployee_reprise_ComptesRendus": {
+                      "type": "If",
+                      "expression": "@equals(string(outputs('Liste_presente_rep_ComptesRendus')), 'True')",
+                      "actions": {
+                        "Elements_reprise_ComptesRendus": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Comptes rendus de suivi",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Historique_reprise_ComptesRendus": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Historique des statuts",
+                              "$filter": "Liste eq 'ComptesRendus' and Resultat eq 'Acceptée'",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {
+                            "Elements_reprise_ComptesRendus": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Acceptees_reprise_ComptesRendus": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('Historique_reprise_ComptesRendus')?['value']",
+                            "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+                          },
+                          "runAfter": {
+                            "Historique_reprise_ComptesRendus": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Elements_historises_ComptesRendus": {
+                          "type": "Select",
+                          "inputs": {
+                            "from": "@body('Acceptees_reprise_ComptesRendus')",
+                            "select": "@int(item()?['ItemId'])"
+                          },
+                          "runAfter": {
+                            "Acceptees_reprise_ComptesRendus": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Pour_element_reprise_ComptesRendus": {
+                          "type": "Foreach",
+                          "foreach": "@body('Elements_reprise_ComptesRendus')?['value']",
+                          "actions": {
+                            "Si_sans_transition_acceptee_ComptesRendus": {
+                              "type": "If",
+                              "expression": "@and(not(contains(body('Elements_historises_ComptesRendus'), int(items('Pour_element_reprise_ComptesRendus')?['ID']))), not(empty(items('Pour_element_reprise_ComptesRendus')?['Statut']?['Value'])), less(ticks(items('Pour_element_reprise_ComptesRendus')?['Created']), ticks(addMinutes(utcNow(), -30))))",
+                              "actions": {
+                                "Historiser_reprise_ComptesRendus": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                      "connectionName": "shared_sharepointonline",
+                                      "operationId": "PostItem"
+                                    },
+                                    "parameters": {
+                                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                      "table": "Historique des statuts",
+                                      "item/Title": "@{coalesce(items('Pour_element_reprise_ComptesRendus')?['IdHNCS'], string(items('Pour_element_reprise_ComptesRendus')?['ID']))}",
+                                      "item/Objet/Value": "CompteRendu",
+                                      "item/Liste": "ComptesRendus",
+                                      "item/ItemId": "@int(items('Pour_element_reprise_ComptesRendus')?['ID'])",
+                                      "item/StatutAvant": "∅",
+                                      "item/StatutApres": "@{items('Pour_element_reprise_ComptesRendus')?['Statut']?['Value']}",
+                                      "item/CodeTransition": "REPRISE",
+                                      "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                      "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                      "item/DateChangement": "@{utcNow()}",
+                                      "item/Origine/Value": "Flux",
+                                      "item/Resultat/Value": "Acceptée",
+                                      "item/Motif": "Reprise de l'existant",
+                                      "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                },
+                                "Compter_reprise_ComptesRendus": {
+                                  "type": "IncrementVariable",
+                                  "inputs": {
+                                    "name": "NbReprises",
+                                    "value": 1
+                                  },
+                                  "runAfter": {
+                                    "Historiser_reprise_ComptesRendus": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                }
+                              },
+                              "else": {
+                                "actions": {}
+                              },
+                              "runAfter": {}
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 1
+                            }
+                          },
+                          "runAfter": {
+                            "Elements_historises_ComptesRendus": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Liste_presente_rep_ComptesRendus": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Erreur_reprise_CommunicationsRD": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Erreur_reprise_ComptesRendus": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Erreur",
+                      "Liste": "ComptesRendus",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'PA-00D : échec de l''écriture des entrées REPRISE (ComptesRendus)'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {
+                    "Reprise_ComptesRendus": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  }
+                },
+                "Reprise_Conventions": {
+                  "type": "Scope",
+                  "actions": {
+                    "Liste_deployee_rep_Conventions": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "HttpRequest"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "parameters/method": "GET",
+                          "parameters/uri": "@{concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/Conventions'), ''')?$select=Id')}",
+                          "parameters/headers": {
+                            "Accept": "application/json;odata=nometadata",
+                            "Content-Type": "application/json;odata=nometadata"
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Liste_presente_rep_Conventions": {
+                      "type": "Compose",
+                      "inputs": "@not(empty(body('Liste_deployee_rep_Conventions')?['Id']))",
+                      "runAfter": {
+                        "Liste_deployee_rep_Conventions": [
+                          "Succeeded",
+                          "Failed"
+                        ]
+                      }
+                    },
+                    "Si_liste_deployee_reprise_Conventions": {
+                      "type": "If",
+                      "expression": "@equals(string(outputs('Liste_presente_rep_Conventions')), 'True')",
+                      "actions": {
+                        "Elements_reprise_Conventions": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Conventions et partenariats",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Historique_reprise_Conventions": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Historique des statuts",
+                              "$filter": "Liste eq 'Conventions' and Resultat eq 'Acceptée'",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {
+                            "Elements_reprise_Conventions": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Acceptees_reprise_Conventions": {
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('Historique_reprise_Conventions')?['value']",
+                            "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+                          },
+                          "runAfter": {
+                            "Historique_reprise_Conventions": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Elements_historises_Conventions": {
+                          "type": "Select",
+                          "inputs": {
+                            "from": "@body('Acceptees_reprise_Conventions')",
+                            "select": "@int(item()?['ItemId'])"
+                          },
+                          "runAfter": {
+                            "Acceptees_reprise_Conventions": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Pour_element_reprise_Conventions": {
+                          "type": "Foreach",
+                          "foreach": "@body('Elements_reprise_Conventions')?['value']",
+                          "actions": {
+                            "Si_sans_transition_acceptee_Conventions": {
+                              "type": "If",
+                              "expression": "@and(not(contains(body('Elements_historises_Conventions'), int(items('Pour_element_reprise_Conventions')?['ID']))), not(empty(items('Pour_element_reprise_Conventions')?['Statut']?['Value'])), less(ticks(items('Pour_element_reprise_Conventions')?['Created']), ticks(addMinutes(utcNow(), -30))))",
+                              "actions": {
+                                "Historiser_reprise_Conventions": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                      "connectionName": "shared_sharepointonline",
+                                      "operationId": "PostItem"
+                                    },
+                                    "parameters": {
+                                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                      "table": "Historique des statuts",
+                                      "item/Title": "@{coalesce(items('Pour_element_reprise_Conventions')?['IdHNCS'], string(items('Pour_element_reprise_Conventions')?['ID']))}",
+                                      "item/Objet/Value": "Convention",
+                                      "item/Liste": "Conventions",
+                                      "item/ItemId": "@int(items('Pour_element_reprise_Conventions')?['ID'])",
+                                      "item/StatutAvant": "∅",
+                                      "item/StatutApres": "@{items('Pour_element_reprise_Conventions')?['Statut']?['Value']}",
+                                      "item/CodeTransition": "REPRISE",
+                                      "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                      "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                      "item/DateChangement": "@{utcNow()}",
+                                      "item/Origine/Value": "Flux",
+                                      "item/Resultat/Value": "Acceptée",
+                                      "item/Motif": "Reprise de l'existant",
+                                      "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                },
+                                "Compter_reprise_Conventions": {
+                                  "type": "IncrementVariable",
+                                  "inputs": {
+                                    "name": "NbReprises",
+                                    "value": 1
+                                  },
+                                  "runAfter": {
+                                    "Historiser_reprise_Conventions": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                }
+                              },
+                              "else": {
+                                "actions": {}
+                              },
+                              "runAfter": {}
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 1
+                            }
+                          },
+                          "runAfter": {
+                            "Elements_historises_Conventions": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Liste_presente_rep_Conventions": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Erreur_reprise_ComptesRendus": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Erreur_reprise_Conventions": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Erreur",
+                      "Liste": "Conventions",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'PA-00D : échec de l''écriture des entrées REPRISE (Conventions)'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {
+                    "Reprise_Conventions": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  }
+                },
+                "Reprise_Livrables": {
+                  "type": "Scope",
+                  "actions": {
+                    "Elements_reprise_Livrables": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Livrables",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Historique_reprise_Livrables": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Historique des statuts",
+                          "$filter": "Liste eq 'Livrables' and Resultat eq 'Acceptée'",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_reprise_Livrables": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Acceptees_reprise_Livrables": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Historique_reprise_Livrables')?['value']",
+                        "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+                      },
+                      "runAfter": {
+                        "Historique_reprise_Livrables": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Elements_historises_Livrables": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@body('Acceptees_reprise_Livrables')",
+                        "select": "@int(item()?['ItemId'])"
+                      },
+                      "runAfter": {
+                        "Acceptees_reprise_Livrables": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Pour_element_reprise_Livrables": {
+                      "type": "Foreach",
+                      "foreach": "@body('Elements_reprise_Livrables')?['value']",
+                      "actions": {
+                        "Si_sans_transition_acceptee_Livrables": {
+                          "type": "If",
+                          "expression": "@and(not(contains(body('Elements_historises_Livrables'), int(items('Pour_element_reprise_Livrables')?['ID']))), not(empty(items('Pour_element_reprise_Livrables')?['Statut']?['Value'])), less(ticks(items('Pour_element_reprise_Livrables')?['Created']), ticks(addMinutes(utcNow(), -30))))",
+                          "actions": {
+                            "Historiser_reprise_Livrables": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PostItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Historique des statuts",
+                                  "item/Title": "@{coalesce(items('Pour_element_reprise_Livrables')?['IdHNCS'], string(items('Pour_element_reprise_Livrables')?['ID']))}",
+                                  "item/Objet/Value": "Livrable",
+                                  "item/Liste": "Livrables",
+                                  "item/ItemId": "@int(items('Pour_element_reprise_Livrables')?['ID'])",
+                                  "item/StatutAvant": "∅",
+                                  "item/StatutApres": "@{items('Pour_element_reprise_Livrables')?['Statut']?['Value']}",
+                                  "item/CodeTransition": "REPRISE",
+                                  "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/DateChangement": "@{utcNow()}",
+                                  "item/Origine/Value": "Flux",
+                                  "item/Resultat/Value": "Acceptée",
+                                  "item/Motif": "Reprise de l'existant",
+                                  "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "Compter_reprise_Livrables": {
+                              "type": "IncrementVariable",
+                              "inputs": {
+                                "name": "NbReprises",
+                                "value": 1
+                              },
+                              "runAfter": {
+                                "Historiser_reprise_Livrables": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_historises_Livrables": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Erreur_reprise_Conventions": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Erreur_reprise_Livrables": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Erreur",
+                      "Liste": "Livrables",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'PA-00D : échec de l''écriture des entrées REPRISE (Livrables)'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {
+                    "Reprise_Livrables": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  }
+                },
+                "Reprise_SujetsRD": {
+                  "type": "Scope",
+                  "actions": {
+                    "Elements_reprise_SujetsRD": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Sujets R&D",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Historique_reprise_SujetsRD": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Historique des statuts",
+                          "$filter": "Liste eq 'SujetsRD' and Resultat eq 'Acceptée'",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_reprise_SujetsRD": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Acceptees_reprise_SujetsRD": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Historique_reprise_SujetsRD')?['value']",
+                        "where": "@not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))"
+                      },
+                      "runAfter": {
+                        "Historique_reprise_SujetsRD": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Elements_historises_SujetsRD": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@body('Acceptees_reprise_SujetsRD')",
+                        "select": "@int(item()?['ItemId'])"
+                      },
+                      "runAfter": {
+                        "Acceptees_reprise_SujetsRD": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Pour_element_reprise_SujetsRD": {
+                      "type": "Foreach",
+                      "foreach": "@body('Elements_reprise_SujetsRD')?['value']",
+                      "actions": {
+                        "Si_sans_transition_acceptee_SujetsRD": {
+                          "type": "If",
+                          "expression": "@and(not(contains(body('Elements_historises_SujetsRD'), int(items('Pour_element_reprise_SujetsRD')?['ID']))), not(empty(items('Pour_element_reprise_SujetsRD')?['Statut']?['Value'])), less(ticks(items('Pour_element_reprise_SujetsRD')?['Created']), ticks(addMinutes(utcNow(), -30))))",
+                          "actions": {
+                            "Historiser_reprise_SujetsRD": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PostItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Historique des statuts",
+                                  "item/Title": "@{coalesce(items('Pour_element_reprise_SujetsRD')?['IdHNCS'], string(items('Pour_element_reprise_SujetsRD')?['ID']))}",
+                                  "item/Objet/Value": "Sujet",
+                                  "item/Liste": "SujetsRD",
+                                  "item/ItemId": "@int(items('Pour_element_reprise_SujetsRD')?['ID'])",
+                                  "item/StatutAvant": "∅",
+                                  "item/StatutApres": "@{items('Pour_element_reprise_SujetsRD')?['Statut']?['Value']}",
+                                  "item/CodeTransition": "REPRISE",
+                                  "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                                  "item/DateChangement": "@{utcNow()}",
+                                  "item/Origine/Value": "Flux",
+                                  "item/Resultat/Value": "Acceptée",
+                                  "item/Motif": "Reprise de l'existant",
+                                  "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "Compter_reprise_SujetsRD": {
+                              "type": "IncrementVariable",
+                              "inputs": {
+                                "name": "NbReprises",
+                                "value": 1
+                              },
+                              "runAfter": {
+                                "Historiser_reprise_SujetsRD": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Elements_historises_SujetsRD": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Erreur_reprise_Livrables": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
+                "Erreur_reprise_SujetsRD": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-00D",
+                      "Niveau": "Erreur",
+                      "Liste": "SujetsRD",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'PA-00D : échec de l''écriture des entrées REPRISE (SujetsRD)'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {
+                    "Reprise_SujetsRD": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  }
+                },
+                "Si_reprises_ecrites": {
+                  "type": "If",
+                  "expression": "@greater(variables('NbReprises'), 0)",
+                  "actions": {
+                    "Journaliser_reprises": {
+                      "type": "Workflow",
+                      "inputs": {
+                        "host": {
+                          "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                        },
+                        "body": {
+                          "CodeFlux": "PA-00D",
+                          "Niveau": "Info",
+                          "Liste": "",
+                          "ItemId": "@{string(coalesce('', ''))}",
+                          "IdObjet": "@{coalesce('', '')}",
+                          "Message": "@{concat(string(variables('NbReprises')), ' entrée(s) REPRISE écrite(s) (reprise de l''existant)')}",
+                          "DetailErreur": "@{string(coalesce('', ''))}",
+                          "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "Erreur_reprise_SujetsRD": [
+                      "Succeeded",
+                      "Failed",
+                      "TimedOut",
+                      "Skipped"
+                    ]
+                  }
+                },
                 "Empreintes_Affectations": {
                   "type": "Scope",
                   "actions": {
@@ -2906,7 +4556,11 @@
                       }
                     }
                   },
-                  "runAfter": {}
+                  "runAfter": {
+                    "Si_reprises_ecrites": [
+                      "Succeeded"
+                    ]
+                  }
                 },
                 "Empreintes_Livrables": {
                   "type": "Scope",
@@ -3549,14 +5203,13 @@
               },
               "runAfter": {
                 "Lot2_actif": [
-                  "Succeeded",
-                  "Failed"
+                  "Succeeded"
                 ]
               }
             }
           },
           "runAfter": {
-            "Initialiser_NbEmpreintes": [
+            "Initialiser_NbReprises": [
               "Succeeded"
             ]
           }

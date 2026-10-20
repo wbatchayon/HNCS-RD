@@ -261,12 +261,23 @@ HIST = "HistoriqueStatuts"
 
 def ref_status(s, lst, id_expr, tag):
     """Statut validé de référence (P-09, § 8.1) : dernier `StatutApres` accepté dans `HistoriqueStatuts` pour l'élément
-    (Liste + ItemId ; entrées hors statut `REF-PRINCIPAL` exclues) ; à défaut d'historique : `∅`. Jamais `StatutPrecedent`."""
+    (Liste + ItemId ; les entrées REPRISE comptent, les entrées hors statut `REF-PRINCIPAL` sont exclues) ; à défaut : `∅`.
+    Jamais `StatutPrecedent`."""
     h = get_items(s, f"Historique_{tag}", HIST, filter_=f"Liste eq '{lst}' and ItemId eq @{{{id_expr}}} and Resultat eq {odata(MODEL.enums['RESULTAT_TRANSITION'][0])}",
                   fields=("Liste", "ItemId", "Resultat", "StatutApres", "CodeTransition", "ID"), order="ID desc", top=100)
     fl = filt(s, f"Transitions_acceptees_{tag}", f"body('{h}')?['value']", "not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))")
     c = compose(s, f"Statut_valide_{tag}", at(f"if(empty(body('{fl}')), '∅', coalesce(first(body('{fl}'))?['StatutApres'], '∅'))"))
     return f"outputs('{c}')"
+
+
+def write_reprise(s, lst, objet, id_expr, idobj_expr, statut_expr, tag=""):
+    """Entrée HistoriqueStatuts de reprise de l'existant (6.1, point 3 ter) : CodeTransition REPRISE, StatutAvant ∅,
+    StatutApres = statut courant, Origine Flux, Résultat Acceptée, motif « Reprise de l'existant »."""
+    return post_item(s, f"Historiser_reprise{tag}", HIST, {
+        "Title": ip(idobj_expr), "Objet": objet, "Liste": lst, "ItemId": at(f"int({id_expr})"), "StatutAvant": "∅",
+        "StatutApres": ip(statut_expr), "CodeTransition": "REPRISE", "Acteur": ip(SVC), "ActeurEmail": ip(SVC),
+        "DateChangement": ip("utcNow()"), "Origine": "Flux", "Resultat": MODEL.enums["RESULTAT_TRANSITION"][0],
+        "Motif": "Reprise de l'existant", "FluxRunId": ip("workflow()?['run']?['name']")})
 
 
 def flux_columns(lst):
@@ -343,7 +354,15 @@ def transition_body(s: Seq, flow, lst, objet, *, effects=None, pre=None, post=No
          lambda y: terminate(y, "Fin_evenement_obsolete"))
     ID = f"{I}?['ID']"
     idobj = ensure_idhncs(s, lst, I, ID, "el") if (with_id and MODEL.obj(lst)["prefix"]) else f"string({ID})"
-    avant = ref_status(s, lst, ID, "el")
+    hist = ref_status(s, lst, ID, "el")
+    # Reprise de l'existant : sans transition acceptée, l'élément n'est une création que s'il est à sa première version
+    # (Created = Modified de l'événement déclencheur) ; sinon son statut courant devient le statut de référence (entrée REPRISE).
+    creation = "equals(string(triggerOutputs()?['body/Created']), string(triggerOutputs()?['body/Modified']))"
+    reprise = f"and(equals({hist}, '∅'), not({creation}), not(empty({I}?['Statut']?['Value'])))"
+    if restore:  # flux propriétaire de la liste : écrit l'entrée REPRISE (une seule entrée par élément)
+        cond(s, "Si_reprise_existant", reprise, lambda y: write_reprise(y, lst, objet, ID, idobj, f"{I}?['Statut']?['Value']"))
+    ref = compose(s, "Statut_reference", at(f"if({reprise}, {I}?['Statut']?['Value'], {hist})"))
+    avant = f"outputs('{ref}')"
     env = Env(I=I, ID=ID, IDOBJ=idobj, AVANT=avant, APRES=f"{I}?['Statut']?['Value']",
               ACTEUR="toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))", LIEN=item_link(lst, ID), LST=lst)
     if pre:

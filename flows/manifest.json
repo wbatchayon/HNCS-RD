@@ -226,6 +226,7 @@
       "DomainesCibles",
       "Entretiens",
       "Etablissements",
+      "HistoriqueStatuts",
       "InteractionsEcoles",
       "Livrables",
       "Mobilisations",
@@ -350,7 +351,21 @@
         "Title"
       ],
       "HistoriqueStatuts": [
-        "Origine"
+        "Acteur",
+        "ActeurEmail",
+        "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
+        "ID",
+        "ItemId",
+        "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
+        "Resultat",
+        "StatutApres",
+        "StatutAvant",
+        "Title"
       ],
       "InteractionsEcoles": [
         "Created",
@@ -831,6 +846,7 @@
     "listsWritten": [
       "Administration",
       "Candidatures",
+      "HistoriqueStatuts",
       "Recrutement"
     ],
     "fieldsUsed": {
@@ -877,12 +893,21 @@
         "Statut"
       ],
       "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
         "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
         "ID",
         "ItemId",
         "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
         "Resultat",
-        "StatutApres"
+        "StatutApres",
+        "StatutAvant",
+        "Title"
       ],
       "Parametres": [
         "Categorie",
@@ -1404,6 +1429,7 @@
       "ActionsIntegration",
       "Administration",
       "Alternants",
+      "HistoriqueStatuts",
       "SuiviAlternants"
     ],
     "fieldsUsed": {
@@ -1462,12 +1488,21 @@
         "ResponsableHNCS"
       ],
       "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
         "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
         "ID",
         "ItemId",
         "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
         "Resultat",
-        "StatutApres"
+        "StatutApres",
+        "StatutAvant",
+        "Title"
       ],
       "Livrables": [
         "Affectation",
@@ -1942,6 +1977,7 @@
     ],
     "listsWritten": [
       "ActionsIntegration",
+      "HistoriqueStatuts",
       "Livrables",
       "LivrablesRD"
     ],
@@ -1967,12 +2003,21 @@
         "Sujet"
       ],
       "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
         "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
         "ID",
         "ItemId",
         "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
         "Resultat",
-        "StatutApres"
+        "StatutApres",
+        "StatutAvant",
+        "Title"
       ],
       "Livrables": [
         "Affectation",
@@ -2153,7 +2198,8 @@
       "Referents"
     ],
     "listsWritten": [
-      "ComptesRendus"
+      "ComptesRendus",
+      "HistoriqueStatuts"
     ],
     "fieldsUsed": {
       "Affectations": [
@@ -2192,12 +2238,21 @@
         "Valideur"
       ],
       "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
         "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
         "ID",
         "ItemId",
         "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
         "Resultat",
-        "StatutApres"
+        "StatutApres",
+        "StatutAvant",
+        "Title"
       ],
       "Parametres": [
         "Categorie",
@@ -2744,7 +2799,8 @@
     ],
     "listsWritten": [
       "Conventions",
-      "Etablissements"
+      "Etablissements",
+      "HistoriqueStatuts"
     ],
     "fieldsUsed": {
       "Conventions": [
@@ -2771,12 +2827,21 @@
         "Title"
       ],
       "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
         "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
         "ID",
         "ItemId",
         "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
         "Resultat",
-        "StatutApres"
+        "StatutApres",
+        "StatutAvant",
+        "Title"
       ],
       "Parametres": [
         "Categorie",
@@ -3037,7 +3102,8 @@
       "Parametres"
     ],
     "listsWritten": [
-      "CommunicationsRD"
+      "CommunicationsRD",
+      "HistoriqueStatuts"
     ],
     "fieldsUsed": {
       "CommunicationsRD": [
@@ -3059,12 +3125,21 @@
         "ValidationInterne"
       ],
       "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
         "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
         "ID",
         "ItemId",
         "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
         "Resultat",
-        "StatutApres"
+        "StatutApres",
+        "StatutAvant",
+        "Title"
       ],
       "Parametres": [
         "Categorie",
@@ -3170,16 +3245,26 @@
       "SujetsRD"
     ],
     "listsWritten": [
+      "HistoriqueStatuts",
       "SujetsRD"
     ],
     "fieldsUsed": {
       "HistoriqueStatuts": [
+        "Acteur",
+        "ActeurEmail",
         "CodeTransition",
+        "DateChangement",
+        "FluxRunId",
         "ID",
         "ItemId",
         "Liste",
+        "Motif",
+        "Objet",
+        "Origine",
         "Resultat",
-        "StatutApres"
+        "StatutApres",
+        "StatutAvant",
+        "Title"
       ],
       "Parametres": [
         "Categorie",

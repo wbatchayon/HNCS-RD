@@ -23,7 +23,7 @@ Rapprocher chaque jour les statuts de l'historique validé (filet de sécurité)
 
 ## Traitement pas à pas
 
-1. Rapprochement des statuts : pour chaque élément dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` (entrées `REF-PRINCIPAL` exclues), sans modification depuis 30 minutes (aucune exécution en cours), rétablissement par PA-00B (refus, Origine Flux, motif « Rapprochement quotidien », N-90 à l'auteur de la dernière modification) et `JournalFlux` Avertissement. Les éléments sans aucune transition acceptée sont ignorés. Une portée par liste ; les listes du lot 3 ne sont traitées que si elles sont déployées.
+1. Rapprochement des statuts : pour chaque élément dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` (entrées `REF-PRINCIPAL` exclues), sans exécution en cours (éléments modifiés depuis moins de 30 minutes ignorés), rétablissement par PA-00B (refus, Origine Flux, motif « Rapprochement quotidien », N-90 à l'auteur de la dernière modification) et `JournalFlux` Avertissement. Les éléments sans aucune transition acceptée sont laissés à PA-00D (entrée `REPRISE`, [6.1](../../spec.md#61-règles-générales), règle 3 ter). Une portée par liste ; les listes du lot 3 ne sont traitées que si elles sont déployées.
 2. Lister les erreurs à reprendre.
 3. Si la liste n'est pas vide, ou si l'étape 1 a rétabli des statuts : N-98 (synthèse avec liens d'exécution et tableau des rapprochements) au support (`hncs_SupportEmail`) et aux membres de G_PROP.
 

@@ -765,9 +765,67 @@
                 ]
               }
             },
+            "Si_reprise_existant": {
+              "type": "If",
+              "expression": "@and(equals(outputs('Statut_valide_el'), '∅'), not(equals(string(triggerOutputs()?['body/Created']), string(triggerOutputs()?['body/Modified']))), not(empty(body('Lire_element')?['Statut']?['Value'])))",
+              "actions": {
+                "Historiser_reprise": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PostItem"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Historique des statuts",
+                      "item/Title": "@{outputs('IdObjet_el')}",
+                      "item/Objet/Value": "Candidature",
+                      "item/Liste": "Candidatures",
+                      "item/ItemId": "@int(body('Lire_element')?['ID'])",
+                      "item/StatutAvant": "∅",
+                      "item/StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
+                      "item/CodeTransition": "REPRISE",
+                      "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                      "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                      "item/DateChangement": "@{utcNow()}",
+                      "item/Origine/Value": "Flux",
+                      "item/Resultat/Value": "Acceptée",
+                      "item/Motif": "Reprise de l'existant",
+                      "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Statut_valide_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Statut_reference": {
+              "type": "Compose",
+              "inputs": "@if(and(equals(outputs('Statut_valide_el'), '∅'), not(equals(string(triggerOutputs()?['body/Created']), string(triggerOutputs()?['body/Modified']))), not(empty(body('Lire_element')?['Statut']?['Value']))), body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))",
+              "runAfter": {
+                "Si_reprise_existant": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Si_aucune_transition_a_traiter": {
               "type": "If",
-              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))), contains(createArray('À analyser', 'En cours d''analyse', 'Présélectionnée', 'Transmise à l''administration', 'Non retenue', 'Clôturée'), body('Lire_element')?['Statut']?['Value'])))",
+              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_reference'))), contains(createArray('À analyser', 'En cours d''analyse', 'Présélectionnée', 'Transmise à l''administration', 'Non retenue', 'Clôturée'), body('Lire_element')?['Statut']?['Value'])))",
               "actions": {
                 "Si_preselectionnee": {
                   "type": "If",
@@ -969,7 +1027,7 @@
                 "actions": {}
               },
               "runAfter": {
-                "Statut_valide_el": [
+                "Statut_reference": [
                   "Succeeded"
                 ]
               }
@@ -982,7 +1040,7 @@
                 },
                 "body": {
                   "Objet": "Candidature",
-                  "StatutAvant": "@{outputs('Statut_valide_el')}",
+                  "StatutAvant": "@{outputs('Statut_reference')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
                   "ItemAuteurEmail": "@{coalesce('', '')}",
@@ -1139,7 +1197,7 @@
                       "ItemId": "@int(body('Lire_element')?['ID'])",
                       "IdObjet": "@{outputs('IdObjet_el')}",
                       "Objet": "Candidature",
-                      "StatutAvant": "@{outputs('Statut_valide_el')}",
+                      "StatutAvant": "@{outputs('Statut_reference')}",
                       "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                       "Accepte": "@false",
                       "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
@@ -1181,7 +1239,7 @@
                   "actions": {
                     "Si_qualification_aa": {
                       "type": "If",
-                      "expression": "@equals(outputs('Statut_valide_el'), 'Reçue')",
+                      "expression": "@equals(outputs('Statut_reference'), 'Reçue')",
                       "actions": {
                         "Doublons_aa": {
                           "type": "OpenApiConnection",
@@ -1257,7 +1315,7 @@
                     },
                     "Si_reouverture": {
                       "type": "If",
-                      "expression": "@contains(createArray('Non retenue', 'Clôturée'), outputs('Statut_valide_el'))",
+                      "expression": "@contains(createArray('Non retenue', 'Clôturée'), outputs('Statut_reference'))",
                       "actions": {
                         "Vider_DateCloture": {
                           "type": "OpenApiConnection",
@@ -1471,7 +1529,7 @@
                   "actions": {
                     "Si_qualification_ec": {
                       "type": "If",
-                      "expression": "@equals(outputs('Statut_valide_el'), 'Reçue')",
+                      "expression": "@equals(outputs('Statut_reference'), 'Reçue')",
                       "actions": {
                         "Doublons_ec": {
                           "type": "OpenApiConnection",
@@ -2302,7 +2360,7 @@
                   "actions": {
                     "Si_ecartee_a_l_analyse": {
                       "type": "If",
-                      "expression": "@equals(outputs('Statut_valide_el'), 'En cours d''analyse')",
+                      "expression": "@equals(outputs('Statut_reference'), 'En cours d''analyse')",
                       "actions": {
                         "Decision_ecartee": {
                           "type": "OpenApiConnection",
@@ -2350,8 +2408,8 @@
                           "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
                           "table": "Candidatures",
                           "id": "@body('Lire_element')?['ID']",
-                          "item/DateDecisionPreselection": "@if(and(equals(outputs('Statut_valide_el'), 'En cours d''analyse'), empty(body('Lire_element')?['DateDecisionPreselection'])), utcNow(), body('Lire_element')?['DateDecisionPreselection'])",
-                          "item/DateDecisionFinale": "@if(and(contains(createArray('Transmise à l''administration', 'Entretien planifié', 'Entretien réalisé', 'En attente de décision'), outputs('Statut_valide_el')), empty(body('Lire_element')?['DateDecisionFinale'])), utcNow(), body('Lire_element')?['DateDecisionFinale'])",
+                          "item/DateDecisionPreselection": "@if(and(equals(outputs('Statut_reference'), 'En cours d''analyse'), empty(body('Lire_element')?['DateDecisionPreselection'])), utcNow(), body('Lire_element')?['DateDecisionPreselection'])",
+                          "item/DateDecisionFinale": "@if(and(contains(createArray('Transmise à l''administration', 'Entretien planifié', 'Entretien réalisé', 'En attente de décision'), outputs('Statut_reference')), empty(body('Lire_element')?['DateDecisionFinale'])), utcNow(), body('Lire_element')?['DateDecisionFinale'])",
                           "item/DateCloture": "@coalesce(body('Lire_element')?['DateCloture'], utcNow())",
                           "item/Canal/Value": "@{body('Lire_element')?['Canal']?['Value']}",
                           "item/ModeReception/Value": "@{body('Lire_element')?['ModeReception']?['Value']}",
@@ -2375,7 +2433,7 @@
                     "Dest_N06": {
                       "type": "Select",
                       "inputs": {
-                        "from": "@split(concat(coalesce(join(body('Emails_G_RD'), ';'), ''), ';', coalesce(if(contains(createArray('Transmise à l''administration', 'Entretien planifié', 'Entretien réalisé', 'En attente de décision', 'Retenue', 'Formalités en cours'), outputs('Statut_valide_el')), coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), '')), ';')",
+                        "from": "@split(concat(coalesce(join(body('Emails_G_RD'), ';'), ''), ';', coalesce(if(contains(createArray('Transmise à l''administration', 'Entretien planifié', 'Entretien réalisé', 'En attente de décision', 'Retenue', 'Formalités en cours'), outputs('Statut_reference')), coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), '')), ';')",
                         "select": "@toLower(trim(item()))"
                       },
                       "runAfter": {
@@ -2694,7 +2752,7 @@
                     "Dest_N06_2": {
                       "type": "Select",
                       "inputs": {
-                        "from": "@split(concat(coalesce(join(body('Emails_G_RD'), ';'), ''), ';', coalesce(if(contains(createArray('Transmise à l''administration', 'Entretien planifié', 'Entretien réalisé', 'En attente de décision', 'Retenue', 'Formalités en cours'), outputs('Statut_valide_el')), coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), '')), ';')",
+                        "from": "@split(concat(coalesce(join(body('Emails_G_RD'), ';'), ''), ';', coalesce(if(contains(createArray('Transmise à l''administration', 'Entretien planifié', 'Entretien réalisé', 'En attente de décision', 'Retenue', 'Formalités en cours'), outputs('Statut_reference')), coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), '')), ';')",
                         "select": "@toLower(trim(item()))"
                       },
                       "runAfter": {
@@ -2879,7 +2937,7 @@
                   "ItemId": "@int(body('Lire_element')?['ID'])",
                   "IdObjet": "@{outputs('IdObjet_el')}",
                   "Objet": "Candidature",
-                  "StatutAvant": "@{outputs('Statut_valide_el')}",
+                  "StatutAvant": "@{outputs('Statut_reference')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "Accepte": "@true",
                   "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",

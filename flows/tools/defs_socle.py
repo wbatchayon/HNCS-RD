@@ -158,9 +158,13 @@ def pa00b():
                 sp_http(r, "Retablir_statut", "POST", item_uri, body=ip(f"outputs('{c}')"), headers=verbose)
 
             def recycle(r):
-                # § 6.1-3 bis : refus d'une création → corbeille du site (récupérable 93 jours), jamais de suppression définitive
-                sp_http(r, "Envoyer_a_la_corbeille", "POST",
-                        ip(f"concat({base_uri}, ''')/items(', string({T}?['ItemId']), ')/recycle()')"))
+                # § 6.1-3 bis : refus d'une création → corbeille du site (récupérable 93 jours), jamais de suppression définitive.
+                # § 6.1-3 ter : un élément qui a plus d'une version n'est jamais une création, il n'est jamais envoyé à la corbeille.
+                vs = sp_http(r, "Versions_avant_corbeille", "GET",
+                             ip(f"concat({base_uri}, ''')/items(', string({T}?['ItemId']), ')/versions?$select=VersionLabel&$top=2')"))
+                cond(r, "Si_premiere_version", f"lessOrEquals(length(coalesce(body('{vs}')?['value'], createArray())), 1)",
+                     lambda w: sp_http(w, "Envoyer_a_la_corbeille", "POST",
+                                       ip(f"concat({base_uri}, ''')/items(', string({T}?['ItemId']), ')/recycle()')")))
             cond(n, "Si_creation_refusee", creation, recycle, restore)
             notify(n, "N-90", [f"{T}?['ActeurEmail']"], {
                 "IdHNCS": f"{T}?['IdObjet']", "StatutDemande": f"{T}?['StatutApres']", "Motif": f"coalesce({T}?['Motif'], '')",
@@ -188,7 +192,7 @@ def pa00b():
         entrees="`Liste`, `ItemId`, `IdObjet`, `Objet`, `StatutAvant`, `StatutApres`, `Accepte`, `CodeTransition`, `ActeurEmail`, `Origine`, `Motif`, `RunId`.",
         etapes=["Lire les paramètres (boîte R&D, notifications Teams).",
                 "Acceptée : `StatutPrecedent` = `StatutApres` (copie de commodité pour les vues), `DateStatut` = maintenant (REST `MERGE`, liste désignée par son nom interne via `GetList`) ; l'entrée d'historique créée devient le statut validé de référence.",
-                "Refusée : statut validé = dernier `StatutApres` accepté de `HistoriqueStatuts` pour l'élément (entrées `REF-PRINCIPAL` exclues ; à défaut, `StatutAvant` reçu) ; `Statut` rétabli à cette valeur (et `StatutPrecedent`, simple copie), jamais à partir de `StatutPrecedent` ; puis N-90 à l'acteur. Refus d'une création (statut validé `∅`, § 6.1-3 bis) : l'élément est envoyé à la corbeille du site (`recycle`, récupérable 93 jours, jamais supprimé définitivement), puis N-90.",
+                "Refusée : statut validé = dernier `StatutApres` accepté de `HistoriqueStatuts` pour l'élément (entrées `REF-PRINCIPAL` exclues ; à défaut, `StatutAvant` reçu) ; `Statut` rétabli à cette valeur (et `StatutPrecedent`, simple copie), jamais à partir de `StatutPrecedent` ; puis N-90 à l'acteur. Refus d'une création (statut validé `∅`, § 6.1-3 bis) : l'élément est envoyé à la corbeille du site (`recycle`, récupérable 93 jours, jamais supprimé définitivement), puis N-90 ; un élément qui a plus d'une version n'est jamais envoyé à la corbeille (§ 6.1-3 ter).",
                 "Dans les deux cas : création d'un élément `HistoriqueStatuts` (`Acceptée` ou `Refusée et annulée`)."],
         sorties="`Ok` = true.",
         erreurs="Toute erreur d'écriture termine le flux en échec : l'action d'appel du parent échoue et le parent passe en portée `Erreur` (PA-00C).",
@@ -266,13 +270,14 @@ def pa00d():
     def empreintes(s):
         """H-55 : à partir du lot 2, initialiser les empreintes vides (§ 6.5) à partir des valeurs courantes, sans rien rétablir.
 
-        Garde « lot 2 actif » : au moins une transition historisée par un flux (Origine = Flux, écrite par PA-00B).
+        Garde « lot 2 actif » : paramètre Fonction.Lot2Actif = Oui (jamais déduit d'un autre indice).
         Chaque liste est traitée dans sa propre portée ; une colonne ou une liste absente est ignorée sans erreur.
         """
         from gen_common import CR_FP, LIV_FP, emp_action, fp_compute
         from defs_production import ev_item
-        g = get_items(s, "Lot2_actif", "HistoriqueStatuts", filter_="Origine eq 'Flux'", fields=("Origine",), top=1,
-                      after={s.last: ["Succeeded", "Skipped", "Failed"]})
+        # Garde « lot 2 activé » : paramètre Fonction.Lot2Actif = Oui, jamais déduit d'un autre indice (contrat PA-00D)
+        g = compose(s, "Lot2_actif", at(f"equals({P('Fonction.Lot2Actif', 'Non')}, 'Oui')"),
+                    after={s.last: ["Succeeded", "Skipped", "Failed"]})
         specs = [
             ("Affectations", "EmpreinteVerrou",
              "EmpreinteVerrou eq null and (Statut eq 'Active' or Statut eq 'À risque' or Statut eq 'Bloquée' "
@@ -318,8 +323,51 @@ def pa00d():
                  lambda w: log(w, "Journaliser_empreintes", "Info",
                                "concat(string(variables('NbEmpreintes')), ' empreinte(s) initialisée(s) à partir des valeurs courantes (H-55)')"),
                  after={prevp: ["Succeeded", "Failed", "TimedOut", "Skipped"]})
-        cond(s, "Si_lot2_actif", f"greater(length(coalesce(body('{g}')?['value'], createArray())), 0)", gated,
-             after={g: ["Succeeded", "Failed"]})
+        def reprise_puis_empreintes(y):
+            reprises(y)
+            gated(y)
+        cond(s, "Si_lot2_actif", f"equals(string(outputs('{g}')), 'True')", reprise_puis_empreintes)
+
+    def reprises(y):
+        """6.1, point 3 ter : chaque élément d'une liste à statut contrôlé sans transition acceptée reçoit son entrée REPRISE.
+        Les éléments créés depuis moins de 30 minutes sont laissés au flux de création de la liste."""
+        from gen_common import write_reprise
+        objets = {p["list"]: p["object"] for p in MODEL.partition}
+        prevp = None
+        for lst, objet in sorted(objets.items()):
+            def per_list(ls, lst=lst, objet=objet):
+                def work(w):
+                    items = get_items(w, f"Elements_reprise_{lst}", lst, fields=("Statut", "IdHNCS", "ID", "Created"))
+                    hist = get_items(w, f"Historique_reprise_{lst}", "HistoriqueStatuts",
+                                     filter_=f"Liste eq '{lst}' and Resultat eq {q(MODEL.enums['RESULTAT_TRANSITION'][0])}",
+                                     fields=("Liste", "ItemId", "Resultat", "CodeTransition", "ID"))
+                    acc = filt(w, f"Acceptees_reprise_{lst}", f"body('{hist}')?['value']",
+                               "not(equals(coalesce(item()?['CodeTransition'], ''), 'REF-PRINCIPAL'))")
+                    ids = select(w, f"Elements_historises_{lst}", f"body('{acc}')", at("int(item()?['ItemId'])"))
+
+                    def each(e, loop):
+                        it = f"items('{loop}')"
+                        idobj = f"coalesce({it}?['IdHNCS'], string({it}?['ID']))"
+
+                        def mk(g2):
+                            write_reprise(g2, lst, objet, f"{it}?['ID']", idobj, f"{it}?['Statut']?['Value']", tag=f"_{lst}")
+                            g2.add(f"Compter_reprise_{lst}", {"type": "IncrementVariable", "inputs": {"name": "NbReprises", "value": 1}})
+                        cond(e, f"Si_sans_transition_acceptee_{lst}",
+                             (f"and(not(contains(body('{ids}'), int({it}?['ID']))), not(empty({it}?['Statut']?['Value'])), "
+                              f"less(ticks({it}?['Created']), ticks(addMinutes(utcNow(), -30))))"), mk)
+                    foreach(w, f"Pour_element_reprise_{lst}", f"body('{items}')?['value']", each)
+                if MODEL.obj(lst)["lot"] >= 3:
+                    cond(ls, f"Si_liste_deployee_reprise_{lst}", list_exists(ls, f"rep_{lst}", lst), work)
+                else:
+                    work(ls)
+            after = None if prevp is None else {prevp: ["Succeeded", "Failed", "TimedOut", "Skipped"]}
+            sc = scope(y, f"Reprise_{lst}", per_list, after=after)
+            prevp = log(y, f"Erreur_reprise_{lst}", "Erreur", q(f"PA-00D : échec de l'écriture des entrées REPRISE ({lst})"), lst,
+                        after={sc: ["Failed", "TimedOut"]})
+        cond(y, "Si_reprises_ecrites", "greater(variables('NbReprises'), 0)",
+             lambda w: log(w, "Journaliser_reprises", "Info",
+                           "concat(string(variables('NbReprises')), ' entrée(s) REPRISE écrite(s) (reprise de l''existant)')"),
+             after={prevp: ["Succeeded", "Failed", "TimedOut", "Skipped"]})
 
     def body(s):
         prev = None
@@ -353,7 +401,7 @@ def pa00d():
              lambda y: log(y, "Journaliser_nombre", "Info", "concat(string(variables('NbIdentifiants')), ' identifiant(s) IdHNCS attribué(s)')"),
              after={prev: ["Succeeded", "Skipped", "Failed"]})
         empreintes(s)
-    standard_shell(f, body, variables=[("NbIdentifiants", "integer", 0), ("NbEmpreintes", "integer", 0)])
+    standard_shell(f, body, variables=[("NbIdentifiants", "integer", 0), ("NbEmpreintes", "integer", 0), ("NbReprises", "integer", 0)])
     f.doc = dict(
         objectif="Filet de sécurité : attribuer `IdHNCS` aux éléments qui n'en ont pas (listes sans flux de création, créations hors flux) et, à partir du lot 2, initialiser les empreintes vides (§ 6.5, H-55).",
         entrees="Toutes les listes ayant un préfixe d'identifiant (§ 4.3) ; les listes des lots ≥ 3 ne sont traitées que si elles sont déployées.",
@@ -361,12 +409,15 @@ def pa00d():
                 "`IdHNCS` = `{PREFIXE}-{année de Created, heure de Paris}-{ID sur 4 chiffres}` ; Pôles : `POL-{CodePole}`.",
                 "Une portée par liste : l'échec d'une liste est journalisé (PA-00C, Erreur) sans bloquer les autres.",
                 "Nombre d'identifiants attribués → `JournalFlux` niveau Info.",
-                "À partir du lot 2 (au moins une transition historisée par un flux, Origine = Flux) : empreintes vides initialisées à partir des valeurs courantes, sans rien rétablir : `EmpreinteVerrou` des affectations déjà validées (actives ou au-delà), `EmpreinteRevue` des livrables et comptes rendus, `EmpreinteAction`, `EmpreinteReferent` (référent renseigné), `EmpreinteDecision` (décideur déjà tracé, H-55) ; une portée par liste, liste ou colonne absente ignorée sans erreur ; nombre initialisé → `JournalFlux` Info."],
+                "À partir du lot 2 (`Fonction.Lot2Actif` = Oui, jamais déduit d'un autre indice) : reprise de l'existant (§ 6.1-3 ter) : chaque élément d'une liste à statut contrôlé sans transition acceptée dans `HistoriqueStatuts` (entrées `REF-PRINCIPAL` exclues), créé depuis plus de 30 minutes, reçoit une entrée `REPRISE` (`StatutAvant` = `∅`, `StatutApres` = statut courant, Origine Flux, Acceptée, motif « Reprise de l'existant ») ; nombre écrit → `JournalFlux` Info.",
+                "Puis empreintes vides initialisées à partir des valeurs courantes, sans rien rétablir : `EmpreinteVerrou` des affectations déjà validées (actives ou au-delà), `EmpreinteRevue` des livrables et comptes rendus, `EmpreinteAction`, `EmpreinteReferent` (référent renseigné), `EmpreinteDecision` (décideur déjà tracé, H-55) ; une portée par liste, liste ou colonne absente ignorée sans erreur ; nombre initialisé → `JournalFlux` Info."],
         sorties="`IdHNCS` renseigné.",
         erreurs="PA-00C par liste en échec ; rattrapage automatique au passage suivant.",
         decision="Sans objet.",
-        tests=["Élément créé sans identifiant → identifiant au format attendu en moins d'une heure.", "Pôle P3 → `POL-P3`.",
-               "Liste de lot 3 absente : aucune erreur.", "Lot 1 seul (aucun historique Origine = Flux) : aucune empreinte écrite.",
+        tests=["Procédure d'installation du lot 2 : activer PA-00A, PA-00B, PA-00C et PA-00D, passer `Fonction.Lot2Actif` à Oui, **exécuter PA-00D manuellement** (« Exécuter »), vérifier les entrées `REPRISE`, puis seulement activer les flux des listes (H-57).",
+               "Élément créé sans identifiant → identifiant au format attendu en moins d'une heure.", "Pôle P3 → `POL-P3`.",
+               "Liste de lot 3 absente : aucune erreur.", "`Fonction.Lot2Actif` = Non (lot 1) : aucune entrée REPRISE ni empreinte écrite, même si l'historique contient des transitions.",
+               "Lot 2 : un livrable saisi au lot 1 sans historique reçoit une entrée REPRISE à son statut courant ; un second passage n'écrit rien.",
                "Livrable importé sans empreinte → `EmpreinteRevue` au format § 6.5 dans l'heure, aucune valeur rétablie."])
     return f
 
@@ -450,7 +501,7 @@ def pa00e():
     f.doc = dict(
         objectif="Rapprocher chaque jour les statuts de l'historique validé (filet de sécurité) et rappeler les erreurs de flux non reprises.",
         entrees="Listes à statut contrôlé (§ 8.2) et `HistoriqueStatuts` ; `JournalFlux` : Niveau = Erreur et `StatutReprise` = « À reprendre ».",
-        etapes=["Rapprochement des statuts : pour chaque élément dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` (entrées `REF-PRINCIPAL` exclues), sans modification depuis 30 minutes (aucune exécution en cours), rétablissement par PA-00B (refus, Origine Flux, motif « Rapprochement quotidien », N-90 à l'auteur de la dernière modification) et `JournalFlux` Avertissement. Les éléments sans aucune transition acceptée sont ignorés. Une portée par liste ; les listes du lot 3 ne sont traitées que si elles sont déployées.",
+        etapes=["Rapprochement des statuts : pour chaque élément dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` (entrées `REF-PRINCIPAL` exclues), sans exécution en cours (éléments modifiés depuis moins de 30 minutes ignorés), rétablissement par PA-00B (refus, Origine Flux, motif « Rapprochement quotidien », N-90 à l'auteur de la dernière modification) et `JournalFlux` Avertissement. Les éléments sans aucune transition acceptée sont laissés à PA-00D (entrée `REPRISE`, § 6.1-3 ter). Une portée par liste ; les listes du lot 3 ne sont traitées que si elles sont déployées.",
                 "Lister les erreurs à reprendre.",
                 "Si la liste n'est pas vide, ou si l'étape 1 a rétabli des statuts : N-98 (synthèse avec liens d'exécution et tableau des rapprochements) au support (`hncs_SupportEmail`) et aux membres de G_PROP."],
         sorties="Statuts rétablis, historique, courriel de synthèse.", erreurs="Socle (PA-00C) ; échec d'une liste journalisé sans bloquer les autres.",

@@ -769,6 +769,64 @@
                 ]
               }
             },
+            "Si_reprise_existant": {
+              "type": "If",
+              "expression": "@and(equals(outputs('Statut_valide_el'), '∅'), not(equals(string(triggerOutputs()?['body/Created']), string(triggerOutputs()?['body/Modified']))), not(empty(body('Lire_element')?['Statut']?['Value'])))",
+              "actions": {
+                "Historiser_reprise": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PostItem"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Historique des statuts",
+                      "item/Title": "@{outputs('IdObjet_el')}",
+                      "item/Objet/Value": "CompteRendu",
+                      "item/Liste": "ComptesRendus",
+                      "item/ItemId": "@int(body('Lire_element')?['ID'])",
+                      "item/StatutAvant": "∅",
+                      "item/StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
+                      "item/CodeTransition": "REPRISE",
+                      "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                      "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                      "item/DateChangement": "@{utcNow()}",
+                      "item/Origine/Value": "Flux",
+                      "item/Resultat/Value": "Acceptée",
+                      "item/Motif": "Reprise de l'existant",
+                      "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Statut_valide_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Statut_reference": {
+              "type": "Compose",
+              "inputs": "@if(and(equals(outputs('Statut_valide_el'), '∅'), not(equals(string(triggerOutputs()?['body/Created']), string(triggerOutputs()?['body/Modified']))), not(empty(body('Lire_element')?['Statut']?['Value']))), body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))",
+              "runAfter": {
+                "Si_reprise_existant": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Affectation_CR": {
               "type": "OpenApiConnection",
               "inputs": {
@@ -791,7 +849,7 @@
                 }
               },
               "runAfter": {
-                "Statut_valide_el": [
+                "Statut_reference": [
                   "Succeeded"
                 ]
               }
@@ -1119,7 +1177,7 @@
             },
             "Si_creation": {
               "type": "If",
-              "expression": "@and(equals(outputs('Statut_valide_el'), '∅'), equals(body('Lire_element')?['Statut']?['Value'], 'Attendu'))",
+              "expression": "@and(equals(outputs('Statut_reference'), '∅'), equals(body('Lire_element')?['Statut']?['Value'], 'Attendu'))",
               "actions": {
                 "Effets_creation": {
                   "type": "OpenApiConnection",
@@ -1335,7 +1393,7 @@
             },
             "Si_aucune_transition_a_traiter": {
               "type": "If",
-              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))), contains(createArray('Attendu', 'En rédaction', 'Remis', 'À compléter', 'Validé', 'Non remis'), body('Lire_element')?['Statut']?['Value'])))",
+              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_reference'))), contains(createArray('Attendu', 'En rédaction', 'Remis', 'À compléter', 'Validé', 'Non remis'), body('Lire_element')?['Statut']?['Value'])))",
               "actions": {
                 "Relire_pour_empreinte_fin": {
                   "type": "OpenApiConnection",
@@ -1451,7 +1509,7 @@
                 },
                 "body": {
                   "Objet": "CompteRendu",
-                  "StatutAvant": "@{outputs('Statut_valide_el')}",
+                  "StatutAvant": "@{outputs('Statut_reference')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
                   "ItemAuteurEmail": "@{coalesce(first(body('Alternant_CR')?['value'])?['CompteM365']?['Email'], '')}",
@@ -1545,7 +1603,7 @@
                       "ItemId": "@int(body('Lire_element')?['ID'])",
                       "IdObjet": "@{outputs('IdObjet_el')}",
                       "Objet": "CompteRendu",
-                      "StatutAvant": "@{outputs('Statut_valide_el')}",
+                      "StatutAvant": "@{outputs('Statut_reference')}",
                       "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                       "Accepte": "@false",
                       "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
@@ -2264,7 +2322,7 @@
                   "ItemId": "@int(body('Lire_element')?['ID'])",
                   "IdObjet": "@{outputs('IdObjet_el')}",
                   "Objet": "CompteRendu",
-                  "StatutAvant": "@{outputs('Statut_valide_el')}",
+                  "StatutAvant": "@{outputs('Statut_reference')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "Accepte": "@true",
                   "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",

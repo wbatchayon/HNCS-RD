@@ -1,15 +1,46 @@
 {
   "EnvironmentVariables": [
-    { "SchemaName": "hncs_SiteUrl", "Value": "https://contoso.sharepoint.com/sites/HNCS-RD" },
-    { "SchemaName": "hncs_ServiceAccountEmail", "Value": "svc-hncs-rd@contoso.com" },
-    { "SchemaName": "hncs_SupportEmail", "Value": "support-rd@contoso.com" },
-    { "SchemaName": "hncs_BoiteRDEmail", "Value": "rd@contoso.com" },
-    { "SchemaName": "hncs_BoiteRDDossierCandidatures", "Value": "<identifiant du dossier Candidatures de la boîte R&D>" }
+    {
+      "SchemaName": "hncs_SiteUrl",
+      "Value": "https://contoso.sharepoint.com/sites/HNCS-RD"
+    },
+    {
+      "SchemaName": "hncs_ServiceAccountEmail",
+      "Value": "svc-hncs-rd@contoso.com"
+    },
+    {
+      "SchemaName": "hncs_SupportEmail",
+      "Value": "support-rd@contoso.com"
+    },
+    {
+      "SchemaName": "hncs_BoiteRDEmail",
+      "Value": "rd@contoso.com"
+    },
+    {
+      "SchemaName": "hncs_BoiteRDDossierCandidatures",
+      "Value": "<identifiant du dossier Candidatures de la boîte R&D>"
+    }
   ],
   "ConnectionReferences": [
-    { "LogicalName": "hncs_sharepoint", "ConnectionId": "<id de la connexion SharePoint du compte de service>", "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline" },
-    { "LogicalName": "hncs_outlook", "ConnectionId": "<id de la connexion Office 365 Outlook du compte de service>", "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_office365" },
-    { "LogicalName": "hncs_teams", "ConnectionId": "<id de la connexion Microsoft Teams du compte de service>", "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_teams" },
-    { "LogicalName": "hncs_o365users", "ConnectionId": "<id de la connexion Office 365 Utilisateurs du compte de service>", "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_office365users" }
+    {
+      "LogicalName": "hncs_sharepoint",
+      "ConnectionId": "<id de la connexion SharePoint du compte de service>",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+    },
+    {
+      "LogicalName": "hncs_outlook",
+      "ConnectionId": "<id de la connexion Office 365 Outlook du compte de service>",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+    },
+    {
+      "LogicalName": "hncs_teams",
+      "ConnectionId": "<id de la connexion Microsoft Teams du compte de service>",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_teams"
+    },
+    {
+      "LogicalName": "hncs_o365users",
+      "ConnectionId": "<id de la connexion Office 365 Utilisateurs du compte de service>",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_office365users"
+    }
   ]
 }

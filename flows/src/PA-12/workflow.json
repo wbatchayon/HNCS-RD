@@ -805,6 +805,64 @@
                 ]
               }
             },
+            "Si_reprise_existant": {
+              "type": "If",
+              "expression": "@and(equals(outputs('Statut_valide_el'), '∅'), not(equals(string(triggerOutputs()?['body/Created']), string(triggerOutputs()?['body/Modified']))), not(empty(body('Lire_element')?['Statut']?['Value'])))",
+              "actions": {
+                "Historiser_reprise": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PostItem"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                      "table": "Historique des statuts",
+                      "item/Title": "@{outputs('IdObjet_el')}",
+                      "item/Objet/Value": "Communication",
+                      "item/Liste": "CommunicationsRD",
+                      "item/ItemId": "@int(body('Lire_element')?['ID'])",
+                      "item/StatutAvant": "∅",
+                      "item/StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
+                      "item/CodeTransition": "REPRISE",
+                      "item/Acteur/Claims": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                      "item/ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                      "item/DateChangement": "@{utcNow()}",
+                      "item/Origine/Value": "Flux",
+                      "item/Resultat/Value": "Acceptée",
+                      "item/Motif": "Reprise de l'existant",
+                      "item/FluxRunId": "@{workflow()?['run']?['name']}"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Statut_valide_el": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Statut_reference": {
+              "type": "Compose",
+              "inputs": "@if(and(equals(outputs('Statut_valide_el'), '∅'), not(equals(string(triggerOutputs()?['body/Created']), string(triggerOutputs()?['body/Modified']))), not(empty(body('Lire_element')?['Statut']?['Value']))), body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))",
+              "runAfter": {
+                "Si_reprise_existant": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Changements": {
               "type": "OpenApiConnection",
               "inputs": {
@@ -828,7 +886,7 @@
                 }
               },
               "runAfter": {
-                "Statut_valide_el": [
+                "Statut_reference": [
                   "Succeeded"
                 ]
               }
@@ -946,7 +1004,7 @@
             },
             "Si_aucune_transition_a_traiter": {
               "type": "If",
-              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_valide_el'))), contains(createArray('Idée', 'À préparer', 'En rédaction', 'En revue', 'Validée', 'Programmée', 'Publiée', 'Suspendue / refusée'), body('Lire_element')?['Statut']?['Value'])))",
+              "expression": "@not(and(not(equals(body('Lire_element')?['Statut']?['Value'], outputs('Statut_reference'))), contains(createArray('Idée', 'À préparer', 'En rédaction', 'En revue', 'Validée', 'Programmée', 'Publiée', 'Suspendue / refusée'), body('Lire_element')?['Statut']?['Value'])))",
               "actions": {
                 "Fin_sans_transition": {
                   "type": "Terminate",
@@ -973,7 +1031,7 @@
                 },
                 "body": {
                   "Objet": "Communication",
-                  "StatutAvant": "@{outputs('Statut_valide_el')}",
+                  "StatutAvant": "@{outputs('Statut_reference')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "ActeurEmail": "@{toLower(coalesce(triggerOutputs()?['body/Editor/Email'], ''))}",
                   "ItemAuteurEmail": "@{coalesce(body('Lire_element')?['Auteur']?['Email'], '')}",
@@ -1067,7 +1125,7 @@
                       "ItemId": "@int(body('Lire_element')?['ID'])",
                       "IdObjet": "@{outputs('IdObjet_el')}",
                       "Objet": "Communication",
-                      "StatutAvant": "@{outputs('Statut_valide_el')}",
+                      "StatutAvant": "@{outputs('Statut_reference')}",
                       "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                       "Accepte": "@false",
                       "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",
@@ -1645,7 +1703,7 @@
                   "actions": {
                     "Si_renvoi_en_redaction": {
                       "type": "If",
-                      "expression": "@equals(outputs('Statut_valide_el'), 'En revue')",
+                      "expression": "@equals(outputs('Statut_reference'), 'En revue')",
                       "actions": {
                         "Dest_N45_3": {
                           "type": "Select",
@@ -1839,7 +1897,7 @@
                   "ItemId": "@int(body('Lire_element')?['ID'])",
                   "IdObjet": "@{outputs('IdObjet_el')}",
                   "Objet": "Communication",
-                  "StatutAvant": "@{outputs('Statut_valide_el')}",
+                  "StatutAvant": "@{outputs('Statut_reference')}",
                   "StatutApres": "@{body('Lire_element')?['Statut']?['Value']}",
                   "Accepte": "@true",
                   "CodeTransition": "@{coalesce(body('Verifier_transition')?['CodeTransition'], '')}",

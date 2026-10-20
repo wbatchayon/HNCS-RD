@@ -16,7 +16,9 @@ Contrôles :
 12. connecteurs standard uniquement, références de connexion ``hncs_*``, appels de flux enfants valides ;
 13. socle : anti-boucle sur les déclencheurs SharePoint (seule condition sur les listes à statut contrôlé), portées Principal / Erreur,
     flux enfants avec réponse ; aucune lecture de StatutPrecedent ; aucun filtre OData sur une colonne Note ;
-14. noms d'actions uniques, ``runAfter`` cohérents, profondeur ≤ 8, ≤ 500 actions, aucun ``{{`` résiduel.
+14. noms d'actions uniques, ``runAfter`` cohérents, profondeur ≤ 8, ≤ 500 actions, aucun ``{{`` résiduel ;
+15. reprise de l'existant : entrée REPRISE et test de première version sur les listes contrôlées, PA-00D gardé par
+    ``Fonction.Lot2Actif``, aucune mise à la corbeille sans vérification de version (PA-00B).
 
 Code de sortie 0 si aucune erreur.
 """
@@ -406,6 +408,32 @@ def main():
                 err(f"{tid} : JSON invalide ({e})")
                 continue
             check_workflow(tid, wf, m, child_guids)
+    # Reprise de l'existant (spec 6.1, point 3 ter ; H-57)
+    texts = {}
+    for m in manifest:
+        wp = FLOWS / "src" / m["id"] / "workflow.json"
+        if wp.exists():
+            texts[m["id"]] = wp.read_text(encoding="utf-8")
+    creation_test = ("triggerOutputs()?['body/Created']", "triggerOutputs()?['body/Modified']")
+    for lst in sorted(CONTROLLED):
+        defs = [m for m in manifest if m["trigger"]["list"] == lst and m["trigger"]["kind"] == "SharePointItem"]
+        updated = [m for m in defs if "GetOnUpdatedItems" in texts.get(m["id"], "")]
+        if not any("'REPRISE'" in texts.get(m["id"], "") or '"REPRISE"' in texts.get(m["id"], "") for m in updated):
+            err(f"{lst} : aucun flux de la liste n'écrit l'entrée REPRISE (reprise de l'existant)")
+        for m in updated:
+            t = texts.get(m["id"], "")
+            if not all(c in t for c in creation_test):
+                err(f"{m['id']} : test de première version (Created = Modified de l'événement) absent")
+    d_text = texts.get("PA-00D", "")
+    if '"REPRISE"' not in d_text and "'REPRISE'" not in d_text:
+        err("PA-00D : écriture des entrées REPRISE absente")
+    if "Fonction.Lot2Actif" not in d_text:
+        err("PA-00D : la reprise et les empreintes doivent être gardées par le paramètre Fonction.Lot2Actif")
+    if re.search(r"Origine eq 'Flux'", d_text):
+        err("PA-00D : l'activation du lot 2 ne doit jamais être déduite de l'historique")
+    b_text = texts.get("PA-00B", "")
+    if "recycle()" in b_text and "Versions_avant_corbeille" not in b_text:
+        err("PA-00B : la mise à la corbeille doit vérifier que l'élément est à sa première version")
     # partition couverte une seule fois
     for p in MODEL["partition"]:
         owners = [m["id"] for m in manifest if code_matches(p["flow"], m["code"]) and m["trigger"]["list"] == p["list"]]

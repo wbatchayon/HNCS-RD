@@ -23,6 +23,7 @@ python flows/tools/generate_flows.py --check    # vérifie que les fichiers vers
 python flows/tools/check_flows.py               # 0 erreur attendue
 python flows/build/build_solution.py --check    # valide la solution
 python flows/build/build_solution.py            # produit flows/dist/HNCSRDSuivi_<version>.zip
+python flows/build/build_solution.py --brouillon  # même solution, tous les flux en brouillon (activation par lot)
 ```
 
 ## Architecture
@@ -50,15 +51,31 @@ python flows/build/build_solution.py            # produit flows/dist/HNCSRDSuivi
 | Idempotence | Dates déjà posées, `CodeModeleAction`, dossiers existants, `DernierRappel`, `RefMessage`, marqueurs `JournalFlux` (N-17), comparaison de `DateRevue` à la modification déclenchante |
 | Empreintes (P-09, [6.5](../spec.md#65-formats-des-empreintes-p-09)) | JSON compact dans l'ordre de la spec, comparées clé par clé ; empreinte vide = initialisation sans rétablissement |
 | Rapprochement quotidien | PA-00E rétablit chaque jour, via PA-00B (motif « Rapprochement quotidien »), tout statut différent du dernier statut accepté de l'historique (éléments non modifiés depuis 30 minutes) et le signale dans N-98 |
+| Reprise de l'existant | Sans transition acceptée, un élément n'est une création que s'il est à sa première version (`Created` = `Modified` de l'événement déclencheur) ; sinon son statut courant devient le statut de référence par une entrée `HistoriqueStatuts` `REPRISE` (`StatutAvant` = `∅`, Origine Flux, Acceptée, motif « Reprise de l'existant »), écrite par le flux propriétaire de la liste ou, en amont, par PA-00D ([6.1](../spec.md#61-règles-générales), règle 3 ter, H-57). Les entrées `REPRISE` comptent comme transitions acceptées, `REF-PRINCIPAL` non. Un élément qui a plus d'une version n'est jamais envoyé à la corbeille |
 
 ## Ordre d'activation
 
-1. **PA-00A, PA-00B, PA-00C** (flux enfants) : à activer en premier ; les parents échouent tant qu'ils sont inactifs.
-2. PA-00D (dès le lot 1 : identifiants des saisies manuelles), PA-00E, PA-00F.
-3. Flux du lot 2, puis du lot 3 une fois les listes de lot 3 déployées.
-4. **PA-13 reste désactivé** : ne l'activer qu'après validation de `Conservation.CandidatureNonRetenueMois` (H-10).
+`deploy/Import-HNCSRDFlows.ps1 -Lot <n>` importe la solution (construite en brouillon avec `-Build` : aucun flux ne s'active pendant l'import) et n'active que les flux de lot inférieur ou égal à `n` (colonne Lot du catalogue [8.3](../spec.md#83-catalogue-des-flux), reprise dans `manifest.json`), via l'API Web Dataverse (jeton `Get-AzAccessToken`). Les flux de lot supérieur sont laissés en brouillon. `-SkipActivation` importe sans rien activer ; `-ShareWith` partage les flux enfants.
 
-`deploy/Import-HNCSRDFlows.ps1` applique cet ordre (via l'API Web Dataverse, jeton `Get-AzAccessToken`) et laisse PA-13 désactivé ; il peut partager les flux enfants (`-ShareWith`). Les données de test sont à importer **flux désactivés** (spec [12](../spec.md#12-stratégie-de-test-et-critères-dacceptation)).
+1. **Phase Socle** : PA-00A, PA-00B, PA-00C (flux enfants, à activer en premier : les parents échouent tant qu'ils sont inactifs), puis PA-00D, PA-00E, PA-00F selon le lot (au lot 1 : PA-00C et PA-00D seuls).
+2. **À partir du lot 2, avant les flux des listes** : passer le paramètre `Fonction.Lot2Actif` à Oui (liste `Parametres`), **exécuter PA-00D manuellement** (« Exécuter »), vérifier dans `HistoriqueStatuts` les entrées `REPRISE` et les empreintes initialisées ([6.5](../spec.md#65-formats-des-empreintes-p-09)). Le script s'arrête à cette étape et attend la saisie de OUI (sinon relancer avec `-Phase Listes`).
+3. **Phase Listes** : les autres flux du lot (lot 2, puis lot 3 une fois les listes de lot 3 déployées).
+4. **PA-13 n'est jamais activé par le script** : l'activer à la main après validation de `Conservation.CandidatureNonRetenueMois` (H-10).
+
+Le fichier de paramètres par défaut `deploy/deploymentSettings.json` (copie renseignée de `deploymentSettings.sample.json`, avec adresses et identifiants de connexion) est **ignoré par git** (`.gitignore`) : il ne doit jamais être versionné. Les données de test sont importées avec leur historique et **flux désactivés** ([12](../spec.md#12-stratégie-de-test-et-critères-dacceptation)).
+
+## Solution gérée (production)
+
+La solution non gérée construite depuis ce dépôt est importée dans l'environnement de **recette** ; la production reçoit une solution **gérée**, exportée de la recette ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), « Conditionnement ») :
+
+```powershell
+pac auth select --name <profil-recette>
+pac solution export --name HNCSRDSuivi --path .\HNCSRDSuivi_<version>_managed.zip --managed
+pac auth select --name <profil-production>
+pac solution import --path .\HNCSRDSuivi_<version>_managed.zip --settings-file <dossier hors du dépôt>\deploymentSettings.production.json
+```
+
+Le fichier de paramètres de production suit le même modèle que `deploymentSettings.sample.json` (connexions de production) ; il est conservé **hors du dépôt**, seul `deploy/deploymentSettings.json` étant couvert par `.gitignore`. L'activation par lot se fait ensuite avec `Import-HNCSRDFlows.ps1 -Lot <n> -SolutionZip <zip géré>` ou à la main, dans le même ordre ; une solution gérée ne se modifie pas en production : toute évolution passe par ce dépôt, la recette, puis un nouvel export.
 
 ## Procédure de reprise
 

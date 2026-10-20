@@ -358,7 +358,7 @@
                     "type": "If",
                     "expression": "@equals(outputs('Statut_valide'), '∅')",
                     "actions": {
-                      "Envoyer_a_la_corbeille": {
+                      "Versions_avant_corbeille": {
                         "type": "OpenApiConnection",
                         "inputs": {
                           "host": {
@@ -368,8 +368,8 @@
                           },
                           "parameters": {
                             "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
-                            "parameters/method": "POST",
-                            "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/', triggerBody()?['Liste']), '''), ''')/items(', string(triggerBody()?['ItemId']), ')/recycle()')}",
+                            "parameters/method": "GET",
+                            "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/', triggerBody()?['Liste']), '''), ''')/items(', string(triggerBody()?['ItemId']), ')/versions?$select=VersionLabel&$top=2')}",
                             "parameters/headers": {
                               "Accept": "application/json;odata=nometadata",
                               "Content-Type": "application/json;odata=nometadata"
@@ -383,6 +383,46 @@
                           }
                         },
                         "runAfter": {}
+                      },
+                      "Si_premiere_version": {
+                        "type": "If",
+                        "expression": "@lessOrEquals(length(coalesce(body('Versions_avant_corbeille')?['value'], createArray())), 1)",
+                        "actions": {
+                          "Envoyer_a_la_corbeille": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                "connectionName": "shared_sharepointonline",
+                                "operationId": "HttpRequest"
+                              },
+                              "parameters": {
+                                "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                "parameters/method": "POST",
+                                "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/', triggerBody()?['Liste']), '''), ''')/items(', string(triggerBody()?['ItemId']), ')/recycle()')}",
+                                "parameters/headers": {
+                                  "Accept": "application/json;odata=nometadata",
+                                  "Content-Type": "application/json;odata=nometadata"
+                                }
+                              },
+                              "authentication": "@parameters('$authentication')",
+                              "retryPolicy": {
+                                "type": "exponential",
+                                "count": 4,
+                                "interval": "PT10S"
+                              }
+                            },
+                            "runAfter": {}
+                          }
+                        },
+                        "else": {
+                          "actions": {}
+                        },
+                        "runAfter": {
+                          "Versions_avant_corbeille": [
+                            "Succeeded"
+                          ]
+                        }
                       }
                     },
                     "else": {
