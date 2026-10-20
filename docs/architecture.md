@@ -1,7 +1,7 @@
 # Architecture : Système de suivi R&D HNCS
 
 > Public : lecteur technique (architecte, administrateur Microsoft 365, développeur Power Platform). Ce document
-> résume et relie ; il ne remplace pas la spécification [`spec.md`](../spec.md) (**v1.7.0**), source de vérité
+> résume et relie ; il ne remplace pas la spécification [`spec.md`](../spec.md) (**v1.7.1**), source de vérité
 > unique, à laquelle renvoient les liens de section. Installation : [`docs/installation.md`](installation.md) ;
 > exploitation : [`docs/exploitation.md`](exploitation.md).
 
@@ -43,7 +43,7 @@ légende « PA-00 … PA-13 » est celle du schéma d'architecture source.
 | **Power Automate** : solution `HNCSRDSuivi` | Flux PA-00A à PA-14 (33 définitions techniques), exécutés sous le **compte de service** : contrôle a posteriori des transitions, champs protégés, identifiants, permissions par élément et dossier, notifications, rappels, synthèses | ne prend **aucune** décision humaine (P-01) ; ne supprime jamais définitivement | [8](../spec.md#8-flux-power-automate--contrats) |
 | **Outlook / Teams** | Notifications N-01 à N-99 depuis la boîte partagée R&D (objet `[HNCS-R&D][N-xx]`), messages Teams aux personnes nommées si `Fonction.NotificationsTeams` = Oui ; équipe Teams « HNCS R&D » distincte | jamais de CV en pièce jointe ; fichiers Teams non référents (H-44) | [7.5](../spec.md#75-sécurité-des-données-personnelles), [8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), `specs/notifications.md` |
 | **Boîte partagée R&D** | Réception des candidatures (dossier `Candidatures`, PA-01b) et expéditeur des notifications | aucune API LinkedIn / France Travail (P-06) | H-04 |
-| **Power BI** : projet PBIP `powerbi/` (TMDL + PBIR), espace « HNCS-R&D Pilotage » | Indicateurs (60 mesures, 8 pages), RLS / OLS par rôle, audiences de l'application ; source REST SharePoint (`GetList`, `$select` limité), actualisation quotidienne 06:00 | lecture seule ; aucune colonne `perso` / `confidentiel` (sauf `NomAffichage`, masquée) | [9](../spec.md#9-modèle-power-bi-et-mesures-dax) |
+| **Power BI** : projet PBIP `powerbi/` (TMDL + PBIR), espace « HNCS-R&D Pilotage » | Indicateurs (60 mesures, 8 pages), RLS / OLS par rôle, audiences de l'application ; source REST SharePoint (`GetList`, `$select` limité), actualisation quotidienne 07:45, après les flux planifiés du matin | lecture seule ; aucune colonne `perso` / `confidentiel` (sauf `NomAffichage`, masquée) | [9](../spec.md#9-modèle-power-bi-et-mesures-dax) |
 | **GitLab** : groupe `hncs-rd` | Référence du code, des issues, MR et jalons ; un projet par sujet (`New-GitlabProjetSujet.ps1`, à la demande d'un humain) ; synchronisation planifiée en lecture vers `GitlabSync` (lot 5), lignes orphelines conservées et marquées `Orpheline` | n'écrit aucun statut métier SharePoint | [10](../spec.md#10-intégration-gitlab-et-infrastructure) |
 | **Outillage du dépôt** | Spec lisible par machine, extracteur, scripts PnP.PowerShell, générateurs, tests hors ligne et de bout en bout, CI | | [12](../spec.md#12-stratégie-de-test-et-critères-dacceptation), [14](../spec.md#14-sous-spécifications-et-journal-des-modifications) |
 
@@ -76,7 +76,7 @@ sequenceDiagram
   PA->>SP: capitalisation (LIV-T08), rappels, retards, escalades
   H->>GL: projet du sujet (script à la demande), code, jalons LIV-…
   GL-->>SP: synchronisation lecture seule → GitlabSync (05:30)
-  SP-->>PBI: actualisation 06:00 (colonnes autorisées seulement)
+  SP-->>PBI: actualisation 07:45 (colonnes autorisées seulement)
   PA->>N: synthèses Comité R&D / Point Direction (PA-11)
 ```
 
@@ -96,7 +96,9 @@ Mécanique commune à chaque changement de statut ([6.1](../spec.md#61-règles-g
 5. le flux exécute les effets du statut cible ; en cas d'échec, la portée `Erreur` appelle **PA-00C** (`JournalFlux`
    « À reprendre », N-99) ;
 6. chaque matin, **PA-00E** rapproche le statut de chaque élément de la dernière transition acceptée et rétablit tout
-   écart (motif « Rapprochement quotidien »), puis envoie la synthèse N-98.
+   écart (motif « Rapprochement quotidien »), puis envoie la synthèse N-98 ; un élément sans aucune transition
+   acceptée qui n'est pas une création (saisi avant le lot 2 ou importé) n'est jamais traité comme une création :
+   PA-00D adopte son statut courant par une entrée `REPRISE` ([6.1](../spec.md#61-règles-générales), point 3 ter, H-57).
 
 Règle structurante (P-09, H-17) : **aucune colonne technique n'est une source de confiance**. Les colonnes `flux`
 (`StatutPrecedent`, `DateStatut`, `Empreinte*`, dates et décideurs tracés…) restent modifiables par l'interface ou

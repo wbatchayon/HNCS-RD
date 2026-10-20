@@ -2,7 +2,7 @@
 
 | Propriété | Valeur |
 | --- | --- |
-| Version de la spec | 1.7.0 |
+| Version de la spec | 1.7.1 |
 | Branche | `feature/systeme-suivi-rd` |
 | Statut global | Réalisation complète des lots 0 à 5 ; validation sur un tenant Microsoft 365 et arbitrage des décisions ouvertes à mener |
 
@@ -24,7 +24,7 @@ Ce document distingue clairement ce qui est **terminé et vérifié hors ligne**
 | 2 et 3. Automatisations | `flows/` : 33 définitions couvrant les flux PA-00 à PA-14, solution non gérée `HNCSRDSuivi`, script d'import, 52 modèles de notification, fiches par flux | Contrôleur des flux à 0 erreur (listes, champs, statuts, transitions, partition, absence de décision humaine automatisée, absence de pièce jointe) ; construction de la solution vérifiée |
 | 4. Power BI | `powerbi/` : projet PBIP (TMDL et PBIR), 25 tables, 60 mesures, 5 rôles, 8 pages, 123 visuels, publication scriptée | Contrôleur PBIP à 0 erreur : mesures identiques à la spec, aucune colonne personnelle importée hors exception masquée, relations, sécurité par rôle |
 | 5. GitLab et stabilisation | `gitlab/` : synchronisation GitLab vers SharePoint, création de projet par sujet, modèles, pipeline ; intégration continue du dépôt | 41 tests unitaires de synchronisation sans réseau ; analyse syntaxique du script de création |
-| Transverse | `testdata/` (jeu fictif couvrant 100 % des statuts), `tests/` (tests hors ligne et de bout en bout), `docs/` (installation, exploitation, architecture, guides par rôle) | Suite de tests hors ligne au vert ; mutations ciblées du jeu de test détectées |
+| Transverse | `testdata/` (jeu fictif couvrant 100 % des statuts, avec un historique complet de 336 transitions), `tests/` (tests hors ligne et de bout en bout), `docs/` (installation, exploitation, architecture, guides par rôle) | 160 tests hors ligne au vert (modèle, matrice, transitions, empreintes, contrats des flux, Power BI) ; mutations ciblées du jeu de test détectées |
 
 ### 1.3 Principes du cadrage et leur garantie
 
@@ -34,7 +34,7 @@ Ce document distingue clairement ce qui est **terminé et vérifié hors ligne**
 | « Intégrée » seulement après les formalités | Règle de validation de liste et contrôle `G_INTEGRATION` ([6.6](spec.md#66-catalogue-des-contrôles)) | Tests du jeu de test, scénarios S-04 |
 | Nouvelle affectation, jamais d'écrasement | Verrou `EmpreinteVerrou`, succession `AffectationRemplacee` ([8.4](spec.md#84-contrats-détaillés)) | Tests du jeu de test, scénario S-06 |
 | CV et données personnelles cloisonnés | Matrice d'accès, permissions par élément, aucune colonne personnelle dans Power BI, OLS ([7](spec.md#7-sécurité--groupes-niveaux-dautorisation-matrice-daccès), [9.6](spec.md#96-sécurité-du-modèle-rls--ols)) | Tests de matrice, contrôleur PBIP |
-| Champs protégés et colonnes techniques non falsifiables | Statut de référence tiré de l'historique, rétablissement des colonnes techniques, rapprochement quotidien ([6.5](spec.md#65-formats-des-empreintes-p-09), [8.1](spec.md#81-socle-commun-sapplique-à-tous-les-flux)) | Contrôleur des flux, tests de contrat |
+| Champs protégés et colonnes techniques non falsifiables | Statut de référence tiré de l'historique, reprise de l'existant sans passage en corbeille, rétablissement des colonnes techniques, rapprochement quotidien ([6.5](spec.md#65-formats-des-empreintes-p-09), [8.1](spec.md#81-socle-commun-sapplique-à-tous-les-flux)) | Contrôleur des flux, tests de contrat |
 
 ## 2. Ce qui reste à valider
 
@@ -53,12 +53,14 @@ Ce document distingue clairement ce qui est **terminé et vérifié hors ligne**
 - Contrôle des transitions a posteriori : un statut non autorisé reste visible quelques secondes avant d'être rétabli ([13](spec.md#13-hypothèses-et-décisions-à-confirmer), H-17).
 - Une exécution de flux resoumise peut renvoyer une notification déjà envoyée lorsqu'aucun marqueur n'est prévu (H-56).
 - Une première modification non autorisée d'un élément jamais initialisé est acceptée comme valeur initiale ; l'initialisation horaire des empreintes réduit cette fenêtre (H-55).
-- PA-00D déduit l'activation du lot 2 de la présence d'un historique écrit par un flux : un jeu de test importé dès le lot 1 déclenche plus tôt l'initialisation des empreintes, sans autre effet que cette initialisation.
 - La lecture des documents des livrables par la Direction est acceptée (H-54).
+- Une modification non autorisée faite entre l'activation des flux et le premier passage de PA-00D serait adoptée comme statut de reprise ; la procédure d'installation exécute PA-00D avant d'activer les flux des listes (H-57).
+- Le rétablissement des colonnes techniques compare les deux dernières versions de l'élément : si un flux a écrit sur l'élément juste après une modification humaine, la vérification n'a pas lieu pour cette modification ; le rapprochement quotidien ne couvre ensuite que le statut.
+- Les colonnes renseignées par les flux (dates de transmission, d'intégration…) restent vides pour les éléments saisis au lot 1 : les indicateurs correspondants ne couvrent pas cette période.
 
 ## 3. Décisions encore ouvertes
 
-Toutes les hypothèses implémentées en attente d'arbitrage sont tenues au [13](spec.md#13-hypothèses-et-décisions-à-confirmer) (H-01 à H-56). Les plus structurantes, à traiter en atelier de validation du lot 0 :
+Toutes les hypothèses implémentées en attente d'arbitrage sont tenues au [13](spec.md#13-hypothèses-et-décisions-à-confirmer) (H-01 à H-57). Les plus structurantes, à traiter en atelier de validation du lot 0 :
 
 | Thème | Hypothèses | Responsable attendu |
 | --- | --- | --- |

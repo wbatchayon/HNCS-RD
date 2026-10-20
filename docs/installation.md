@@ -1,7 +1,7 @@
 # Guide d'installation : Système de suivi R&D HNCS
 
 > Public : administrateur Microsoft 365 / IT. Installation de bout en bout sur un tenant Microsoft 365, lot par lot
-> (spec [11](../spec.md#11-découpage-en-lots-0-à-5)). La spécification [`spec.md`](../spec.md) (**v1.7.0**) fait foi en cas d'écart ; ce guide ne fait
+> (spec [11](../spec.md#11-découpage-en-lots-0-à-5)). La spécification [`spec.md`](../spec.md) (**v1.7.1**) fait foi en cas d'écart ; ce guide ne fait
 > qu'enchaîner les commandes des scripts livrés (`provisioning/`, `flows/`, `powerbi/`, `gitlab/`, `testdata/`,
 > `tests/`), avec leurs paramètres réels.
 >
@@ -41,7 +41,7 @@ flowchart TD
   C --> L1["Lot 1<br/>Deploy-HNCSRD.ps1 -Lot 1<br/>Set-HNCSRDMembres.ps1<br/>Grant-HNCSRDServiceAccount.ps1<br/>Test-HNCSRDDeploiement.ps1<br/>flux PA-00C + PA-00D seuls"]
   L1 --> L2["Lot 2<br/>solution HNCSRDSuivi<br/>références de connexion, variables<br/>PA-00A/B/C puis flux du lot 2"]
   L2 --> L3["Lot 3<br/>Deploy-HNCSRD.ps1 -Lot 3<br/>flux du lot 3, GitLab (scripts, modèles)"]
-  L3 --> L4["Lot 4<br/>Deploy-HNCSRD.ps1 -Lot 4<br/>Publish-HNCSRDPowerBI.ps1<br/>OAuth, 06:00, RLS, audiences"]
+  L3 --> L4["Lot 4<br/>Deploy-HNCSRD.ps1 -Lot 4<br/>Publish-HNCSRDPowerBI.ps1<br/>OAuth, 07:45, RLS, audiences"]
   L4 --> L5["Lot 5<br/>Deploy-HNCSRD.ps1 -Lot 5<br/>synchronisation GitLab (CI 05:30)<br/>PA-13 désactivé"]
   L1 -. recette .-> T["Jeu de test<br/>Import-TestData.ps1, flux désactivés<br/>tests/e2e (Pester 5)"]
 ```
@@ -250,22 +250,22 @@ R&D, qui les ajuste ensuite directement dans la liste (droits CSS de G_DRD) ; el
   l'information RGPD ne sont pas validés (H-09) ;
 - `Conservation.CandidatureNonRetenueMois` **vide** (H-10) ;
 - `Fonction.RepriseExistantActive` à Non hors période de reprise de l'existant (H-12) ;
+- `Fonction.Lot2Actif` à Non jusqu'à la mise en service du lot 2 (procédure 5.4) ;
 - `Recrutement.PartageTransmission` à `Groupe` sauf décision contraire (H-45).
 
 ### 4.5 Flux du lot 1 : PA-00C et PA-00D seuls
 
 Le lot 1 n'automatise que la journalisation (PA-00C) et l'attribution horaire des identifiants manquants (PA-00D),
 pour que les colonnes de recherche, qui affichent `IdHNCS`, soient utilisables en saisie manuelle. Ils sont livrés
-dans la solution `HNCSRDSuivi` : appliquer les sections **5.1 et 5.2**, importer **sans activation**, puis activer à
-la main PA-00C, puis PA-00D :
+dans la solution `HNCSRDSuivi` : appliquer les sections **5.1 et 5.2**, puis importer en limitant l'activation au
+lot 1 (seuls PA-00C et PA-00D sont de lot 1) :
 
 ```powershell
-pwsh ./flows/deploy/Import-HNCSRDFlows.ps1 -EnvironmentUrl https://<org>.crm4.dynamics.com -SettingsFile <chemin>/deploymentSettings.json -Build -SkipActivation
+pwsh ./flows/deploy/Import-HNCSRDFlows.ps1 -EnvironmentUrl https://<org>.crm4.dynamics.com -SettingsFile <chemin>/deploymentSettings.json -Build -Lot 1
 ```
 
-Sans `-SkipActivation`, le script activerait **tous** les flux marqués « activés par défaut » (lots 2 et 3 compris,
-voir 5.3). Le fichier de paramètres doit être complet dès le lot 1 (les quatre connexions et les cinq variables) :
-le script refuse un fichier incomplet. Vérifier ensuite dans l'environnement que seuls PA-00C et PA-00D sont actifs.
+Le fichier de paramètres doit être complet dès le lot 1 (les quatre connexions et les cinq variables) : le script
+refuse un fichier incomplet. Vérifier ensuite dans l'environnement que seuls PA-00C et PA-00D sont actifs.
 
 Contrôle : créer un élément de test dans « Offres » → `IdHNCS` au format `OFF-AAAA-NNNN` en moins d'une heure (ou
 après « Exécuter » manuel de PA-00D) ; `JournalFlux` contient l'entrée Info de PA-00D.
@@ -292,10 +292,15 @@ python flows/build/build_solution.py             # écrit flows/dist/HNCSRDSuivi
 ```
 
 Le zip (`flows/dist/` est ignoré par git) contient la solution **non gérée** `HNCSRDSuivi` (éditeur et préfixe
-`hncs`, version = version de la spec sur 4 nombres, ex. `1.5.0.0`) : les 33 définitions techniques (un flux
+`hncs`, version = version de la spec sur 4 nombres, ex. `1.7.1.0`) : les 33 définitions techniques (un flux
 SharePoint n'écoute qu'une liste : PA-03, PA-04, PA-09, PA-10 sont livrés en plusieurs définitions `-cand`, `-ent`,
 `-alt`, `-act`, `-bil`, `-conv`, `-int`), les références de connexion et les variables d'environnement ci-dessous.
-`workflows.json` est le catalogue utilisé par le script d'import pour l'activation. Fiches de chaque flux :
+`workflows.json` est le catalogue utilisé par le script d'import pour l'activation.
+
+Solution **gérée** de production ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), « Conditionnement ») :
+la solution non gérée construite depuis le dépôt est importée et recettée dans l'environnement de recette, puis
+exportée en solution gérée par `pac solution export --managed` ; c'est ce fichier exporté qui est importé en
+production. Fiches de chaque flux :
 `flows/docs/PA-xx.md` ; architecture des flux : [`flows/README.md`](../flows/README.md).
 
 | Référence de connexion | Connecteur |
@@ -320,29 +325,39 @@ SharePoint n'écoute qu'une liste : PA-03, PA-04, PA-09, PA-10 sont livrés en p
 2. Copier `flows/deploy/deploymentSettings.sample.json` (format `pac solution create-settings`) et renseigner
    `EnvironmentVariables[].Value` pour les cinq variables et `ConnectionReferences[].ConnectionId` pour les quatre
    références. Le script refuse toute valeur vide ou commençant par `<`.
-3. Ce fichier contient des adresses réelles et des identifiants de connexion : le conserver **hors du dépôt**. Le
-   chemin par défaut du script, `flows/deploy/deploymentSettings.json`, n'est pas couvert par `.gitignore` à la date
-   de ce guide : ne jamais le committer (dépôt public, H-30).
+3. Ce fichier contient des adresses réelles et des identifiants de connexion. Le chemin par défaut du script,
+   `flows/deploy/deploymentSettings.json`, est ignoré par git ; un fichier placé ailleurs ne doit jamais être
+   committé (dépôt public, H-30).
 
 ### 5.3 Import
 
 ```powershell
 Connect-AzAccount    # facultatif : nécessaire à l'activation automatique et au partage des flux enfants
-pwsh ./flows/deploy/Import-HNCSRDFlows.ps1 -EnvironmentUrl https://<org>.crm4.dynamics.com -SettingsFile <chemin>/deploymentSettings.json -Build -WhatIf
-pwsh ./flows/deploy/Import-HNCSRDFlows.ps1 -EnvironmentUrl https://<org>.crm4.dynamics.com -SettingsFile <chemin>/deploymentSettings.json -Build -SkipActivation
+pwsh ./flows/deploy/Import-HNCSRDFlows.ps1 -EnvironmentUrl https://<org>.crm4.dynamics.com -SettingsFile <chemin>/deploymentSettings.json -Build -Lot 2 -WhatIf
+pwsh ./flows/deploy/Import-HNCSRDFlows.ps1 -EnvironmentUrl https://<org>.crm4.dynamics.com -SettingsFile <chemin>/deploymentSettings.json -Build -Lot 2
 ```
 
-`Import-HNCSRDFlows.ps1` : (option `-Build`) construit la solution ; sélectionne (`-AuthProfile <nom>`) ou crée
-(`pac auth create --environment`) le profil `pac` ; importe le zip (`-SolutionZip`, par défaut
-`flows/dist/HNCSRDSuivi_<specVersion>.zip`) par `pac solution import --settings-file … --publish-changes --async` ;
-puis, sauf `-SkipActivation`, active par l'API Web Dataverse (jeton `Get-AzAccessToken`, module Az.Accounts)
-**PA-00A, PA-00B, PA-00C d'abord, puis tous les autres flux activés par défaut** ; PA-13 reste désactivé.
-`-ShareWith <adresses>` partage en lecture les flux enfants avec les comptes indiqués. Sans Az.Accounts connecté,
-l'import est fait et le script affiche l'ordre d'activation à appliquer à la main.
+`Import-HNCSRDFlows.ps1` : (option `-Build`) construit la solution avec tous les flux en brouillon, si bien que rien
+ne s'active pendant l'import ; sélectionne (`-AuthProfile <nom>`) ou crée (`pac auth create --environment`) le profil
+`pac` ; importe le zip (`-SolutionZip`, par défaut `flows/dist/HNCSRDSuivi_<specVersion>.zip`) par
+`pac solution import --settings-file … --publish-changes --async` ; puis, sauf `-SkipActivation`, active par l'API Web
+Dataverse (jeton `Get-AzAccessToken`, module Az.Accounts) les seuls flux de lot ≤ `-Lot` (paramètre obligatoire, lot lu
+dans `flows/manifest.json`), les autres étant laissés ou remis en brouillon. PA-13 n'est jamais activé.
 
-L'activation automatique ne tient **pas compte du lot** : elle active aussi les flux du lot 3, qui écoutent des
-listes inexistantes avant `-Lot 3`. Avant le lot 3, importer avec `-SkipActivation` et activer à la main (5.4) ;
-l'activation automatique ne convient qu'une fois le lot 3 déployé.
+L'activation se fait en deux phases :
+
+- **Socle** : PA-00A et PA-00B (flux enfants), PA-00C, puis les autres flux PA-00x ;
+- **Listes** : tous les autres flux du lot. À partir de `-Lot 2`, le script s'arrête entre les deux phases et
+  demande de passer `Fonction.Lot2Actif` à Oui puis d'exécuter PA-00D (5.4) ; il reprend après la saisie de `OUI`.
+
+`-Phase Socle` ou `-Phase Listes` exécute une seule phase ; `-SansPause` enchaîne les deux sans confirmation (à
+réserver à un environnement sans données existantes). `-ShareWith <adresses>` partage en lecture les flux enfants
+avec les comptes indiqués. Sans Az.Accounts connecté, l'import est fait et le script affiche l'ordre d'activation à
+appliquer à la main.
+
+Usage par lot : `-Lot 1` au lot 1 (4.5) ; `-Lot 2` au lot 2, avec la pause de reprise de l'existant (5.4) ; au lot 3,
+une fois les listes de lot 3 déployées, relance avec `-Lot 3` (6.2). Les flux du lot 3 écoutent des listes qui
+n'existent pas avant le déploiement SharePoint du lot 3.
 
 Sans Dataverse (H-15) : importer chaque flux comme package hérité et réassocier les connexions à la main.
 
@@ -359,20 +374,35 @@ Le propriétaire de chaque flux et l'identité de chaque connexion doivent être
 | 5 | PA-08, PA-08b, PA-09-alt, PA-09-bil, PA-09b, PA-10-conv, PA-10-int, PA-10b, PA-11, PA-12, PA-14 | 3 | seulement après `-Lot 3` (section 6) |
 | - | **PA-13** | 5 | reste **désactivé** (H-10, section 8.3) |
 
-À partir du lot 2, PA-00D initialise chaque heure les empreintes vides ([6.5](../spec.md#65-formats-des-empreintes-p-09)) des éléments existants : tant qu'une
-empreinte n'est pas initialisée, une première modification non autorisée d'un champ protégé serait acceptée comme
-valeur initiale (H-55). Lancer PA-00D à la main (« Exécuter ») juste après l'activation des flux du lot 2.
+**Reprise de l'existant** ([6.1, point 3 ter](../spec.md#61-règles-générales), H-57) : un élément d'une liste à statut contrôlé qui n'a
+aucune transition acceptée dans `HistoriqueStatuts` et qui n'est pas une création (élément saisi au lot 1, ou importé)
+n'est jamais traité comme une création ni envoyé à la corbeille. Son statut courant est adopté comme statut de
+référence par une entrée `HistoriqueStatuts` `CodeTransition` = `REPRISE` (`StatutAvant` = `∅`, `Origine` = Flux,
+`Resultat` = Acceptée, motif « Reprise de l'existant »), écrite par PA-00D dès que `Fonction.Lot2Actif` vaut Oui ou, à défaut,
+par le flux de la liste. PA-00D initialise aussi les empreintes vides ([6.5](../spec.md#65-formats-des-empreintes-p-09), H-55).
 
-> **Avant d'activer les flux du lot 2 sur un site déjà utilisé au lot 1** : depuis la spec v1.6.0 ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)), le
-> statut validé de référence d'un élément est la **dernière transition acceptée de `HistoriqueStatuts`** (à défaut
-> d'historique : création, `∅`) ; `StatutPrecedent` n'est plus qu'une copie de commodité pour les vues, et PA-00E
-> rapproche chaque jour les statuts de cet historique. Un élément saisi à la main au lot 1 n'a **aucun** historique
-> (aucun flux ne l'a écrit) : à sa prochaine modification, ou au rapprochement quotidien, il serait traité comme une
-> création (`∅` → statut courant) et, si cette transition n'existe pas, refusé ; pour une création refusée, l'élément
-> part à la corbeille ([6.1, point 3 bis](../spec.md#61-règles-générales)). Aucun script livré ne crée d'historique d'amorçage, et `HistoriqueStatuts` ne
-> doit être écrit que par le compte de service (P-09) : ne **pas** le compléter à la main, ni modifier
-> `StatutPrecedent` (colonne technique, rétablie). **Point ouvert O-4** (section 14) : ne pas activer les flux du
-> lot 2 sur des données saisies au lot 1 tant qu'il n'est pas tranché.
+Procédure de mise en service du lot 2 sur un site déjà utilisé au lot 1 :
+
+1. facultatif : exporter les listes à statut contrôlé pour pouvoir contrôler la reprise (H-57) ;
+2. lancer `Import-HNCSRDFlows.ps1 … -Lot 2` (5.3) : le script active la phase **Socle** (PA-00A, PA-00B, PA-00C,
+   puis les autres flux PA-00x), puis s'arrête ;
+3. passer `Fonction.Lot2Actif` à **Oui** dans la liste « Paramètres » : PA-00D ne déduit jamais le lot 2 d'un autre indice ;
+4. exécuter **PA-00D à la main** (« Exécuter ») et vérifier dans « Historique des statuts » les entrées `REPRISE`
+   et, dans `JournalFlux`, l'entrée Info de PA-00D ;
+5. saisir `OUI` pour que le script active la phase **Listes** (ou relancer plus tard avec `-Lot 2 -Phase Listes`).
+   Sans Az.Accounts, activer les flux à la main dans l'ordre du tableau ci-dessus.
+
+PA-00D laisse au flux de création les éléments créés depuis moins de 30 minutes.
+
+Une modification non autorisée faite entre l'activation des flux des listes et le premier passage de PA-00D serait
+adoptée comme statut de référence (H-57) : c'est pourquoi PA-00D est exécuté **avant** l'activation des flux des
+listes. Ne jamais compléter `HistoriqueStatuts` ni modifier `StatutPrecedent` à la main (colonnes techniques,
+P-09).
+
+> Rappel ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)) : le statut validé de référence d'un élément est
+> la **dernière transition acceptée de `HistoriqueStatuts`** ; `StatutPrecedent` n'est qu'une copie de commodité
+> pour les vues. PA-00E rapproche chaque jour les statuts de cet historique (les éléments modifiés depuis moins de
+> 30 minutes sont ignorés, les éléments sans transition acceptée sont laissés à PA-00D).
 
 ### 5.5 Contrôles après activation
 
@@ -407,8 +437,9 @@ Ajoute `Conventions`, `InteractionsEcoles`, `BilansAlternance`, `ComptesRendus`,
 
 ### 6.2 Flux
 
-Activer les flux de l'ordre 5 du tableau 5.4 (à partir de ce lot, `Import-HNCSRDFlows.ps1` sans `-SkipActivation`
-active tous les flux dans le bon ordre, PA-13 excepté). PA-05 crée alors le premier compte rendu « Attendu » à l'activation
+Activer les flux de l'ordre 5 du tableau 5.4 : relancer
+`pwsh ./flows/deploy/Import-HNCSRDFlows.ps1 -EnvironmentUrl https://<org>.crm4.dynamics.com -SettingsFile <chemin>/deploymentSettings.json -Lot 3`
+(PA-13 n'est jamais activé). PA-05 crée alors le premier compte rendu « Attendu » à l'activation
 d'une affectation (cadence ≠ « Par jalon »).
 
 ### 6.3 GitLab : modèles et création de projet à la demande
@@ -452,7 +483,7 @@ facultative) fait échouer l'actualisation. Le lot 3 doit donc être déployé.
 ```powershell
 # Préparation à blanc (aucun appel d'API) : définitions écrites dans ./out
 pwsh ./powerbi/deploy/Publish-HNCSRDPowerBI.ps1 -SiteUrl https://<tenant>.sharepoint.com/sites/HNCS-RD -PreparationSeule -DossierSortie ./out
-# Publication + actualisation + planification 06:00
+# Publication + actualisation + planification 07:45
 pwsh ./powerbi/deploy/Publish-HNCSRDPowerBI.ps1 -SiteUrl https://<tenant>.sharepoint.com/sites/HNCS-RD -ConfigurerPlanification
 ```
 
@@ -468,7 +499,8 @@ Le script crée l'espace s'il n'existe pas, crée ou met à jour (`updateDefinit
 1. **Identifiants** : *Paramètres du modèle > Informations d'identification de la source de données > Web (SiteUrl)
    > Modifier* : **OAuth2, compte de service**, confidentialité « Organisationnel » (H-16). Sans cette étape,
    l'actualisation échoue.
-2. **Actualisation planifiée** quotidienne à **06:00** (Romance Standard Time), notification en cas d'échec : si
+2. **Actualisation planifiée** quotidienne à **07:45** (Romance Standard Time), après les flux planifiés du matin
+   (06:30 à 07:30), notification en cas d'échec : si
    `-ConfigurerPlanification` n'a pas pu l'appliquer (il exige des identifiants valides).
 3. **Rôles RLS / OLS** (*Modèle sémantique > Sécurité*) : affecter les groupes Entra ou personnes à `Direction`
    (Direction Générale), `PilotageRD` (Direction R&D, équipe R&D), `Administration`, `RelationEcoles` (G_ECO),
@@ -539,7 +571,7 @@ Détail : [`gitlab/README.md`](../gitlab/README.md), section « Mise en place »
    `HNCS_LISTE_ID_SUJETSRD`, `HNCS_LISTE_ID_LIVRABLES`, `HNCS_LISTE_ID_GITLABSYNC` ; facultatives `HNCS_GRAPH_URL`,
    `HNCS_LOGIN_URL` (clouds souverains).
 6. **Planification** : *CI/CD > Schedules* : intervalle `30 5 * * *`, fuseau **Europe/Paris**, branche `main`,
-   variable `SCHEDULE_TYPE` = `gitlab-sync` (avant l'actualisation Power BI de 06:00).
+   variable `SCHEDULE_TYPE` = `gitlab-sync` (avant les flux planifiés du matin et l'actualisation Power BI de 07:45).
 7. **Simulation** : *Run pipeline* sur `main` avec `SYNC_DRY_RUN` = `1` (job `synchro-simulation`, aucune écriture).
 
 Aucun secret dans SharePoint, dans `RessourcesTechniques` ni dans ce dépôt ([10.1](../spec.md#101-principes)).
@@ -561,10 +593,11 @@ fait que **signaler** (N-46) ; aucune suppression automatique. Procédure d'acti
   **flux désactivés**, ou sous le compte de service, ou avant le lot 2 ([12](../spec.md#12-stratégie-de-test-et-critères-dacceptation)) : sinon les flux de création les
   traiteraient comme de nouvelles saisies. Une empreinte vide est initialisée par PA-00D ou par le premier passage
   d'un flux, sans rien rétablir ([6.5](../spec.md#65-formats-des-empreintes-p-09)).
-- Depuis la spec v1.6.0, le statut de référence est la dernière transition acceptée de `HistoriqueStatuts` : un
-  élément du jeu dont le statut courant n'y figure pas serait rétabli par le rapprochement quotidien de PA-00E ou à
-  sa prochaine modification. Le jeu actuel ne fournit un tel historique que pour une partie des éléments (point
-  ouvert O-9) : en recette, contrôler la vue « Transitions refusées » après le premier passage de PA-00E.
+- Le jeu est importé **avec son historique complet** ([12](../spec.md#12-stratégie-de-test-et-critères-dacceptation)) :
+  pour chaque élément à statut contrôlé, le dernier `StatutApres` accepté dans `HistoriqueStatuts` est égal à
+  `Statut`. Toute autre reprise de données suit la même règle ou passe par les entrées `REPRISE`
+  ([6.1, point 3 ter](../spec.md#61-règles-générales)). Après le premier passage de PA-00E, la vue « Transitions refusées » ne doit
+  contenir aucune entrée « Rapprochement quotidien » portant sur le jeu.
 - Le script **refuse** une URL sans marqueur de recette (`recette`, `test`, `qualif`, `dev`), sauf `-Force` : ne
   jamais l'utiliser en production.
 
@@ -636,7 +669,7 @@ pendant la recette (historique, actions générées, comptes rendus…) ne sont 
 | `Grant-HNCSRDServiceAccount.ps1` | Lecture seule ; `-Corriger` ajoute le compte à G_PROP s'il manque | - |
 | `Test-HNCSRDDeploiement.ps1` | Lecture seule ; code 0 / 1 | après chaque déploiement |
 | `build_solution.py` | Reconstruit le zip de la version courante ; les identifiants de flux sont déterministes (identiques d'un build à l'autre) | - |
-| `Import-HNCSRDFlows.ps1` | Met à jour les flux existants (mêmes identifiants) ; connexions et variables reprises du fichier de paramètres ; sans `-SkipActivation`, active PA-00A/B/C puis tous les flux activés par défaut (PA-13 jamais) | avant le lot 3 : `-SkipActivation` ; contrôler l'état de chaque flux après import (5.3, 5.4) |
+| `Import-HNCSRDFlows.ps1` | Met à jour les flux existants (mêmes identifiants) ; connexions et variables reprises du fichier de paramètres ; sans `-SkipActivation`, active les flux enfants puis les autres flux de lot ≤ `-Lot` (PA-13 jamais) | toujours préciser `-Lot` ; au lot 2, exécuter PA-00D avant d'activer les flux des listes (5.4) |
 | « Resoumettre » une exécution de flux | Chaque effet vérifie d'abord s'il a déjà été produit (dates, éléments, dossiers, `CodeModeleAction`, `DernierRappel`, `RefMessage`) : aucun doublon de données ; une notification sans marqueur d'envoi peut être renvoyée (H-56) | voir [`docs/exploitation.md`, section 4](exploitation.md#4-procédure-de-reprise-dune-erreur-de-flux) |
 | Flux planifiés | Se rattrapent au passage suivant | - |
 | `Publish-HNCSRDPowerBI.ps1` | Met à jour la définition du modèle et du rapport existants (`updateDefinition`) ; relance une actualisation (sauf `-SkipRefresh`) | identifiants, rôles et audiences restent en place ; les revérifier |
@@ -680,7 +713,8 @@ complétée d'actions manuelles quand c'est inévitable.
 | ☐ | Groupes alimentés en membres directs ; groupes par défaut du site vides ; aucune donnée métier dans les listes système | H-14, [7.2](../spec.md#72-niveaux-dautorisation) |
 | ☐ | Paramètres validés par la Direction R&D ; H-09, H-10, H-45 respectés | 4.4 |
 | ☐ | Flux du lot actifs, **tous les autres désactivés**, PA-13 désactivé | 5.4 |
-| ☐ | Lot 2 : point ouvert O-4 tranché pour les éléments saisis au lot 1 (5.4) | [8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux) |
+| ☐ | Lot 2 : `Fonction.Lot2Actif` passé à Oui avant l'exécution manuelle de PA-00D (5.4) | `specs/referentiels-initiaux.md` |
+| ☐ | Lot 2 : PA-00D exécuté avant l'activation des flux des listes, entrées `REPRISE` contrôlées pour les éléments saisis au lot 1 (5.4) | [6.1](../spec.md#61-règles-générales), H-57 |
 | ☐ | Notifications : objet `[HNCS-R&D][N-xx]`, lien vers l'élément, aucune pièce jointe, aucun nom dans les envois larges | [7.5](../spec.md#75-sécurité-des-données-personnelles) |
 | ☐ | Lot 2 : responsable support désigné, procédure de reprise connue | [11](../spec.md#11-découpage-en-lots-0-à-5) |
 | ☐ | Lot 4 : réconciliation 0 écart, rôles vérifiés « en tant que », audiences publiées | S-09 |
@@ -732,14 +766,9 @@ Une fois le lot recetté, chaque utilisateur suit le guide de son rôle ([index 
 
 ## 14. Points ouverts connus à la date de ce guide
 
+Les deux points suivants ne dépendent plus que d'une décision des responsables métier.
+
 | # | Point | Conséquence pour l'installation |
 | --- | --- | --- |
-| O-1 | `Import-HNCSRDFlows.ps1` active tous les flux marqués « activés par défaut » (tous sauf PA-13), sans notion de lot | Avant le lot 3 : `-SkipActivation` puis activation manuelle (4.5, 5.3, 5.4) |
-| O-2 | `build_solution.py` ne produit qu'une solution **non gérée** ; la spec demande une solution **gérée** en production ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)) | Mode de production de la solution gérée à décider |
-| O-3 | Le fichier de paramètres de déploiement par défaut (`flows/deploy/deploymentSettings.json`) n'est pas ignoré par git | Le conserver hors du dépôt (5.2) |
-| O-4 | Éléments saisis au lot 1 sans aucune entrée dans `HistoriqueStatuts`, alors que la v1.6.0 en fait le statut de référence (5.4) ; aucun historique d'amorçage n'est spécifié ni outillé | Ne pas activer le lot 2 sur ces données avant décision |
-| O-5 | Une resoumission peut renvoyer une notification déjà envoyée (H-56) ; une empreinte non encore initialisée accepte une première modification non autorisée (H-55) | Prévenir les destinataires lors d'une reprise ; exécuter PA-00D après l'activation du lot 2 |
-| O-6 | L'actualisation Power BI de 06:00 précède les flux planifiés du matin (06:30 à 07:10), alors que [9.1](../spec.md#91-projet) la place « après les flux de nuit » | Les changements d'état de ces flux apparaissent dans le rapport le lendemain |
-| O-7 | Au lot 1, les colonnes renseignées par les flux (`DateTransmissionAdmin`, `DateIntegration`, `DateDecisionPreselection`…) restent vides ; aucun rattrapage n'est spécifié | Les indicateurs Power BI qui en dépendent ignorent l'activité du lot 1 |
-| O-8 | Les flux versionnés ne mettent pas encore en œuvre le rapprochement quotidien des statuts par PA-00E, le déclenchement sur toute modification humaine ni le rétablissement des colonnes techniques introduits par la spec v1.6.0 | Vérifier `flows/docs/PA-00E.md` avant la mise en service du lot 2 ; réimporter la solution une fois les flux alignés |
-| O-9 | Jeu de test : `StatutPrecedent` = `Statut` ([12](../spec.md#12-stratégie-de-test-et-critères-dacceptation)), mais historique accepté présent pour une partie seulement des éléments à statut contrôlé | Résultats du rapprochement PA-00E à analyser en recette (9.1) |
+| O-1 | Une resoumission peut renvoyer une notification déjà envoyée (H-56) ; une empreinte non encore initialisée accepte une première modification non autorisée (H-55) | Prévenir les destinataires lors d'une reprise ; exécuter PA-00D à la main avant l'activation des flux des listes (5.4) |
+| O-2 | Au lot 1, les colonnes renseignées par les flux (`DateTransmissionAdmin`, `DateIntegration`, `DateDecisionPreselection`…) restent vides ; aucun rattrapage n'est spécifié | Les indicateurs Power BI qui en dépendent ignorent l'activité du lot 1 |

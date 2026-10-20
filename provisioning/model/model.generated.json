@@ -14121,6 +14121,12 @@
       "description": "Doubler les notifications nominatives par un message Teams"
     },
     {
+      "key": "Fonction.Lot2Actif",
+      "value": "Non",
+      "category": "Fonctionnalités",
+      "description": "Passé à Oui par l'administrateur à l'activation du lot 2, avant l'exécution manuelle de PA-00D : déclenche l'initialisation des empreintes et l'écriture des entrées `REPRISE` ([6.1](../spec.md#61-règles-générales), point 3 ter)"
+    },
+    {
       "key": "Fonction.RepriseExistantActive",
       "value": "Non",
       "category": "Fonctionnalités",
