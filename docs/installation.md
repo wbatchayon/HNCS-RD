@@ -687,7 +687,7 @@ complétée d'actions manuelles quand c'est inévitable.
 | ☐ | Lot 5 : risque H-31 accepté par écrit si `Sites.Selected` ; synchronisation en simulation puis réelle sans erreur | H-31 |
 | ☐ | Procès-verbal de recette du lot signé (condition de sortie [11](../spec.md#11-découpage-en-lots-0-à-5)) | [11](../spec.md#11-découpage-en-lots-0-à-5) |
 
-### 12.2 Scénarios de recette S-01 à S-15 (spec [12.1](../spec.md#121-scénarios-de-recette-cadrage--101-et-compléments))
+### 12.2 Scénarios de recette S-01 à S-15 (spec [12.1](../spec.md#121-scénarios-de-recette))
 
 Détail des étapes et des preuves : [`tests/e2e/scenarios.md`](../tests/e2e/scenarios.md). Scénarios complémentaires
 S-16 à S-26 (transition interdite, intégration sans formalités, idempotence, décision de partenariat, compte rendu

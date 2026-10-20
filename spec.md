@@ -2,9 +2,9 @@
 
 | Propriété | Valeur |
 | --- | --- |
-| Version de la spec | 1.7.0 |
-| Date | 2026-10-14 |
-| Statut | Lot 0, à valider en atelier (voir [13](#13-hypothèses-et-décisions-à-confirmer)) ; les versions 1.1.0 à 1.6.0 intègrent la revue de conformité RC-01 à RC-39, la revue croisée RX-01 à RX-09 et les retours de réalisation ([14.3](#143-journal)) |
+| Version de la spec | 1.7.1 |
+| Date | 2026-10-20 |
+| Statut | Lot 0, à valider en atelier (voir [13](#13-hypothèses-et-décisions-à-confirmer)) ; les versions 1.1.0 à 1.7.1 intègrent la revue de conformité RC-01 à RC-39, la revue croisée RX-01 à RX-09 et les retours de réalisation ([14.3](#143-journal)) |
 | Sources fonctionnelles | `Processus.md` ; `Cadrage_Fonctionnel_Automatisation_R&D_HNCS.docx` (v0.1) ; schéma « Architecture cible, Système de suivi R&D HNCS » |
 | Portée | Recrutement, intégration, suivi des alternants, livrables, comptes rendus, écoles et partenariats, capitalisation, reporting |
 
@@ -97,7 +97,7 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | La liste a un « Préfixe ID » différent de `-` | `IdHNCS` | Text | indexed; flux | Identifiant métier stable (pas de contrainte `unique` : plusieurs éléments peuvent être sans identifiant entre leur création et le passage de PA-00D) |
 | La liste a une « Énumération de statut » | `Statut` | Choice | enum=<énumération>; default=<statut initial>; indexed | Statut courant |
-| idem | `StatutPrecedent` | Text | hidden; flux | Dernier statut **validé** (sert à détecter et, si besoin, annuler une transition) |
+| idem | `StatutPrecedent` | Text | hidden; flux | Copie de commodité du dernier statut validé, pour les vues ; jamais utilisée pour détecter ni pour rétablir une transition ([8.1](#81-socle-commun-sapplique-à-tous-les-flux)) |
 | idem | `DateStatut` | DateTime | flux | Date du dernier changement validé |
 
 Les colonnes système SharePoint (`ID`, `Created`, `Modified`, `Author`, `Editor`) sont utilisées telles quelles.
@@ -1162,9 +1162,10 @@ Toutes les bibliothèques ont le versioning activé. La colonne Titre des docume
 ### 6.1 Règles générales
 
 1. **Toute** transition d'un objet listé ci-dessous est contrôlée après coup par le flux responsable du statut cible ([8.2](#82-partition-des-statuts-cibles)) : il vérifie que le couple (De, Vers) existe, que l'acteur (`Editor`) a l'un des rôles autorisés et que les contrôles `G_*` sont satisfaits.
-2. Si la transition est **acceptée** : écriture dans `HistoriqueStatuts` (`Acceptée`), mise à jour de `StatutPrecedent` et `DateStatut`, puis exécution des effets.
-3. Si la transition est **refusée** : le statut est **rétabli** à `StatutPrecedent` par le compte de service, l'événement est historisé (`Refusée et annulée`, motif), et l'acteur est notifié (N-90). Aucun effet métier n'est exécuté. Limite connue : le statut refusé reste visible quelques secondes (H-17).
+2. Si la transition est **acceptée** : écriture dans `HistoriqueStatuts` (`Acceptée`), mise à jour de la copie `StatutPrecedent` et de `DateStatut`, puis exécution des effets.
+3. Si la transition est **refusée** : le statut est **rétabli** au dernier statut accepté dans `HistoriqueStatuts` (statut de référence, [8.1](#81-socle-commun-sapplique-à-tous-les-flux)) par le compte de service, l'événement est historisé (`Refusée et annulée`, motif), et l'acteur est notifié (N-90). Aucun effet métier n'est exécuté. Limite connue : le statut refusé reste visible quelques secondes (H-17).
 3 bis. **Refus d'une création** (`∅` → statut initial) : il n'existe pas de statut à rétablir ; l'élément est envoyé à la **corbeille du site** par le compte de service (récupérable 93 jours, jamais supprimé définitivement par un flux), l'événement est historisé (`Refusée et annulée`, motif) et l'auteur est notifié (N-90).
+3 ter. **Reprise de l'existant** : un élément sans aucune transition acceptée qui n'est pas une création (élément saisi avant l'activation des flux du lot 2, ou importé) n'est jamais traité comme une création. Son statut courant est adopté comme statut de référence par une entrée `HistoriqueStatuts` `CodeTransition` = `REPRISE`, `StatutAvant` = `∅`, `StatutApres` = statut courant, `Origine` = Flux, `Resultat` = Acceptée, `Motif` = « Reprise de l'existant ». PA-00D écrit ces entrées dès l'activation du lot 2 ; à défaut, le flux de la liste l'écrit lui-même lorsque l'élément a plus d'une version, puis poursuit son traitement à partir de ce statut (H-57). Une création est un élément à sa première version.
 4. `∅` désigne la création. `*` dans « De » désigne tout statut de l'énumération autre que le statut d'arrivée.
 4 bis. Un contrôle `G_*` est évalué **au moment de la transition** qu'il garde ; il n'est pas réévalué ensuite (ex. une affectation terminée dont le référent est devenu inactif reste valide ; une fiche alternant reprise de l'existant reste valide si `Fonction.RepriseExistantActive` repasse à Non).
 5. Plusieurs valeurs séparées par ` ; ` dans « De » ou « Vers » sont développées en autant de lignes dans la liste `TransitionsStatuts` (codes suffixés `-01`, `-02`…).
@@ -1361,7 +1362,7 @@ Les empreintes sont des colonnes masquées (`Text` pour les empreintes courtes, 
 | `EmpreinteReferent` | Alternants | ID SharePoint du référent principal validé, en texte (`"5"`), ou vide |
 | `EmpreinteDecision` | Conventions | Valeur de `DecisionPartenariat` validée, en texte, ou vide |
 
-Historisation hors statut (exceptions documentées de `HistoriqueStatuts`) : (a) **résultat d'entretien**, une entrée Objet = Entretien avec `StatutAvant`/`StatutApres` = statut de l'entretien et `Motif` = « Résultat : {Resultat} » ; (b) **changement de référent principal**, une entrée Objet = Alternant, `CodeTransition` = `REF-PRINCIPAL`, `StatutAvant`/`StatutApres` = `IdHNCS` des référents.
+Historisation hors statut (exceptions documentées de `HistoriqueStatuts`) : (a) **résultat d'entretien**, une entrée Objet = Entretien avec `StatutAvant`/`StatutApres` = statut de l'entretien et `Motif` = « Résultat : {Resultat} » ; (b) **changement de référent principal**, une entrée Objet = Alternant, `CodeTransition` = `REF-PRINCIPAL`, `StatutAvant`/`StatutApres` = `IdHNCS` des référents ; (c) **reprise de l'existant**, une entrée `CodeTransition` = `REPRISE` ([6.1](#61-règles-générales), point 3 ter), qui compte comme transition acceptée pour le statut de référence, contrairement à `REF-PRINCIPAL`.
 
 ### 6.6 Catalogue des contrôles
 
@@ -1549,10 +1550,10 @@ R = réalise ; A = responsable final / approbateur ; C = consulté ; I = inform�
 
 | Thème | Règle |
 | --- | --- |
-| Conditionnement | Une **solution** Power Platform `HNCSRDSuivi` (non gérée en recette, gérée en production) contenant les flux, les références de connexion `hncs_sharepoint`, `hncs_outlook`, `hncs_teams`, `hncs_o365users` et les variables d'environnement `hncs_SiteUrl`, `hncs_ServiceAccountEmail`, `hncs_SupportEmail`, `hncs_BoiteRDEmail` et `hncs_BoiteRDDossierCandidatures` (le déclencheur de boîte partagée exige une adresse et un dossier fixés au déploiement ; `Destinataires.BoiteRD` doit avoir la même valeur). |
+| Conditionnement | Une **solution** Power Platform `HNCSRDSuivi` (non gérée en recette, gérée en production : la solution non gérée construite depuis le dépôt est importée dans l'environnement de recette, puis exportée en solution gérée par `pac solution export --managed` pour la production) contenant les flux, les références de connexion `hncs_sharepoint`, `hncs_outlook`, `hncs_teams`, `hncs_o365users` et les variables d'environnement `hncs_SiteUrl`, `hncs_ServiceAccountEmail`, `hncs_SupportEmail`, `hncs_BoiteRDEmail` et `hncs_BoiteRDDossierCandidatures` (le déclencheur de boîte partagée exige une adresse et un dossier fixés au déploiement ; `Destinataires.BoiteRD` doit avoir la même valeur). |
 | Identité d'exécution | Toutes les connexions utilisent le **compte de service** (H-13), membre de G_PROP. |
 | Anti-boucle | Toute écriture du compte de service ne redéclenche aucun flux : condition de déclenchement `@not(equals(toLower(triggerOutputs()?['body/Editor/Email']), toLower(parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))))`. Le flux qui écrit est donc responsable de journaliser ce qu'il fait. |
-| Détection d'une transition | Sur les listes à statut contrôlé, la condition de déclenchement est **uniquement** l'anti-boucle (toute modification humaine déclenche le flux de la liste ; pour une liste servie par plusieurs flux, chacun filtre ensuite sur ses statuts cibles, [8.2](#82-partition-des-statuts-cibles)). Le flux détermine s'il y a transition en comparant `Statut` au **dernier `StatutApres` accepté** pour l'élément dans `HistoriqueStatuts` (à défaut d'historique : création, `∅`). `StatutPrecedent` n'est qu'une copie de commodité pour les vues : il n'est jamais utilisé pour décider ni pour rétablir ; PA-00B rétablit le statut à partir de l'historique. |
+| Détection d'une transition | Sur les listes à statut contrôlé, la condition de déclenchement est **uniquement** l'anti-boucle (toute modification humaine déclenche le flux de la liste ; pour une liste servie par plusieurs flux, chacun filtre ensuite sur ses statuts cibles, [8.2](#82-partition-des-statuts-cibles)). Le flux détermine s'il y a transition en comparant `Statut` au **dernier `StatutApres` accepté** pour l'élément dans `HistoriqueStatuts` (à défaut d'historique : création `∅` si l'élément est à sa première version, sinon reprise de l'existant, [6.1](#61-règles-générales), point 3 ter). `StatutPrecedent` n'est qu'une copie de commodité pour les vues : il n'est jamais utilisé pour décider ni pour rétablir ; PA-00B rétablit le statut à partir de l'historique. |
 | Colonnes techniques | À chaque déclenchement humain, le flux de la liste vérifie (« Obtenir les modifications d'un élément » depuis la version précédente) si une colonne `flux` a été modifiée ; si oui, il la rétablit à sa valeur de la version précédente (API des versions), journalise (Avertissement) et notifie N-92, puis poursuit sur les valeurs rétablies. |
 | Structure | Portées `Principal` → `Erreur` (exécutée si `Principal` est en échec ou expiré) → `Terminer`. La portée `Erreur` appelle **PA-00C**, puis termine l'exécution en échec (pour permettre la reprise par « Resoumettre »). |
 | Nouvelle tentative | Stratégie exponentielle par défaut (4 tentatives) sur les actions SharePoint, Outlook et Teams. |
@@ -1665,7 +1666,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | --- | --- |
 | Déclencheur | Récurrence horaire + déclenchement manuel |
 | Entrées | Toutes les listes ayant un préfixe ID ([4.3](#43-listes)) |
-| Traitement | Pour chaque liste, éléments où `IdHNCS` est vide → `IdHNCS` = `{PREFIXE}-{année de Created}-{ID sur 4 chiffres}` (Pôles : `POL-{CodePole}`). À partir du lot 2 : les empreintes vides ([6.5](#65-formats-des-empreintes-p-09)) des éléments existants sont initialisées à partir des valeurs courantes, afin de réduire la fenêtre pendant laquelle une première modification non autorisée d'un élément jamais initialisé serait acceptée (H-55). |
+| Traitement | Pour chaque liste, éléments où `IdHNCS` est vide → `IdHNCS` = `{PREFIXE}-{année de Created}-{ID sur 4 chiffres}` (Pôles : `POL-{CodePole}`). À partir du lot 2 : les empreintes vides ([6.5](#65-formats-des-empreintes-p-09)) des éléments existants sont initialisées à partir des valeurs courantes, afin de réduire la fenêtre pendant laquelle une première modification non autorisée d'un élément jamais initialisé serait acceptée (H-55) ; chaque élément d'une liste à statut contrôlé sans transition acceptée reçoit son entrée `REPRISE` ([6.1](#61-règles-générales), point 3 ter). La procédure d'installation exécute PA-00D manuellement avant d'activer les flux des listes. |
 | Sorties | `IdHNCS` renseigné ; filet de sécurité pour les listes sans flux de création. Livré dès le **lot 1** (avec PA-00C) pour que les colonnes de recherche, qui affichent `IdHNCS`, soient utilisables en saisie manuelle (RC-26) |
 | Erreurs / journalisation | PA-00C par liste en échec ; nombre d'identifiants attribués → `JournalFlux` Info |
 
@@ -1674,7 +1675,7 @@ Les propriétaires métier sont des rôles ; les personnes nominatives sont à d
 | Élément | Contrat |
 | --- | --- |
 | Déclencheur | Quotidien 07:30 |
-| Traitement | 1. **Rapprochement des statuts** (filet de sécurité) : pour chaque élément des listes à statut contrôlé dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` sans exécution en cours, rétablir le statut via PA-00B (Refusée et annulée, motif « Rapprochement quotidien ») et journaliser (Avertissement). 2. Lister `JournalFlux` Niveau Erreur avec `StatutReprise` = À reprendre ; si non vide (ou si l'étape 1 a rétabli des statuts), envoyer N-98 (synthèse) au support et à G_PROP. |
+| Traitement | 1. **Rapprochement des statuts** (filet de sécurité) : pour chaque élément des listes à statut contrôlé dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` sans exécution en cours (éléments modifiés depuis moins de 30 minutes ignorés ; éléments sans transition acceptée laissés à PA-00D), rétablir le statut via PA-00B (Refusée et annulée, motif « Rapprochement quotidien ») et journaliser (Avertissement). 2. Lister `JournalFlux` Niveau Erreur avec `StatutReprise` = À reprendre ; si non vide (ou si l'étape 1 a rétabli des statuts), envoyer N-98 (synthèse) au support et à G_PROP. |
 | Sorties | Courriel de synthèse |
 
 #### PA-00F : Droits des propriétaires de modèles
@@ -1881,7 +1882,7 @@ Les valeurs initiales sont des **propositions** à valider ([13](#13-hypothèses
 - Source : **API REST SharePoint** (`Web.Contents(SiteUrl, [RelativePath = "_api/web/GetList('<chemin du site>/Lists/<NomInterne>')/items", Query = [#"$select" = …, #"$top" = "5000"]])`, bibliothèques : `GetList('<chemin du site>/<NomInterne>')` -, avec pagination `odata.nextLink`) afin de ne sélectionner **que** les colonnes autorisées. Les listes sont désignées par leur **nom interne** (URL), jamais par leur titre affiché, qui peut être renommé. Paramètre M `SiteUrl`.
 - Dates : SharePoint renvoie les dates en UTC, y compris les colonnes « date seule » ; toutes les colonnes `Date` et `DateTime` sont converties en heure de Paris dans Power Query avant typage (`Date` → date seule). Dans le service, `TODAY ()` et `NOW ()` sont en UTC : écart toléré entre 00:00 et 02:00 (H-48).
 - `GitlabSync` (lot 5) est lue en mode facultatif : liste absente (404) → table vide.
-- Actualisation planifiée quotidienne (06:00, après les flux de nuit) dans l'espace de travail « HNCS-R&D Pilotage » ; identifiants OAuth du compte de service (H-16).
+- Actualisation planifiée quotidienne (07:45, après les flux planifiés du matin, de 06:30 à 07:30) dans l'espace de travail « HNCS-R&D Pilotage » ; identifiants OAuth du compte de service (H-16).
 - Reporting **en lecture seule** : aucune réécriture vers SharePoint.
 
 ### 9.2 Tables importées
@@ -2193,9 +2194,9 @@ Le script de déploiement accepte `-Lot <n>` et déploie **cumulativement** tous
 | Droits d'accès | Matrice [7.3](#73-matrice-daccès) vérifiée persona par persona (lecture, écriture, refus) | `tests/e2e/Access.Tests.ps1` |
 | Réconciliation Power BI | Chaque mesure clé recalculée depuis SharePoint et comparée | `tests/e2e/reconciliation/` |
 
-Données de test **fictives** uniquement (noms et e-mails factices, domaine `example.org`). Elles sont importées comme des **données déjà validées** (`StatutPrecedent` = `Statut`, empreintes vides ou cohérentes) et **flux désactivés** (ou avant le lot 2) : sinon les flux de création traiteraient ces éléments comme de nouvelles saisies. Les identifiants du jeu utilisent la plage `9xxx` (aucune collision avec PA-00D) ; le jeu peut ajouter des entrées fictives de référentiel (`MOD-2026-9xxx`, `DOM-2026-9xxx`) pour couvrir tous les statuts.
+Données de test **fictives** uniquement (noms et e-mails factices, domaine `example.org`). Elles sont importées comme des **données déjà validées** (`StatutPrecedent` = `Statut`, empreintes vides ou cohérentes) **avec leur historique** : pour chaque élément contrôlé, le dernier `StatutApres` accepté dans `HistoriqueStatuts` est égal à `Statut`. Toute autre reprise de données suit la même règle ou passe par les entrées `REPRISE` ([6.1](#61-règles-générales), point 3 ter) et **flux désactivés** (ou avant le lot 2) : sinon les flux de création traiteraient ces éléments comme de nouvelles saisies. Les identifiants du jeu utilisent la plage `9xxx` (aucune collision avec PA-00D) ; le jeu peut ajouter des entrées fictives de référentiel (`MOD-2026-9xxx`, `DOM-2026-9xxx`) pour couvrir tous les statuts.
 
-### 12.1 Scénarios de recette (cadrage § 10.1 et compléments)
+### 12.1 Scénarios de recette
 
 | # | Scénario | Résultat attendu (références) |
 | --- | --- | --- |
@@ -2278,6 +2279,7 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | H-51 | Livrables ouverts lors d'un remplacement d'affectation | Décision humaine de la R&D pour chaque livrable (poursuite via `LivrableOrigine`, suspension motivée ou clôture) ; aucun transfert automatique | Automatiser une proposition de transfert | Direction R&D |
 | H-55 | Empreintes non initialisées | Une première modification non autorisée d'un élément dont l'empreinte est vide (créé avant l'activation des flux) est acceptée comme valeur initiale ; risque réduit par l'initialisation horaire de PA-00D et, pour la décision de partenariat, par la vérification de l'habilitation tant que `DecideurPartenariat` est vide | Marqueur d'initialisation distinct | Direction R&D |
 | H-56 | Doublons de notifications à la reprise | Une exécution resoumise peut renvoyer une notification déjà envoyée lorsqu'aucun marqueur n'est prévu (N-01, N-03, N-16…) ; N-41 est répétée chaque jour tant que l'échéance n'est pas mise à jour | Ajouter des marqueurs d'envoi | Direction R&D |
+| H-57 | Reprise de l'existant | Un élément sans transition acceptée et à plus d'une version adopte son statut courant comme statut de référence (entrée `REPRISE`) ; une modification non autorisée faite entre l'activation des flux et le premier passage de PA-00D serait adoptée, d'où l'exécution manuelle de PA-00D avant l'activation des flux des listes | Contrôler la reprise par un export préalable des statuts | Direction R&D |
 | H-53 | Composition du Comité R&D | Direction R&D, équipe R&D et référents ; la synthèse N-42 est envoyée à G_DRD et publiée dans le canal Teams du comité, dont ces personnes sont membres | Ajuster la liste de diffusion | Direction R&D |
 | H-54 | Bibliothèque « 04 - Livrables R&D » et Direction | La Direction lit les documents des livrables (travaux, sans donnée personnelle ; colonnes de recherche affichées en `IdHNCS`) | Retirer `R` à G_DIR | Direction Générale |
 | H-52 | Publics Power BI complémentaires | Pas de rôle « Communication » ni « Avant-vente » : ces publics passent par PilotageRD ou par la Direction R&D | Ajouter des rôles | Direction R&D |
@@ -2307,6 +2309,7 @@ Chaque ligne décrit ce qui est **implémenté** en attendant l'arbitrage. Les c
 | --- | --- | --- | --- |
 | 1.0.0 | 2026-10-14 | Équipe projet | Première version complète (lot 0) |
 | 1.7.0 | 2026-10-16 | Équipe projet | Révision rédactionnelle : valeurs contrôlées sans tiret long (« Réservé (entretien complémentaire) », « Contrat d'alternance (volet école) », « P1 (haute) » à « P3 (basse) », « Refusée et annulée »), titres des bibliothèques « 01 - … », noms des flux « PA-xx : … », renvois de section sous forme de liens, H-05 tranché (Carine) |
+| 1.7.1 | 2026-10-20 | Équipe projet | Retours de réalisation : reprise de l'existant (entrée `REPRISE`, [6.1](#61-règles-générales) point 3 ter, PA-00D, H-57), `StatutPrecedent` réduit à une copie de commodité dans [2.3](#23-colonnes-implicites-ajoutées-par-lextracteur) et [6.1](#61-règles-générales), seuil de 30 minutes de PA-00E, actualisation Power BI à 07:45, export de la solution gérée, jeu de test importé avec son historique, titre de [12.1](#121-scénarios-de-recette) |
 | 1.6.0 | 2026-10-16 | Équipe projet | Revue croisée RX-01 à RX-09 : empreintes longues en colonnes `Note` ; colonnes techniques jamais source de confiance (statut de référence = dernière transition acceptée de l'historique, rétablissement des colonnes `flux`, rapprochement quotidien PA-00E, déclenchement sur toute modification humaine) ; OLS `NomAffichage` pour RelationEcoles ; tables techniques filtrées dans Power BI ; actions visibles des référents ; identifiants réservés des référentiels ; lignes GitLab orphelines ; saisie des candidatures par la R&D |
 | 1.5.0 | 2026-10-16 | Équipe projet | Retours des flux (20 points) : variables d'environnement de la boîte R&D, PA-01b repris sur exécution partielle, PA-00C/PA-00D au lot 1 et initialisation des empreintes, envoi trimestriel unique, décision de partenariat avant signature, droits du responsable dans tous les contextes (PA-04 c), changement d'auteur (PA-12), verrou d'affectation suivi du traitement de la transition (PA-05), format de `DernierRappel`, exception de permission sur les fichiers de modèles, destinataires des notifications alignés, H-55, H-56 |
 | 1.4.0 | 2026-10-16 | Équipe projet | Retours du jeu de test : formats des empreintes et historisations hors statut ([6.5](#65-formats-des-empreintes-p-09)), contrôles évalués au moment de la transition, accès nominatifs sous la matrice, cadence « Par jalon », import des données de test flux désactivés, H-42 précisé |

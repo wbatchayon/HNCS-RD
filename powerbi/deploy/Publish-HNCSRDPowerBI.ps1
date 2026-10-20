@@ -8,13 +8,13 @@
     est injecté dans expressions.tmdl au moment de l'envoi (le fichier local n'est pas modifié).
     Le rapport est relié au modèle publié (definition.pbir réécrit en byConnection pour l'API).
     Déclenche ensuite une actualisation et, sur demande, configure l'actualisation planifiée
-    quotidienne de 06:00 (heure de Paris).
+    quotidienne de 07:45 (heure de Paris).
 
     Étapes qui restent MANUELLES dans le service Power BI (spec § 9.1, H-16) :
       1. Identifiants de la source : Paramètres du modèle > Informations d'identification de la source
          de données > SharePoint (Web) > Modifier > OAuth2, compte de service, confidentialité
          « Organisationnel ». Sans cette étape l'actualisation échoue.
-      2. Actualisation planifiée quotidienne 06:00 (Romance Standard Time) si -ConfigurerPlanification
+      2. Actualisation planifiée quotidienne 07:45 (Romance Standard Time) si -ConfigurerPlanification
          n'a pas pu l'appliquer (elle exige des identifiants valides).
       3. Sécurité : affecter les groupes Entra / personnes aux rôles Direction, PilotageRD,
          Administration, RelationEcoles et Referent (Modèle > Sécurité). Ne jamais mettre une même personne dans
@@ -331,18 +331,18 @@ function Set-RefreshSchedule {
         value = [ordered]@{
             enabled         = $true
             days            = @('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
-            times           = @('06:00')
+            times           = @('07:45')
             localTimeZoneId = 'Romance Standard Time'
             notifyOption    = 'MailOnFailure'
         }
     }
     try {
         Invoke-HncsApi -Method Patch -Uri "$PowerBIApi/groups/$WorkspaceId/datasets/$ModelId/refreshSchedule" -Body $corps | Out-Null
-        Write-Host 'Actualisation planifiée : tous les jours à 06:00 (heure de Paris).'
+        Write-Host 'Actualisation planifiée : tous les jours à 07:45 (heure de Paris).'
     }
     catch {
         Write-Warning "Planification non appliquée (identifiants de la source probablement non renseignés) : $($_.Exception.Message)"
-        Write-Warning 'À faire dans le service : Paramètres du modèle > Actualisation planifiée > quotidienne 06:00.'
+        Write-Warning 'À faire dans le service : Paramètres du modèle > Actualisation planifiée > quotidienne 07:45.'
     }
 }
 
@@ -395,7 +395,7 @@ if (-not $SkipRefresh) {
 Write-Host ''
 Write-Host 'Publication terminée. Étapes manuelles restantes (README.md § Publication) :'
 Write-Host '  1. Identifiants OAuth2 de la source SharePoint (compte de service, confidentialité Organisationnel).'
-Write-Host '  2. Actualisation planifiée quotidienne 06:00 si elle n''a pas été appliquée ci-dessus.'
+Write-Host '  2. Actualisation planifiée quotidienne 07:45 si elle n''a pas été appliquée ci-dessus.'
 Write-Host '  3. Affectation des membres aux rôles RLS / OLS (Direction, PilotageRD, Administration, RelationEcoles, Referent), une personne dans un seul rôle, H-16.'
 Write-Host "  4. Accès à l'espace « $WorkspaceName » en lecture pour les publics du rapport (aucun alternant, H-19)."
 Write-Host "Modèle : $modelId, Rapport : $reportId"

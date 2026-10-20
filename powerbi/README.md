@@ -207,7 +207,7 @@ Le script : obtient un jeton (audience Power BI / Fabric) ; crée l'espace « HN
 `.../semanticModels/{id}/updateDefinition` s'il existe) avec `SiteUrl` injecté dans `expressions.tmdl` ; envoie le
 rapport (`/reports`, idem) en réécrivant `definition.pbir` en `byConnection` vers le modèle publié ; suit les opérations
 longues (202 + `Location`) et les limitations (429) ; déclenche une actualisation (`-SkipRefresh` pour l'éviter) ;
-avec `-ConfigurerPlanification`, applique l'actualisation quotidienne 06:00 (Romance Standard Time). `-WhatIf` est pris
+avec `-ConfigurerPlanification`, applique l'actualisation quotidienne 07:45 (Romance Standard Time). `-WhatIf` est pris
 en charge. Compatible Windows PowerShell 5.1 (fichier UTF-8 avec BOM) et PowerShell 7.
 
 Prérequis : droits de création d'espace / d'éléments ; selon la configuration du tenant, les API de définition
@@ -221,7 +221,7 @@ Ouvrir le PBIP dans Desktop ([2](../spec.md#2-architecture-et-conventions-de-nom
 
 1. **Identifiants** : *Paramètres du modèle > Informations d'identification de la source de données > Web
    (SiteUrl) > Modifier* : OAuth2, compte de service (H-13, H-16), confidentialité « Organisationnel ».
-2. **Actualisation planifiée** : quotidienne à **06:00** (Romance Standard Time), après les flux de nuit, notification
+2. **Actualisation planifiée** : quotidienne à **07:45** (Romance Standard Time), après les flux planifiés du matin, notification
    en cas d'échec, si `-ConfigurerPlanification` n'a pas pu l'appliquer (identifiants absents).
 3. **Rôles** : affecter les groupes Entra / personnes à `Direction`, `PilotageRD`, `Administration`,
    `RelationEcoles`, `Referent` (H-16), une personne dans un seul rôle.

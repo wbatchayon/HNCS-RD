@@ -1,6 +1,6 @@
 {
   "$comment": "FICHIER GÉNÉRÉ par tools/spec_extract.py à partir de spec.md, ne pas modifier à la main.",
-  "specVersion": "1.7.0",
+  "specVersion": "1.7.1",
   "site": {
     "url": "https://<tenant>.sharepoint.com/sites/HNCS-RD",
     "title": "HNCS-R&D",
@@ -16859,6 +16859,10 @@
     {
       "id": "H-56",
       "subject": "Doublons de notifications à la reprise"
+    },
+    {
+      "id": "H-57",
+      "subject": "Reprise de l'existant"
     },
     {
       "id": "H-53",

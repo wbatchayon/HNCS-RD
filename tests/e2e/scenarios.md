@@ -1,6 +1,6 @@
 # Scénarios de recette de bout en bout : HNCS-RD
 
-> Référence : `spec.md` [12.1](../../spec.md#121-scénarios-de-recette-cadrage--101-et-compléments) (S-01 à S-15, repris du cadrage § 10.1) et scénarios complémentaires S-16 à S-26.
+> Référence : `spec.md` [12.1](../../spec.md#121-scénarios-de-recette) (S-01 à S-15, repris du cadrage § 10.1) et scénarios complémentaires S-16 à S-26.
 > Spec en vigueur : v1.7.0. En cas d'écart, la spec prévaut.
 > Tous les scénarios s'exécutent sur un **site de recette** (URL contenant « recette », « test », « qualif » ou « dev »),
 > avec le jeu de test fictif de `testdata/` et les personas de `testdata/personas.json`.

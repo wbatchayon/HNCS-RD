@@ -13,7 +13,7 @@ déploiement.
 | `Deploy-HNCSRD.ps1` | Point d'entrée idempotent : site, niveau d'autorisation, groupes, listes, colonnes, lookups, validations, vues, permissions, référentiels, transitions, navigation, Teams (optionnel) |
 | `Set-HNCSRDMembres.ps1` | Membres **directs** des groupes SharePoint depuis `config/membres.json` (H-14) ; `-Synchroniser` retire les absents |
 | `Grant-HNCSRDServiceAccount.ps1` | Contrôle du compte de service (membre de G_PROP, permissions effectives) ; `-Corriger` l'ajoute à G_PROP |
-| `Test-HNCSRDDeploiement.ps1` | Contrôle post-déploiement **en lecture seule** : rapport d'écarts site ↔ modèle, code 1 si écart |
+| `Test-HNCSRDDeploiement.ps1` | Contrôle post-déploiement **en lecture seule** : rapport d'écarts site ↔ modèle, code de sortie 1 si au moins un écart de gravité « Erreur » |
 | `modules/HNCSRD.Provisioning.psd1/.psm1` | Fonctions réutilisables (`Ensure-*`, `Set-*`, `Sync-*`, fonctions pures) |
 | `config/tenant.sample.json`, `config/membres.sample.json` | Contrats de configuration partagés avec les autres lots |
 | `tests/*.Tests.ps1` | Tests hors ligne des fonctions pures (CAML de toutes les vues, XML de toutes les colonnes…) |
