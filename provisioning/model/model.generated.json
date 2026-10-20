@@ -10181,7 +10181,7 @@
           "label": "Ligne orpheline",
           "type": "Boolean",
           "required": false,
-          "description": "Jalon supprimé ou sujet détaché : ligne conservée mais exclue des indicateurs ([10.3](#103-composants-livrés))",
+          "description": "Jalon supprimé ou sujet détaché : ligne conservée mais exclue des indicateurs (spec, section 10.3)",
           "enum": null,
           "lookup": null,
           "default": "Non",
@@ -14124,7 +14124,7 @@
       "key": "Fonction.Lot2Actif",
       "value": "Non",
       "category": "Fonctionnalités",
-      "description": "Passé à Oui par l'administrateur à l'activation du lot 2, avant l'exécution manuelle de PA-00D : déclenche l'initialisation des empreintes et l'écriture des entrées `REPRISE` ([6.1](../spec.md#61-règles-générales), point 3 ter)"
+      "description": "Passé à Oui par l'administrateur à l'activation du lot 2, avant l'exécution manuelle de PA-00D : déclenche l'initialisation des empreintes et l'écriture des entrées `REPRISE` (spec, section 6.1, point 3 ter)"
     },
     {
       "key": "Fonction.RepriseExistantActive",
@@ -15070,7 +15070,7 @@
       "recipients": "G_DRD, canal Teams du comité",
       "channel": "Mail+Teams",
       "subject": "Synthèse Comité R&D du {date}",
-      "content": "Synthèse opérationnelle ([8.4](../spec.md#84-contrats-détaillés) PA-11)",
+      "content": "Synthèse opérationnelle ([\\[8.4\\]](../spec.md#84-contrats-détaillés) PA-11)",
       "data": [
         "ID"
       ]
@@ -16624,8 +16624,8 @@
   "lots": [
     {
       "lot": "0, Cadrage",
-      "content": "`spec.md`, `specs/`, [13](#13-hypothèses-et-décisions-à-confirmer)",
-      "exit": "Accord fonctionnel des responsables métier et administratifs sur [13](#13-hypothèses-et-décisions-à-confirmer)"
+      "content": "`spec.md`, `specs/`, [\\[13\\]](#13-hypothèses-et-décisions-à-confirmer)",
+      "exit": "Accord fonctionnel des responsables métier et administratifs sur [\\[13\\]](#13-hypothèses-et-décisions-à-confirmer)"
     },
     {
       "lot": "1, Socle SharePoint",

@@ -1,6 +1,6 @@
 # Sous-spécification : Vues SharePoint
 
-> Alignée sur `spec.md` [4](../spec.md#4-modèle-de-données--listes-sharepoint) et [5](../spec.md#5-bibliothèques-documentaires) (qui prévaut). Lue par `tools/spec_extract.py`.
+> Alignée sur `spec.md` [\[4\]](../spec.md#4-modèle-de-données--listes-sharepoint) et [\[5\]](../spec.md#5-bibliothèques-documentaires) (qui prévaut). Lue par `tools/spec_extract.py`.
 
 ## Grammaire
 

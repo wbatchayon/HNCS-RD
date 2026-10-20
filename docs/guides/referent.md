@@ -6,7 +6,7 @@
 
 ## 1. Votre rôle dans le processus
 
-Le référent encadre un ou plusieurs alternants sur un sujet R&D. Au RACI ([7.6](../../spec.md#76-matrice-raci-et-implémentation)), vous êtes « A/R » de la production et de la
+Le référent encadre un ou plusieurs alternants sur un sujet R&D. Au RACI ([\[7.6\]](../../spec.md#76-matrice-raci-et-implémentation)), vous êtes « A/R » de la production et de la
 validation des livrables. Concrètement :
 
 - vous êtes désigné sur une **affectation** (alternant + sujet + référent) par l'équipe R&D ;
@@ -24,7 +24,7 @@ Groupe SharePoint : `HNCS-RD-Referents` (rôle `REFERENT`). La validation d'un l
 
 ## 2. Ce que vous voyez et ne voyez pas
 
-D'après la matrice d'accès (spec [7.3](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
+D'après la matrice d'accès (spec [\[7.3\]](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([\[7.4\]](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
 
 | Accès | Listes et bibliothèques |
 | --- | --- |
@@ -151,7 +151,7 @@ l'équipe R&D et la Direction R&D peuvent les changer, P-09). Un compte rendu no
 
 1. Liste **Affectations**, ouvrez l'affectation concernée.
 2. Posez **« À risque »** ou **« Bloquée »** (`AFF-T03`). La Direction R&D reçoit **N-21** ; l'affectation apparaît ensuite
-   dans la synthèse du Comité R&D, puis au Point Direction si besoin (escalade [7.7](../../spec.md#77-circuit-descalade)).
+   dans la synthèse du Comité R&D, puis au Point Direction si besoin (escalade [\[7.7\]](../../spec.md#77-circuit-descalade)).
 3. Quand la situation est rétablie, reposez **« Active »** (`AFF-T04`).
 
 Seuls l'équipe R&D et le référent de l'affectation peuvent poser ces statuts.
@@ -163,7 +163,7 @@ Seuls l'équipe R&D et le référent de l'affectation peuvent poser ces statuts.
   validation ». Le « Réviseur » est par défaut le référent de l'affectation ; c'est un champ protégé : seul vous-même ou un membre de la Direction R&D pouvez être désigné, et seules l'équipe R&D et la
   Direction R&D peuvent le changer).
 - **Projet GitLab** : demandez sa création à l'équipe R&D ; un de ses membres, propriétaire du groupe `hncs-rd`, lance le
-  script de création à votre demande ([10.3](../../spec.md#103-composants-livrés)).
+  script de création à votre demande ([\[10.3\]](../../spec.md#103-composants-livrés)).
 - **Échéance** : c'est un champ protégé ; en tant que réviseur légitime, vous pouvez la déplacer (comme l'équipe R&D et la
   Direction R&D), pas l'alternant ; « Échéance initiale » garde la valeur d'origine. S'il existe un jalon GitLab
   `LIV-…`, alignez-le **après** la modification SharePoint ; l'outillage ne modifie jamais un jalon, il signale l'écart.
@@ -181,7 +181,7 @@ référent du sujet, vous recevez **N-47** avec la décision et son motif.
 - **Dossier de suivi** `05 - Suivi des alternants/ALT-…/` : plan de travail, consignes, bilans de mission (partagés avec
   l'alternant). Rangez les **évaluations confidentielles** dans `_Evaluations` (« Type de document » = Évaluation
   (confidentielle)) : l'alternant n'y a pas accès. Ne déposez aucun document métier dans la bibliothèque « Documents » par
-  défaut du site ni dans les fichiers de l'équipe Teams : ils ne sont pas protégés par les droits du système (spec [7.2](../../spec.md#72-niveaux-dautorisation)).
+  défaut du site ni dans les fichiers de l'équipe Teams : ils ne sont pas protégés par les droits du système (spec [\[7.2\]](../../spec.md#72-niveaux-dautorisation)).
 - **Livrables** : vues « Livrables en cours », « En retard ». En cas de retard, vous recevez **N-24** avec l'alternant.
 
 ### 3.10 Fin d'alternance, bilan et recommandation
@@ -279,7 +279,7 @@ résultat) et chaque élément est versionné.
 Rôle Power BI **Referent** : les données sont **limitées aux affectations et aux alternants que vous encadrez** ; aucune donnée
 de recrutement (candidatures, entretiens) n'est visible. Vous voyez en revanche les **actions d'intégration et de clôture de vos
 alternants** (page 7, actions en retard). Pages de votre audience dans l'application
-(spec [9.7](../../spec.md#97-pages-du-rapport)) :
+(spec [\[9.7\]](../../spec.md#97-pages-du-rapport)) :
 
 | Page | Usage pour vous |
 | --- | --- |

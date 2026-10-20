@@ -1316,7 +1316,7 @@ function Ensure-HNCSRDPermissionLevels {
         $retirer = @($niv.remove)
         $attendues = @(Get-HNCSRDPermissionKinds -RoleDefinition $base[0] | Where-Object { $retirer -notcontains $_ })
         $existant = @($defs | Where-Object { $_.Name -eq [string]$niv.name })
-        $description = ("Permissions de {0} sans {1} (spec § 7.2)" -f $niv.basedOn, ($retirer -join ', '))
+        $description = ("Permissions de {0} sans {1} (spec, section 7.2)" -f $niv.basedOn, ($retirer -join ', '))
         if ($existant.Count -eq 0) {
             if (Test-HNCSRDSimulation) { Add-HNCSRDResultat -Statut Simule -Cible $niv.name -Message "Création (clone de $($base[0].Name) sans $($retirer -join ', '))"; continue }
             Add-PnPRoleDefinition -RoleName ([string]$niv.name) -Clone $base[0] -Exclude $retirer -Description $description -ErrorAction Stop | Out-Null

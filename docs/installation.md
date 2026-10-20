@@ -1,7 +1,7 @@
 # Guide d'installation : Système de suivi R&D HNCS
 
 > Public : administrateur Microsoft 365 / IT. Installation de bout en bout sur un tenant Microsoft 365, lot par lot
-> (spec [11](../spec.md#11-découpage-en-lots-0-à-5)). La spécification [`spec.md`](../spec.md) (**v1.7.1**) fait foi en cas d'écart ; ce guide ne fait
+> (spec [\[11\]](../spec.md#11-découpage-en-lots-0-à-5)). La spécification [`spec.md`](../spec.md) (**v1.7.1**) fait foi en cas d'écart ; ce guide ne fait
 > qu'enchaîner les commandes des scripts livrés (`provisioning/`, `flows/`, `powerbi/`, `gitlab/`, `testdata/`,
 > `tests/`), avec leurs paramètres réels.
 >
@@ -46,9 +46,9 @@ flowchart TD
   L1 -. recette .-> T["Jeu de test<br/>Import-TestData.ps1, flux désactivés<br/>tests/e2e (Pester 5)"]
 ```
 
-| Lot | Ce qui est installé (spec [11](../spec.md#11-découpage-en-lots-0-à-5)) | Condition de sortie ([11](../spec.md#11-découpage-en-lots-0-à-5)) | Section |
+| Lot | Ce qui est installé (spec [\[11\]](../spec.md#11-découpage-en-lots-0-à-5)) | Condition de sortie ([\[11\]](../spec.md#11-découpage-en-lots-0-à-5)) | Section |
 | --- | --- | --- | --- |
-| 0 : Cadrage | Rien sur le tenant : contrôle du modèle et de la configuration (`-Lot 0`) | Accord des responsables métier et administratifs sur [13](../spec.md#13-hypothèses-et-décisions-à-confirmer) | 3 |
+| 0 : Cadrage | Rien sur le tenant : contrôle du modèle et de la configuration (`-Lot 0`) | Accord des responsables métier et administratifs sur [\[13\]](../spec.md#13-hypothèses-et-décisions-à-confirmer) | 3 |
 | 1 : Socle SharePoint | Site, groupes, niveau CSS, listes et bibliothèques de lot 1, vues, validations, index, permissions, référentiels ; flux **PA-00C et PA-00D** ; procédure manuelle de partage (H-50) | Scénarios de bout en bout testés, y compris les droits d'accès | 4 |
 | 2 : Automatisations prioritaires | PA-00A, PA-00B, PA-00E, PA-00F, PA-01a/b, PA-02/02b, PA-03/03b, PA-04/04b, PA-05, PA-06, PA-07/07b | Tests réussis, journal d'erreurs opérationnel, **responsable support désigné** | 5 |
 | 3 : Suivi opérationnel complet | Listes de lot 3 ; PA-08, PA-09, PA-10, PA-11, PA-12, PA-14 ; `gitlab/scripts`, `gitlab/templates` | Validation par la R&D, les référents et les acteurs support | 6 |
@@ -67,12 +67,12 @@ déployés sont inertes). Il n'existe aucun objet SharePoint propre au lot 2 : `
 
 | Besoin | Exigence | Référence |
 | --- | --- | --- |
-| Utilisateurs métier | Licence Microsoft 365 donnant accès à SharePoint, Outlook et Teams | [2](../spec.md#2-architecture-et-conventions-de-nommage) |
+| Utilisateurs métier | Licence Microsoft 365 donnant accès à SharePoint, Outlook et Teams | [\[2\]](../spec.md#2-architecture-et-conventions-de-nommage) |
 | Flux | Power Automate inclus dans Microsoft 365, **connecteurs standard uniquement** : SharePoint, Office 365 Outlook, Office 365 Users, Microsoft Teams. Aucun connecteur premium (HTTP, Dataverse premium, API tierces) sans validation budgétaire | P-08, H-15 |
 | Compte de service | Licence Microsoft 365 avec Power Automate (connecteurs standard) et messagerie | H-13 |
-| Solution de flux | Environnement Power Platform **avec Dataverse** (celui de l'environnement par défaut est accepté). Sans Dataverse : mode « import de package hérité » flux par flux, connexions à réassocier à la main | H-15, [8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux) |
+| Solution de flux | Environnement Power Platform **avec Dataverse** (celui de l'environnement par défaut est accepté). Sans Dataverse : mode « import de package hérité » flux par flux, connexions à réassocier à la main | H-15, [\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux) |
 | Rapport | **Power BI Pro** pour les publics du rapport ; selon la configuration du tenant, les API de définition d'éléments Fabric utilisées par le script peuvent exiger un espace sur capacité (Fabric, Premium ou PPU) ; à défaut, publication manuelle depuis Desktop | H-15, H-16, `powerbi/README.md`, section 7 |
-| GitLab | Instance existante ; les labels à portée `rd::…::…` ne sont exclusifs qu'avec GitLab Premium (sans effet sur les scripts) | [10.2](../spec.md#102-conventions-gitlab) |
+| GitLab | Instance existante ; les labels à portée `rd::…::…` ne sont exclusifs qu'avec GitLab Premium (sans effet sur les scripts) | [\[10.2\]](../spec.md#102-conventions-gitlab) |
 
 Les alternants n'ont aucun accès au rapport Power BI (H-19) : aucune licence Power BI n'est nécessaire pour eux.
 
@@ -80,14 +80,14 @@ Les alternants n'ont aucun accès au rapport Power BI (H-19) : aucune licence Po
 
 | # | Ressource | Détail | Réf. |
 | --- | --- | --- | --- |
-| C1 | **Compte de service** `svc-hncs-rd@<domaine>` | Licencié (2.1) ; mot de passe sans expiration **ou** procédure de renouvellement ; MFA / accès conditionnel compatibles avec des connexions de flux ; droit **« Envoyer en tant que »** sur la boîte partagée R&D (C2) ; membre **direct** de `HNCS-RD-Proprietaires` (posé par `Set-HNCSRDMembres.ps1`, contrôlé par `Grant-HNCSRDServiceAccount.ps1`). Toutes les connexions des flux utilisent ce compte, propriétaire des flux | H-13, H-14, [8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux) |
-| C2 | **Boîte partagée R&D** (ex. `rd@<domaine>`) | Expéditeur de toutes les notifications (`Destinataires.BoiteRD`) ; dossier **`Candidatures`** surveillé par PA-01b ; les règles Outlook qui y déposent les courriels (formulaire du site balisé `[CANDIDATURE-SITE]`, notifications LinkedIn / France Travail) sont définies par la R&D ; la rétention de cette boîte est hors périmètre | [8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), PA-01b, H-04, H-10 |
+| C1 | **Compte de service** `svc-hncs-rd@<domaine>` | Licencié (2.1) ; mot de passe sans expiration **ou** procédure de renouvellement ; MFA / accès conditionnel compatibles avec des connexions de flux ; droit **« Envoyer en tant que »** sur la boîte partagée R&D (C2) ; membre **direct** de `HNCS-RD-Proprietaires` (posé par `Set-HNCSRDMembres.ps1`, contrôlé par `Grant-HNCSRDServiceAccount.ps1`). Toutes les connexions des flux utilisent ce compte, propriétaire des flux | H-13, H-14, [\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux) |
+| C2 | **Boîte partagée R&D** (ex. `rd@<domaine>`) | Expéditeur de toutes les notifications (`Destinataires.BoiteRD`) ; dossier **`Candidatures`** surveillé par PA-01b ; les règles Outlook qui y déposent les courriels (formulaire du site balisé `[CANDIDATURE-SITE]`, notifications LinkedIn / France Travail) sont définies par la R&D ; la rétention de cette boîte est hors périmètre | [\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), PA-01b, H-04, H-10 |
 | C3 | **Application Entra pour PnP.PowerShell** (obligatoire : l'application multi-tenant PnP n'existe plus) | `Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "HNCS-RD Provisioning" -Tenant <tenant>.onmicrosoft.com`, puis reporter l'identifiant dans `PnPClientId`. Permissions déléguées SharePoint `AllSites.FullControl` ; pour l'étape `Teams`, Microsoft Graph `Group.ReadWrite.All`, `Channel.Create`, `TeamsTab.Create`. Mode automatisation : certificat de l'application et permissions **d'application** équivalentes | `provisioning/README.md` |
 | C4 | **Comptes d'administration** | Administrateur SharePoint (création du site via `TenantAdminUrl`) et **administrateur de collection de sites** HNCS-RD (le compte exécutant doit être `SiteOwner` ou administrateur de collection : la rupture d'héritage retire toute attribution directe non prévue) | `provisioning/README.md` |
-| C5 | **Environnement Power Platform avec Dataverse** | Un environnement de recette et un de production (ou l'environnement par défaut) pour la solution `HNCSRDSuivi` | [8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), H-15 |
-| C6 | **Espace Power BI** « HNCS-R&D Pilotage » | Créé par le script de publication s'il n'existe pas (`-CapacityId` facultatif) | [9.1](../spec.md#91-projet), H-16 |
-| C7 | **GitLab** (lots 3 et 5) | Groupe `hncs-rd` (le script ne crée aucun groupe) ; jetons et application Entra : section 8 | [10](../spec.md#10-intégration-gitlab-et-infrastructure) |
-| C8 | **Comptes de recette** | Un compte de test par persona de `testdata/personas.sample.json` (site de recette uniquement) | [12](../spec.md#12-stratégie-de-test-et-critères-dacceptation), `testdata/README.md` |
+| C5 | **Environnement Power Platform avec Dataverse** | Un environnement de recette et un de production (ou l'environnement par défaut) pour la solution `HNCSRDSuivi` | [\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), H-15 |
+| C6 | **Espace Power BI** « HNCS-R&D Pilotage » | Créé par le script de publication s'il n'existe pas (`-CapacityId` facultatif) | [\[9.1\]](../spec.md#91-projet), H-16 |
+| C7 | **GitLab** (lots 3 et 5) | Groupe `hncs-rd` (le script ne crée aucun groupe) ; jetons et application Entra : section 8 | [\[10\]](../spec.md#10-intégration-gitlab-et-infrastructure) |
+| C8 | **Comptes de recette** | Un compte de test par persona de `testdata/personas.sample.json` (site de recette uniquement) | [\[12\]](../spec.md#12-stratégie-de-test-et-critères-dacceptation), `testdata/README.md` |
 | C9 | **Adresses fonctionnelles** | Administration (`Destinataires.Administration`, Carine, H-05), Direction R&D, Direction Générale, **support des flux** (destinataire de N-99 / N-98) | `specs/referentiels-initiaux.md` |
 
 ### 2.3 Outils du poste d'installation
@@ -155,9 +155,9 @@ valeur dans la configuration ; une valeur **non vide** n'est jamais écrasée (s
 Clés = codes de groupe (`G_PROP`, `G_DRD`, `G_RD`, `G_ADM`, `G_REF`, `G_ALT`, `G_DIR`, `G_ECO`) ; valeurs = listes
 d'UPN de **comptes utilisateurs** (un groupe Entra ou SharePoint présent dans le fichier est refusé, H-14). Une clé
 absente laisse le groupe inchangé. Le compte de service est toujours ajouté à `G_PROP`, même absent du fichier.
-Une même personne peut figurer dans plusieurs groupes (ex. Direction R&D dans `G_DRD` et `G_RD`, [7.1](../spec.md#71-groupes-sharepoint)).
+Une même personne peut figurer dans plusieurs groupes (ex. Direction R&D dans `G_DRD` et `G_RD`, [\[7.1\]](../spec.md#71-groupes-sharepoint)).
 
-| Code | Groupe SharePoint | Membres cibles ([7.1](../spec.md#71-groupes-sharepoint)) |
+| Code | Groupe SharePoint | Membres cibles ([\[7.1\]](../spec.md#71-groupes-sharepoint)) |
 | --- | --- | --- |
 | G_PROP | HNCS-RD-Proprietaires | Administrateurs M365 / IT, compte de service |
 | G_DRD | HNCS-RD-DirectionRD | Direction R&D |
@@ -201,10 +201,10 @@ Résultat attendu :
 - les 8 groupes `HNCS-RD-*`, propriétaire `HNCS-RD-Proprietaires`, sans membres ;
 - listes et bibliothèques de lot 1 (URL = nom interne), versioning, colonnes, colonnes de recherche affichant
   `IdHNCS`, règles de validation, vues de `specs/sharepoint-vues.md` ;
-- héritage rompu sur **toutes** les listes et bibliothèques du modèle, attributions = matrice [7.3](../spec.md#73-matrice-daccès) ; site : G_PROP
+- héritage rompu sur **toutes** les listes et bibliothèques du modèle, attributions = matrice [\[7.3\]](../spec.md#73-matrice-daccès) ; site : G_PROP
   Contrôle total, autres groupes Lecture ; groupes par défaut du site vidés et sans attribution (jamais supprimés) ;
   listes système (« Documents », « Pages du site »…) laissées en héritage : elles ne doivent contenir **aucune
-  donnée métier** ([7.2](../spec.md#72-niveaux-dautorisation)) ;
+  donnée métier** ([\[7.2\]](../spec.md#72-niveaux-dautorisation)) ;
 - référentiels initiaux (`specs/referentiels-initiaux.md`) : paramètres, pôles, domaines cibles, modèles de
   checklists, registre de modèles ; `TransitionsStatuts` complète ; navigation par domaine ;
 - équipe Teams si `Teams.Creer` = true.
@@ -297,7 +297,7 @@ SharePoint n'écoute qu'une liste : PA-03, PA-04, PA-09, PA-10 sont livrés en p
 `-alt`, `-act`, `-bil`, `-conv`, `-int`), les références de connexion et les variables d'environnement ci-dessous.
 `workflows.json` est le catalogue utilisé par le script d'import pour l'activation.
 
-Solution **gérée** de production ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), « Conditionnement ») :
+Solution **gérée** de production ([\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux), « Conditionnement ») :
 la solution non gérée construite depuis le dépôt est importée et recettée dans l'environnement de recette, puis
 exportée en solution gérée par `pac solution export --managed` ; c'est ce fichier exporté qui est importé en
 production. Fiches de chaque flux :
@@ -315,7 +315,7 @@ production. Fiches de chaque flux :
 | `hncs_SiteUrl` | URL du site, **sans barre finale** (= `SiteUrl`) |
 | `hncs_ServiceAccountEmail` | adresse du compte de service (= `ServiceAccountEmail`) : anti-boucle et rôle `FLUX` |
 | `hncs_SupportEmail` | adresse du support, destinataire de N-99 et N-98 (même adresse que `EmailSupport` / `Destinataires.Support`) |
-| `hncs_BoiteRDEmail` | adresse de la boîte partagée surveillée par PA-01b ; **même valeur** que `Destinataires.BoiteRD` ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)) |
+| `hncs_BoiteRDEmail` | adresse de la boîte partagée surveillée par PA-01b ; **même valeur** que `Destinataires.BoiteRD` ([\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)) |
 | `hncs_BoiteRDDossierCandidatures` | identifiant du dossier « Candidatures » de cette boîte (le déclencheur de boîte partagée exige une adresse et un dossier fixés au déploiement) |
 
 ### 5.2 Connexions et fichier de paramètres de déploiement
@@ -374,12 +374,12 @@ Le propriétaire de chaque flux et l'identité de chaque connexion doivent être
 | 5 | PA-08, PA-08b, PA-09-alt, PA-09-bil, PA-09b, PA-10-conv, PA-10-int, PA-10b, PA-11, PA-12, PA-14 | 3 | seulement après `-Lot 3` (section 6) |
 | - | **PA-13** | 5 | reste **désactivé** (H-10, section 8.3) |
 
-**Reprise de l'existant** ([6.1, point 3 ter](../spec.md#61-règles-générales), H-57) : un élément d'une liste à statut contrôlé qui n'a
+**Reprise de l'existant** ([\[6.1\]](../spec.md#61-règles-générales), point 3 ter, H-57) : un élément d'une liste à statut contrôlé qui n'a
 aucune transition acceptée dans `HistoriqueStatuts` et qui n'est pas une création (élément saisi au lot 1, ou importé)
 n'est jamais traité comme une création ni envoyé à la corbeille. Son statut courant est adopté comme statut de
 référence par une entrée `HistoriqueStatuts` `CodeTransition` = `REPRISE` (`StatutAvant` = `∅`, `Origine` = Flux,
 `Resultat` = Acceptée, motif « Reprise de l'existant »), écrite par PA-00D dès que `Fonction.Lot2Actif` vaut Oui ou, à défaut,
-par le flux de la liste. PA-00D initialise aussi les empreintes vides ([6.5](../spec.md#65-formats-des-empreintes-p-09), H-55).
+par le flux de la liste. PA-00D initialise aussi les empreintes vides ([\[6.5\]](../spec.md#65-formats-des-empreintes-p-09), H-55).
 
 Procédure de mise en service du lot 2 sur un site déjà utilisé au lot 1 :
 
@@ -399,14 +399,14 @@ adoptée comme statut de référence (H-57) : c'est pourquoi PA-00D est exécut�
 listes. Ne jamais compléter `HistoriqueStatuts` ni modifier `StatutPrecedent` à la main (colonnes techniques,
 P-09).
 
-> Rappel ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)) : le statut validé de référence d'un élément est
+> Rappel ([\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)) : le statut validé de référence d'un élément est
 > la **dernière transition acceptée de `HistoriqueStatuts`** ; `StatutPrecedent` n'est qu'une copie de commodité
 > pour les vues. PA-00E rapproche chaque jour les statuts de cet historique (les éléments modifiés depuis moins de
 > 30 minutes sont ignorés, les éléments sans transition acceptée sont laissés à PA-00D).
 
 ### 5.5 Contrôles après activation
 
-- chaque déclencheur SharePoint porte la condition anti-boucle sur `hncs_ServiceAccountEmail` ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux) ; vérifiée hors
+- chaque déclencheur SharePoint porte la condition anti-boucle sur `hncs_ServiceAccountEmail` ([\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux) ; vérifiée hors
   ligne par `check_flows.py`) ;
 - une candidature de test créée par un membre de G_RD reçoit son `IdHNCS` (PA-01a), son dossier
   `01 - Recrutement/AAAA/CAND-…` et une entrée « Acceptée » dans « Historique des statuts » ;
@@ -448,7 +448,7 @@ Suivre [`gitlab/README.md`](../gitlab/README.md), section « Mise en place » :
 
 1. créer le groupe `hncs-rd` (et, si souhaité, les sous-groupes de pôle) ;
 2. la création d'un projet de sujet est lancée **par un membre de l'équipe R&D**, à la demande du référent, avec un
-   jeton **personnel** de portée `api` saisi pour la session et jamais stocké ([10.3](../spec.md#103-composants-livrés)) :
+   jeton **personnel** de portée `api` saisi pour la session et jamais stocké ([\[10.3\]](../spec.md#103-composants-livrés)) :
 
 ```powershell
 $env:GITLAB_URL   = 'https://gitlab.example.com'
@@ -504,13 +504,13 @@ Le script crée l'espace s'il n'existe pas, crée ou met à jour (`updateDefinit
    `-ConfigurerPlanification` n'a pas pu l'appliquer (il exige des identifiants valides).
 3. **Rôles RLS / OLS** (*Modèle sémantique > Sécurité*) : affecter les groupes Entra ou personnes à `Direction`
    (Direction Générale), `PilotageRD` (Direction R&D, équipe R&D), `Administration`, `RelationEcoles` (G_ECO),
-   `Referent`. `Alternants[NomAffichage]` est masquée par OLS aux rôles `Direction` et `RelationEcoles` ([9.6](../spec.md#96-sécurité-du-modèle-rls--ols)).
+   `Referent`. `Alternants[NomAffichage]` est masquée par OLS aux rôles `Direction` et `RelationEcoles` ([\[9.6\]](../spec.md#96-sécurité-du-modèle-rls--ols)).
    **Une personne relève d'un seul rôle** (Power BI interdit le cumul d'un rôle avec OLS et d'un rôle avec RLS).
    Aucun rôle « Communication » ni « Avant-vente » (H-52) ; aucun alternant (H-19). Les membres ne sont pas
    versionnés : les tenir à jour selon [`docs/exploitation.md`, section 6.2](exploitation.md#62-power-bi--rôles-lecteurs-et-audiences-de-lapplication).
 4. **Accès à l'espace** : les publics du rapport sont **Lecteurs** (les rôles Administrateur, Membre, Contributeur ne
    sont pas soumis à la RLS / OLS).
-5. **Application et audiences** ([9.7](../spec.md#97-pages-du-rapport)) : publier l'application de l'espace avec une audience par public :
+5. **Application et audiences** ([\[9.7\]](../spec.md#97-pages-du-rapport)) : publier l'application de l'espace avec une audience par public :
    Direction : pages 1, 3, 4, 5, 6 ; Administration : 2, 3, 5 ; RelationEcoles : 3, 5 ; Referent : 3, 4, 7 ;
    PilotageRD : toutes. Chaque membre d'une audience est affecté au rôle de même nom. Les audiences ne sont pas une
    mesure de sécurité (la sécurité reste la RLS / OLS).
@@ -541,7 +541,7 @@ pwsh ./provisioning/Test-HNCSRDDeploiement.ps1 -ConfigPath ./provisioning/config
 ```
 
 Ajoute la liste technique `GitlabSync` (lue en mode facultatif par Power BI). Sa colonne `Orpheline` marque les
-lignes dont le jalon a été supprimé ou le sujet détaché : conservées, exclues des indicateurs ([10.3](../spec.md#103-composants-livrés)).
+lignes dont le jalon a été supprimé ou le sujet détaché : conservées, exclues des indicateurs ([\[10.3\]](../spec.md#103-composants-livrés)).
 
 ### 8.2 Synchronisation GitLab → `GitlabSync` (lecture seule de GitLab)
 
@@ -574,7 +574,7 @@ Détail : [`gitlab/README.md`](../gitlab/README.md), section « Mise en place »
    variable `SCHEDULE_TYPE` = `gitlab-sync` (avant les flux planifiés du matin et l'actualisation Power BI de 07:45).
 7. **Simulation** : *Run pipeline* sur `main` avec `SYNC_DRY_RUN` = `1` (job `synchro-simulation`, aucune écriture).
 
-Aucun secret dans SharePoint, dans `RessourcesTechniques` ni dans ce dépôt ([10.1](../spec.md#101-principes)).
+Aucun secret dans SharePoint, dans `RessourcesTechniques` ni dans ce dépôt ([\[10.1\]](../spec.md#101-principes)).
 
 ### 8.3 Conservation des candidatures (PA-13)
 
@@ -590,13 +590,13 @@ fait que **signaler** (N-46) ; aucune suppression automatique. Procédure d'acti
 
 - Données **100 % fictives** (`example.org`), identifiants `…-2026-9xxx` (aucune collision avec PA-00D).
 - Importées comme des **données déjà validées** (`StatutPrecedent` = `Statut`, empreintes vides ou cohérentes) et
-  **flux désactivés**, ou sous le compte de service, ou avant le lot 2 ([12](../spec.md#12-stratégie-de-test-et-critères-dacceptation)) : sinon les flux de création les
+  **flux désactivés**, ou sous le compte de service, ou avant le lot 2 ([\[12\]](../spec.md#12-stratégie-de-test-et-critères-dacceptation)) : sinon les flux de création les
   traiteraient comme de nouvelles saisies. Une empreinte vide est initialisée par PA-00D ou par le premier passage
-  d'un flux, sans rien rétablir ([6.5](../spec.md#65-formats-des-empreintes-p-09)).
-- Le jeu est importé **avec son historique complet** ([12](../spec.md#12-stratégie-de-test-et-critères-dacceptation)) :
+  d'un flux, sans rien rétablir ([\[6.5\]](../spec.md#65-formats-des-empreintes-p-09)).
+- Le jeu est importé **avec son historique complet** ([\[12\]](../spec.md#12-stratégie-de-test-et-critères-dacceptation)) :
   pour chaque élément à statut contrôlé, le dernier `StatutApres` accepté dans `HistoriqueStatuts` est égal à
   `Statut`. Toute autre reprise de données suit la même règle ou passe par les entrées `REPRISE`
-  ([6.1, point 3 ter](../spec.md#61-règles-générales)). Après le premier passage de PA-00E, la vue « Transitions refusées » ne doit
+  ([\[6.1\]](../spec.md#61-règles-générales), point 3 ter). Après le premier passage de PA-00E, la vue « Transitions refusées » ne doit
   contenir aucune entrée « Rapprochement quotidien » portant sur le jeu.
 - Le script **refuse** une URL sans marqueur de recette (`recette`, `test`, `qualif`, `dev`), sauf `-Force` : ne
   jamais l'utiliser en production.
@@ -609,7 +609,7 @@ Copy-Item ./testdata/personas.sample.json ./testdata/personas.json
 # 2. Fichier des membres depuis les personas, puis ajout des membres
 pwsh ./testdata/Import-TestData.ps1 -ExporterMembres ./provisioning/config/membres.json
 pwsh ./provisioning/Set-HNCSRDMembres.ps1 -ConfigPath ./provisioning/config/tenant.json -MembresPath ./provisioning/config/membres.json
-# 3. Import, FLUX DÉSACTIVÉS : simulation puis réel, avec émulation des permissions par élément ([7.4](../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux))
+# 3. Import, FLUX DÉSACTIVÉS : simulation puis réel, avec émulation des permissions par élément (spec, section 7.4)
 pwsh ./testdata/Import-TestData.ps1 -ConfigPath ./provisioning/config/tenant.json -SiteUrl https://<tenant>.sharepoint.com/sites/HNCS-RD-Recette -WhatIf
 pwsh ./testdata/Import-TestData.ps1 -ConfigPath ./provisioning/config/tenant.json -SiteUrl https://<tenant>.sharepoint.com/sites/HNCS-RD-Recette -PermissionsElement
 # 4. Réactiver les flux du lot recetté
@@ -688,14 +688,14 @@ complétée d'actions manuelles quand c'est inévitable.
 | Situation | Action |
 | --- | --- |
 | Vue, validation, permission de liste, paramètre de colonne erroné | Corriger la spec (ou la configuration), `python tools/spec_extract.py`, rejouer l'étape concernée (`-Etapes …`). Les données ne sont pas touchées |
-| Colonne créée avec un mauvais type ou une mauvaise liste cible | Sauvegarder (export) la liste, supprimer la colonne à la main (propriétaire du site), corriger la spec, rejouer `-Etapes Colonnes, Lookups, Validation, Vues`. Un nom interne n'est jamais renommé ([2.2](../spec.md#22-conventions-de-nommage)) |
+| Colonne créée avec un mauvais type ou une mauvaise liste cible | Sauvegarder (export) la liste, supprimer la colonne à la main (propriétaire du site), corriger la spec, rejouer `-Etapes Colonnes, Lookups, Validation, Vues`. Un nom interne n'est jamais renommé ([\[2.2\]](../spec.md#22-conventions-de-nommage)) |
 | Paramètre métier mal réglé | Corriger la valeur dans la liste `Parametres` (prise en compte à l'exécution suivante des flux) |
 | Nouvelle version de flux défaillante | Désactiver le ou les flux concernés ; reconstruire la version précédente (`build_solution.py` sur le commit précédent) et la réimporter (comportement de l'import d'une version inférieure à valider en recette) ; reprendre les exécutions en échec ([`docs/exploitation.md`, section 4](exploitation.md#4-procédure-de-reprise-dune-erreur-de-flux)) |
 | Arrêt d'urgence des automatisations | Désactiver les flux de la solution (en commençant par les flux métier, puis les flux enfants) : le site reste utilisable en saisie manuelle, en appliquant la procédure du lot 1 ([`docs/exploitation.md`, section 5](exploitation.md#5-procédure-manuelle-provisoire-du-lot-1-h-50)) ; à la réactivation, voir l'avertissement de 5.4 |
 | Effet indésirable d'un flux sur un élément | Les flux ne suppriment jamais définitivement : rétablir à la main depuis l'historique des versions de l'élément ; tracer l'action dans `CommentaireReprise` de l'entrée `JournalFlux` concernée |
 | Création refusée envoyée à la corbeille par erreur | Restaurer depuis la corbeille du site (93 jours) ou recréer l'élément après correction de la cause |
 | Rapport Power BI erroné | Republier la version précédente du PBIP (historique git) avec `Publish-HNCSRDPowerBI.ps1` ; le reporting est en lecture seule |
-| Synchronisation GitLab erronée | Désactiver la planification ; `GitlabSync` est une liste technique sans effet sur les statuts métier ([10.1](../spec.md#101-principes)) |
+| Synchronisation GitLab erronée | Désactiver la planification ; `GitlabSync` est une liste technique sans effet sur les statuts métier ([\[10.1\]](../spec.md#101-principes)) |
 | Site de recette à refaire | Supprimer le site **et le vider de la corbeille du tenant** avant de relancer `Deploy-HNCSRD.ps1` (un site en corbeille provoque une erreur de l'étape `Site`) |
 | Données de recette | `Import-TestData.ps1 -Reset` (9.4) |
 
@@ -707,21 +707,21 @@ complétée d'actions manuelles quand c'est inévitable.
 
 | ✔ | Contrôle | Référence |
 | --- | --- | --- |
-| ☐ | CI verte sur le commit installé (2.4) | [12](../spec.md#12-stratégie-de-test-et-critères-dacceptation) |
+| ☐ | CI verte sur le commit installé (2.4) | [\[12\]](../spec.md#12-stratégie-de-test-et-critères-dacceptation) |
 | ☐ | `Test-HNCSRDDeploiement.ps1 -Lot n` : code 0, aucun marqueur `<…>` non résolu | 4.3 |
 | ☐ | Compte de service : licence, membre direct de G_PROP, « Envoyer en tant que » sur la boîte R&D, propriétaire des flux et des connexions | H-13 |
-| ☐ | Groupes alimentés en membres directs ; groupes par défaut du site vides ; aucune donnée métier dans les listes système | H-14, [7.2](../spec.md#72-niveaux-dautorisation) |
+| ☐ | Groupes alimentés en membres directs ; groupes par défaut du site vides ; aucune donnée métier dans les listes système | H-14, [\[7.2\]](../spec.md#72-niveaux-dautorisation) |
 | ☐ | Paramètres validés par la Direction R&D ; H-09, H-10, H-45 respectés | 4.4 |
 | ☐ | Flux du lot actifs, **tous les autres désactivés**, PA-13 désactivé | 5.4 |
 | ☐ | Lot 2 : `Fonction.Lot2Actif` passé à Oui avant l'exécution manuelle de PA-00D (5.4) | `specs/referentiels-initiaux.md` |
-| ☐ | Lot 2 : PA-00D exécuté avant l'activation des flux des listes, entrées `REPRISE` contrôlées pour les éléments saisis au lot 1 (5.4) | [6.1](../spec.md#61-règles-générales), H-57 |
-| ☐ | Notifications : objet `[HNCS-R&D][N-xx]`, lien vers l'élément, aucune pièce jointe, aucun nom dans les envois larges | [7.5](../spec.md#75-sécurité-des-données-personnelles) |
-| ☐ | Lot 2 : responsable support désigné, procédure de reprise connue | [11](../spec.md#11-découpage-en-lots-0-à-5) |
+| ☐ | Lot 2 : PA-00D exécuté avant l'activation des flux des listes, entrées `REPRISE` contrôlées pour les éléments saisis au lot 1 (5.4) | [\[6.1\]](../spec.md#61-règles-générales), H-57 |
+| ☐ | Notifications : objet `[HNCS-R&D][N-xx]`, lien vers l'élément, aucune pièce jointe, aucun nom dans les envois larges | [\[7.5\]](../spec.md#75-sécurité-des-données-personnelles) |
+| ☐ | Lot 2 : responsable support désigné, procédure de reprise connue | [\[11\]](../spec.md#11-découpage-en-lots-0-à-5) |
 | ☐ | Lot 4 : réconciliation 0 écart, rôles vérifiés « en tant que », audiences publiées | S-09 |
 | ☐ | Lot 5 : risque H-31 accepté par écrit si `Sites.Selected` ; synchronisation en simulation puis réelle sans erreur | H-31 |
-| ☐ | Procès-verbal de recette du lot signé (condition de sortie [11](../spec.md#11-découpage-en-lots-0-à-5)) | [11](../spec.md#11-découpage-en-lots-0-à-5) |
+| ☐ | Procès-verbal de recette du lot signé (condition de sortie [\[11\]](../spec.md#11-découpage-en-lots-0-à-5)) | [\[11\]](../spec.md#11-découpage-en-lots-0-à-5) |
 
-### 12.2 Scénarios de recette S-01 à S-15 (spec [12.1](../spec.md#121-scénarios-de-recette))
+### 12.2 Scénarios de recette S-01 à S-15 (spec [\[12.1\]](../spec.md#121-scénarios-de-recette))
 
 Détail des étapes et des preuves : [`tests/e2e/scenarios.md`](../tests/e2e/scenarios.md). Scénarios complémentaires
 S-16 à S-26 (transition interdite, intégration sans formalités, idempotence, décision de partenariat, compte rendu
@@ -744,7 +744,7 @@ création) : même document.
 | ☐ | S-12 | Échéance de livrable déplacée | `EcheanceInitiale` conservée ; `EnRetard` recalculé ; rappels selon la nouvelle échéance | 2 | manuel |
 | ☐ | S-13 | Un alternant se désigne réviseur de son propre livrable et tente de le valider | Modification du réviseur annulée (P-09, N-92) ou validation refusée (`G_VALIDEUR_LEGITIME`, N-90) | 2 | `S-07 / S-13` |
 | ☐ | S-14 | Signature d'une convention de partenariat sans décision de partenariat | CONV-T03 refusée (`G_DECISION_PARTENARIAT`) ; décision possible seulement par DIRECTION_RD / DIRECTION | 3 | `S-14 / S-19` |
-| ☐ | S-15 | Droits d'accès persona par persona (R&D, administration, référent, alternant, direction, relation écoles, IT) | Matrice [7.3](../spec.md#73-matrice-daccès) et [7.4](../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux) vérifiée en lecture et en écriture | 1 | `Access.Tests.ps1` |
+| ☐ | S-15 | Droits d'accès persona par persona (R&D, administration, référent, alternant, direction, relation écoles, IT) | Matrice [\[7.3\]](../spec.md#73-matrice-daccès) et [\[7.4\]](../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux) vérifiée en lecture et en écriture | 1 | `Access.Tests.ps1` |
 
 ---
 

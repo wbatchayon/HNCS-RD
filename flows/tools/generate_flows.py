@@ -113,7 +113,7 @@ def linkify(text: str, spec_path: str) -> str:
         num, rule = m.group(1), m.group(2)
         if num not in _ANCHORS:
             raise SystemExit(f"Section de spec introuvable pour le renvoi § {num}")
-        link = f"[{num}]({spec_path}#{_ANCHORS[num]})"
+        link = rf"[\[{num}\]]({spec_path}#{_ANCHORS[num]})"
         return link + (f", règle {rule}" if rule else "")
     return re.sub(r"§\s?(\d+(?:\.\d+)?)(?:-(\d+(?: bis)?))?", rep, text)
 

@@ -1,6 +1,6 @@
 # Mesures du modèle Power BI HNCS-RD
 
-> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` [9.5](../spec.md#95-mesures) (qui prévaut), sans écart (spec v1.7.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, § 8.2 indicateurs recommandés), document source non versionné (H-30).
+> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` [\[9.5\]](../spec.md#95-mesures) (qui prévaut), sans écart (spec v1.7.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, § 8.2 indicateurs recommandés), document source non versionné (H-30).
 
 Conventions communes :
 
@@ -703,7 +703,7 @@ Cible =
 
 - **Définition** : Horodatage (heure de Paris) de la dernière actualisation du modèle : maximum de la colonne masquée `Mesures[DerniereActualisation]`, calculée en Power Query (`DateTimeZone.FixedUtcNow` converti en heure de Paris).
 - **Format** : `dd/MM/yyyy HH:mm`, dossier d'affichage « Technique »
-- **Point de vigilance** : Affichée sur chaque page (specs/powerbi-rapport.md) ; section « Technique » de [9.5](../spec.md#95-mesures).
+- **Point de vigilance** : Affichée sur chaque page (specs/powerbi-rapport.md) ; section « Technique » de [\[9.5\]](../spec.md#95-mesures).
 
 ```dax
 Dernière actualisation =

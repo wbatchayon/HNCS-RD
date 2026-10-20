@@ -1,11 +1,11 @@
 # Intégration GitLab et infrastructure
 
-Mise en œuvre de la spec [10](../spec.md#10-intégration-gitlab-et-infrastructure) (lots 3 et 5). La spec [`spec.md`](../spec.md) prévaut en cas d'écart.
+Mise en œuvre de la spec [\[10\]](../spec.md#10-intégration-gitlab-et-infrastructure) (lots 3 et 5). La spec [`spec.md`](../spec.md) prévaut en cas d'écart.
 
 - GitLab est la **référence** du code, des issues, des merge requests et des jalons ; SharePoint ne
   stocke **que** des liens et des métadonnées (P-05).
 - La synchronisation **lit** GitLab et n'écrit **que** dans la liste technique `GitlabSync` : aucun
-  statut métier, aucune écriture dans `SujetsRD` ni `Livrables` ([10.1](../spec.md#101-principes)).
+  statut métier, aucune écriture dans `SujetsRD` ni `Livrables` ([\[10.1\]](../spec.md#101-principes)).
 - Seul le script de création de projet, lancé par un humain, reporte `GitlabProjetUrl` et
   `GitlabProjetId` sur le sujet concerné.
 - Aucun secret (jeton, mot de passe, certificat) dans ce dépôt, qui est **public** (H-30), ni dans
@@ -23,7 +23,7 @@ Mise en œuvre de la spec [10](../spec.md#10-intégration-gitlab-et-infrastructu
 | `sync/tests/test_sync.py` | Tests hors ligne (doublures HTTP, aucun réseau) | 5 |
 | `ci/.gitlab-ci.yml` | Pipeline GitLab planifié (quotidien 05:30) exécutant la synchronisation | 5 |
 
-## Conventions GitLab (spec [10.2](../spec.md#102-conventions-gitlab))
+## Conventions GitLab (spec [\[10.2\]](../spec.md#102-conventions-gitlab))
 
 | Élément | Convention |
 | --- | --- |
@@ -49,7 +49,7 @@ GitLab Premium ; sur GitLab Free ce sont des labels ordinaires, ce qui ne change
    groupe, rôle **Reporter**, portée **`read_api`** uniquement, expiration d'un an au plus, rotation
    inscrite au calendrier d'exploitation. Il est saisi directement dans la variable CI masquée
    `GITLAB_TOKEN` (jamais dans un fichier).
-3. **Jeton de création de projet** (script `New-GitlabProjetSujet.ps1`, spec [10.3](../spec.md#103-composants-livrés)) : jeton
+3. **Jeton de création de projet** (script `New-GitlabProjetSujet.ps1`, spec [\[10.3\]](../spec.md#103-composants-livrés)) : jeton
    **personnel** de la personne qui lance le script, portée **`api`**, rôle Maintainer sur le groupe
    cible, durée courte. Il est saisi dans `$env:GITLAB_TOKEN` pour la session uniquement et **jamais
    stocké** (ni fichier, ni variable CI, ni profil PowerShell). Le jeton de groupe `read_api` de la
@@ -58,7 +58,7 @@ GitLab Premium ; sur GitLab Free ce sont des labels ordinaires, ce qui ne change
    `gitlab/` de ce dépôt (même arborescence) et `ci/.gitlab-ci.yml` placé à sa racine sous le nom
    `.gitlab-ci.yml`. Protéger la branche `main`.
 
-### 2. Application Entra (permissions « Selected », spec [10.3](../spec.md#103-composants-livrés) et H-31)
+### 2. Application Entra (permissions « Selected », spec [\[10.3\]](../spec.md#103-composants-livrés) et H-31)
 
 1. *Entra ID > Inscriptions d'applications > Nouvelle inscription* : « HNCS-RD GitLab Sync », comptes
    de ce tenant uniquement, sans URI de redirection.
@@ -156,7 +156,7 @@ Facultatives : `HNCS_GRAPH_URL`, `HNCS_LOGIN_URL` (clouds souverains uniquement)
 
 *CI/CD > Schedules > New schedule* : description « Synchronisation GitLab → SharePoint », intervalle
 `30 5 * * *`, fuseau **Europe/Paris**, branche `main`, variable `SCHEDULE_TYPE` = `gitlab-sync`.
-L'heure précède l'actualisation Power BI de 06:00 ([9.1](../spec.md#91-projet)). Le job tourne dans `python:3.12-slim`
+L'heure précède l'actualisation Power BI de 06:00 ([\[9.1\]](../spec.md#91-projet)). Le job tourne dans `python:3.12-slim`
 et un `resource_group` empêche deux exécutions simultanées.
 
 ### 5. SharePoint
@@ -195,7 +195,7 @@ Fonctionnement :
 - **Idempotence** : une ligne n'est créée que si sa `CleSynchro` est absente et n'est mise à jour que
   si un champ a changé (seuls les champs modifiés sont envoyés, avec `DateSynchro`). Un second passage
   sans changement n'écrit rien.
-- **Lignes orphelines** (spec [10.3](../spec.md#103-composants-livrés)) : une ligne existante sans correspondance GitLab (jalon supprimé,
+- **Lignes orphelines** (spec [\[10.3\]](../spec.md#103-composants-livrés)) : une ligne existante sans correspondance GitLab (jalon supprimé,
   sujet détaché, projet retiré du sujet) n'est **jamais supprimée** : elle passe à `Orpheline` = Oui
   (une seule écriture, avec `DateSynchro`) et reste exclue des indicateurs Power BI ; si elle redevient
   valide (jalon rétabli, projet rattaché à nouveau), elle repasse à Non. Les lignes d'un projet
@@ -269,7 +269,7 @@ sortie, sans aucun accès réseau.
 - Comptage des issues par `issues_statistics` (filtre sur le **titre** du jalon) : renommer un jalon
   est sans effet sur la clé (`milestoneId`), mais deux jalons de même titre seraient confondus.
 - Pas de suppression des lignes orphelines (seulement `Orpheline` = Oui) ; pas de mise à jour de `DateSynchro` sans changement
-  (`DateSynchro` = date de la dernière écriture de la ligne, spec [4](../spec.md#4-modèle-de-données--listes-sharepoint)).
+  (`DateSynchro` = date de la dernière écriture de la ligne, spec [\[4\]](../spec.md#4-modèle-de-données--listes-sharepoint)).
 - En repli `Sites.Selected`, la limitation à `GitlabSync` repose sur le code (H-31).
 - Un livrable doit avoir un `IdHNCS` (attribué par PA-00D) pour recevoir un jalon.
 - Le script de création ne crée ni groupe ni sous-groupe, et ne modifie jamais un jalon existant.
@@ -277,7 +277,7 @@ sortie, sans aucun accès réseau.
 
 ## Infrastructure (Proxmox / OVH)
 
-Conformément à la spec [10.4](../spec.md#104-infrastructure-proxmox--ovh) et à H-21 :
+Conformément à la spec [\[10.4\]](../spec.md#104-infrastructure-proxmox--ovh) et à H-21 :
 
 - les serveurs, VM et environnements de démonstration (Proxmox, OVH) sont **référencés** dans la liste
   SharePoint `RessourcesTechniques` : `TypeRessource` (`VM Proxmox`, `Serveur OVH`, `Environnement de

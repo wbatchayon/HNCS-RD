@@ -10,7 +10,7 @@
 | | Direction Générale | Direction R&D |
 | --- | --- | --- |
 | Groupe SharePoint | `HNCS-RD-Direction` (rôle `DIRECTION`) | `HNCS-RD-DirectionRD` (rôle `DIRECTION_RD`) |
-| Posture (RACI [7.6](../../spec.md#76-matrice-raci-et-implémentation)) | Lecture de pilotage, validations de son niveau ; « A » de la cible et du budget, « A* » de la sélection et des communications (à confirmer, H-06, H-11) | Pilotage opérationnel et arbitrages R&D ; « A » du recrutement côté R&D, des affectations, du suivi école ; « A/R » du reporting de gouvernance |
+| Posture (RACI [\[7.6\]](../../spec.md#76-matrice-raci-et-implémentation)) | Lecture de pilotage, validations de son niveau ; « A » de la cible et du budget, « A* » de la sélection et des communications (à confirmer, H-06, H-11) | Pilotage opérationnel et arbitrages R&D ; « A » du recrutement côté R&D, des affectations, du suivi école ; « A/R » du reporting de gouvernance |
 | Données nominatives | **Aucune** dans SharePoint (volontairement) | Accès aux candidatures et aux CV (pas aux entretiens), aux fiches alternants, aux évaluations en lecture |
 | Power BI | Rôle `Direction` : pages 1, 3, 4, 5, 6 | Rôle `PilotageRD` : les 8 pages, sans restriction de lignes |
 | Décisions propres | Validation des communications externes ; décision de partenariat ou de sponsoring ; arbitrage des sujets | Les mêmes, plus réouverture d'une candidature, reprise de l'existant |
@@ -49,7 +49,7 @@
 | Lecture seule | Offres, Pôles R&D, Référents, Registre des modèles R&D, Domaines cibles, Mobilisations commerciales, Transitions de statuts, Synchronisation GitLab, « 03 - Modèles R&D », « 04 - Livrables R&D » |
 | Aucun accès | Candidatures, « 01 - Recrutement » (CV), Entretiens, Écoles et établissements, Alternants, Affectations, Livrables, Comptes rendus de suivi, Actions d'intégration et checklists, Bilans d'alternance, Échanges avec les écoles, Ressources techniques, Paramètres, Historique des statuts, Journal des flux, « 02 - Administration », « 05 - Suivi des alternants », « 06 - Écoles et partenariats » |
 
-**Absence volontaire de données nominatives** (P-04, [7.5](../../spec.md#75-sécurité-des-données-personnelles)) : la Direction Générale n'accède à aucune liste nominative dans
+**Absence volontaire de données nominatives** (P-04, [\[7.5\]](../../spec.md#75-sécurité-des-données-personnelles)) : la Direction Générale n'accède à aucune liste nominative dans
 SharePoint (candidatures, entretiens, alternants, livrables, établissements, bilans). Son accès aux indicateurs passe par
 Power BI, qui n'importe aucune donnée personnelle, hormis le nom de l'alternant, absent de tous les visuels et masqué pour les publics sans
 accès SharePoint aux fiches alternants (Direction, Relation écoles), ni aucune
@@ -79,7 +79,7 @@ Les commentaires d'entretien et les pièces administratives restent à l'adminis
 3. Lisez les cartes, les jauges « indicateur / cible », la répartition des candidatures par statut (agrégée) et
    l'histogramme des livrables par statut.
 
-| Indicateur | Définition (spec [9.5](../../spec.md#95-mesures)) | Objectif indicatif à un an |
+| Indicateur | Définition (spec [\[9.5\]](../../spec.md#95-mesures)) | Objectif indicatif à un an |
 | --- | --- | --- |
 | Alternants actifs | Alternants « Actif » ou « Fin planifiée » (les suspendus sont exclus, H-41) | - |
 | Alternants accueillis | Alternants passés par l'accueil (Actif, Suspendu, Fin planifiée, Terminé, Clôturé) | 3 |
@@ -159,7 +159,7 @@ L'arbitrage du portefeuille est une décision humaine réservée à la Direction
 ### 3.5 Exploiter les synthèses de gouvernance
 
 - **Direction R&D** : N-42 (Comité R&D, chaque lundi) ; N-43 (Point Direction, revue trimestrielle) **à relire puis transmettre
-  à la Direction Générale** ([8.4](../../spec.md#84-contrats-détaillés) PA-11, RACI « A/R » de la publication du reporting).
+  à la Direction Générale** ([\[8.4\]](../../spec.md#84-contrats-détaillés) PA-11, RACI « A/R » de la publication du reporting).
 - **Direction Générale** : vous recevez la synthèse N-43 par la Direction R&D (agrégats et points d'arbitrage, sans nom de
   personne). Utilisez-la avec la vue exécutive (3.1).
 
@@ -169,7 +169,7 @@ L'arbitrage du portefeuille est une décision humaine réservée à la Direction
 
 | Signal | Où agir |
 | --- | --- |
-| N-21 : affectation « À risque » ou « Bloquée » | Liste Affectations ; voir avec le référent ; si non résolu, Comité R&D puis Point Direction ([7.7](../../spec.md#77-circuit-descalade)) |
+| N-21 : affectation « À risque » ou « Bloquée » | Liste Affectations ; voir avec le référent ; si non résolu, Comité R&D puis Point Direction ([\[7.7\]](../../spec.md#77-circuit-descalade)) |
 | N-33 : blocage signalé dans un compte rendu | Comptes rendus de suivi, vue « Blocages signalés » ; Point Direction si un arbitrage est requis |
 | N-47 : sujet « Bloqué » ou « À arbitrer » | Sujets R&D, vue « À arbitrer » (3.4) |
 | Livrables en retard de plus de 7 jours (`Delai.EscaladeComiteJours`) | Synthèse du Comité R&D ; Livrables, vue « En retard » |
@@ -212,7 +212,7 @@ sont pas validés (H-09) ; laissez vide `Conservation.CandidatureNonRetenueMois`
 « Historique des statuts », vue « Transitions refusées » ; « Journal des flux », vue « Erreurs à reprendre » (la reprise est
 faite par le support) ; à partir du lot 5, **N-46** liste les candidatures arrivées en fin de conservation, pour traitement
 manuel (aucune suppression automatique). Rappelez aux équipes qu'aucun document métier ne doit être déposé dans la
-bibliothèque « Documents » par défaut du site (spec [7.2](../../spec.md#72-niveaux-dautorisation)).
+bibliothèque « Documents » par défaut du site (spec [\[7.2\]](../../spec.md#72-niveaux-dautorisation)).
 
 ## 4. Vos décisions humaines
 
@@ -225,7 +225,7 @@ bibliothèque « Documents » par défaut du site (spec [7.2](../../spec.md#72-n
 | Réouverture d'une candidature (`CAND-T16`) | Non | Oui | Historique |
 | Reprise d'un alternant existant (`ALT-T01`) | Non | Oui | Historique |
 
-Hypothèses de cadrage à confirmer (spec [13](../../spec.md#13-hypothèses-et-décisions-à-confirmer)), ce qui est implémenté en attendant :
+Hypothèses de cadrage à confirmer (spec [\[13\]](../../spec.md#13-hypothèses-et-décisions-à-confirmer)), ce qui est implémenté en attendant :
 
 | Arbitre | Hypothèses |
 | --- | --- |
@@ -274,10 +274,10 @@ Si vous êtes aussi membre de l'équipe R&D, vous recevez en plus les notificati
 | 8. Qualité des données | Non (hors audience) | Oui |
 
 Les pages sont restreintes par les **audiences de l'application Power BI** (la sécurité au niveau des lignes et des objets
-protège les données, pas les pages, [9.7](../../spec.md#97-pages-du-rapport)). Sur la page 4, les liens vers les documents des livrables vous sont visibles (H-54).
+protège les données, pas les pages, [\[9.7\]](../../spec.md#97-pages-du-rapport)). Sur la page 4, les liens vers les documents des livrables vous sont visibles (H-54).
 Aucun visuel n'affiche de nom de personne, quel que soit le rôle : les tableaux montrent des identifiants (`ALT-…`, `AFF-…`).
 Pour le rôle `Direction`, la colonne des noms d'alternants est en outre inaccessible (sécurité au niveau objet). Une personne
-ne relève que d'un seul rôle Power BI ([9.6](../../spec.md#96-sécurité-du-modèle-rls--ols)) : un membre de la Direction R&D qui siège aussi à la Direction Générale doit être
+ne relève que d'un seul rôle Power BI ([\[9.6\]](../../spec.md#96-sécurité-du-modèle-rls--ols)) : un membre de la Direction R&D qui siège aussi à la Direction Générale doit être
 rattaché à l'un ou l'autre.
 
 ## 7. Rituels de gouvernance
@@ -289,7 +289,7 @@ rattaché à l'un ou l'autre.
 | Revue de gouvernance | Trimestrielle, 1er lundi du trimestre | N-43 : version agrégée | Même circuit |
 
 Supports : page Power BI 7 « Comité R&D » pour le comité ; page 1 « Vue exécutive » pour le Point Direction et la revue
-trimestrielle. Le Point Direction est le dernier niveau d'escalade ([7.7](../../spec.md#77-circuit-descalade)) pour les blocages et les affectations à risque non
+trimestrielle. Le Point Direction est le dernier niveau d'escalade ([\[7.7\]](../../spec.md#77-circuit-descalade)) pour les blocages et les affectations à risque non
 résolus. Les décisions prises en séance (arbitrage d'un sujet, validation d'une communication, décision de partenariat) se
 saisissent ensuite dans SharePoint pour être tracées.
 

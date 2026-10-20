@@ -1,6 +1,6 @@
 # Sous-spécification : Catalogue des notifications
 
-> Alignée sur `spec.md` [7.5](../spec.md#75-sécurité-des-données-personnelles) et [8](../spec.md#8-flux-power-automate--contrats) (qui prévaut). Lue par `tools/spec_extract.py`.
+> Alignée sur `spec.md` [\[7.5\]](../spec.md#75-sécurité-des-données-personnelles) et [\[8\]](../spec.md#8-flux-power-automate--contrats) (qui prévaut). Lue par `tools/spec_extract.py`.
 
 ## Règles communes
 
@@ -56,7 +56,7 @@
 | N-39 | PA-10 | G_ECO, Destinataires.Administration, G_DRD | Mail | Décision de partenariat enregistrée ({IdHNCS}) | Décision, décideur, date | ID |
 | N-40 | PA-10b | Responsable de la convention, G_ECO | Mail | Convention {IdHNCS} {statut} | Date de fin, renouvellement | ID |
 | N-41 | PA-10b | Responsable HNCS de l'établissement | Mail+Teams | Prochaine action école : {IdHNCS} | Action et échéance | ID |
-| N-42 | PA-11 | G_DRD, canal Teams du comité | Mail+Teams | Synthèse Comité R&D du {date} | Synthèse opérationnelle ([8.4](../spec.md#84-contrats-détaillés) PA-11) | ID |
+| N-42 | PA-11 | G_DRD, canal Teams du comité | Mail+Teams | Synthèse Comité R&D du {date} | Synthèse opérationnelle ([\[8.4\]](../spec.md#84-contrats-détaillés) PA-11) | ID |
 | N-43 | PA-11 | G_DRD (relaie à Destinataires.Direction après relecture) | Mail | Synthèse {Point Direction / Revue trimestrielle} à relire et transmettre | Agrégats et points d'arbitrage, sans nom de personne | ID |
 | N-44 | PA-12 | Approbateur, sinon G_DRD | Mail+Teams | Communication {IdHNCS} à valider | Canal, date prévue, autorisations, lien | ID |
 | N-45 | PA-12 | Auteur | Mail+Teams | Communication {IdHNCS} {statut} | Validée, suspendue / refusée ou renvoyée « En rédaction » : décision et commentaire | ID |

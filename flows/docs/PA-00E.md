@@ -1,6 +1,6 @@
 # PA-00E : Supervision quotidienne des flux
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([\[8.4\]](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -19,11 +19,11 @@ Rapprocher chaque jour les statuts de l'historique validé (filet de sécurité)
 
 ## Entrées
 
-- `PA-00E` : Listes à statut contrôlé ([8.2](../../spec.md#82-partition-des-statuts-cibles)) et `HistoriqueStatuts` ; `JournalFlux` : Niveau = Erreur et `StatutReprise` = « À reprendre ».
+- `PA-00E` : Listes à statut contrôlé ([\[8.2\]](../../spec.md#82-partition-des-statuts-cibles)) et `HistoriqueStatuts` ; `JournalFlux` : Niveau = Erreur et `StatutReprise` = « À reprendre ».
 
 ## Traitement pas à pas
 
-1. Rapprochement des statuts : pour chaque élément dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` (entrées `REF-PRINCIPAL` exclues), sans exécution en cours (éléments modifiés depuis moins de 30 minutes ignorés), rétablissement par PA-00B (refus, Origine Flux, motif « Rapprochement quotidien », N-90 à l'auteur de la dernière modification) et `JournalFlux` Avertissement. Les éléments sans aucune transition acceptée sont laissés à PA-00D (entrée `REPRISE`, [6.1](../../spec.md#61-règles-générales), règle 3 ter). Une portée par liste ; les listes du lot 3 ne sont traitées que si elles sont déployées.
+1. Rapprochement des statuts : pour chaque élément dont `Statut` diffère du dernier `StatutApres` accepté dans `HistoriqueStatuts` (entrées `REF-PRINCIPAL` exclues), sans exécution en cours (éléments modifiés depuis moins de 30 minutes ignorés), rétablissement par PA-00B (refus, Origine Flux, motif « Rapprochement quotidien », N-90 à l'auteur de la dernière modification) et `JournalFlux` Avertissement. Les éléments sans aucune transition acceptée sont laissés à PA-00D (entrée `REPRISE`, [\[6.1\]](../../spec.md#61-règles-générales), règle 3 ter). Une portée par liste ; les listes du lot 3 ne sont traitées que si elles sont déployées.
 2. Lister les erreurs à reprendre.
 3. Si la liste n'est pas vide, ou si l'étape 1 a rétabli des statuts : N-98 (synthèse avec liens d'exécution et tableau des rapprochements) au support (`hncs_SupportEmail`) et aux membres de G_PROP.
 

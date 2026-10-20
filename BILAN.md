@@ -12,9 +12,9 @@ Ce document distingue clairement ce qui est **terminé et vérifié hors ligne**
 
 ### 1.1 Spécification (lot 0)
 
-- `spec.md` et ses sous-spécifications fixent le modèle de données (26 listes, 6 bibliothèques, colonnes, types, lookups, identifiants), les statuts et 170 transitions contrôlées, les groupes et la matrice d'accès, le contrat des 28 flux, le modèle Power BI et ses 60 mesures, l'intégration GitLab et le découpage en lots ([4](spec.md#4-modèle-de-données--listes-sharepoint) à [11](spec.md#11-découpage-en-lots-0-à-5)).
+- `spec.md` et ses sous-spécifications fixent le modèle de données (26 listes, 6 bibliothèques, colonnes, types, lookups, identifiants), les statuts et 170 transitions contrôlées, les groupes et la matrice d'accès, le contrat des 28 flux, le modèle Power BI et ses 60 mesures, l'intégration GitLab et le découpage en lots ([\[4\]](spec.md#4-modèle-de-données--listes-sharepoint) à [\[11\]](spec.md#11-découpage-en-lots-0-à-5)).
 - La spec est lue par machine : `tools/spec_extract.py` génère `provisioning/model/model.generated.json` et refuse toute incohérence interne (énumérations, lookups entre lots, transitions, partition des statuts, décisions humaines jamais confiées à un flux, matrice, Power BI).
-- Deux revues ont été intégrées : la revue de conformité aux documents sources (RC-01 à RC-39) et la revue croisée des livrables (RX-01 à RX-09). Le journal des versions est tenu au [14.3](spec.md#143-journal).
+- Deux revues ont été intégrées : la revue de conformité aux documents sources (RC-01 à RC-39) et la revue croisée des livrables (RX-01 à RX-09). Le journal des versions est tenu au [\[14.3\]](spec.md#143-journal).
 
 ### 1.2 Réalisation par lot
 
@@ -30,11 +30,11 @@ Ce document distingue clairement ce qui est **terminé et vérifié hors ligne**
 
 | Principe | Garantie technique | Vérifié par |
 | --- | --- | --- |
-| Décisions humaines jamais automatisées | Le rôle `FLUX` est absent de toute transition de décision humaine ([6.1](spec.md#61-règles-générales)) | Extracteur, contrôleur des flux, tests hors ligne |
-| « Intégrée » seulement après les formalités | Règle de validation de liste et contrôle `G_INTEGRATION` ([6.6](spec.md#66-catalogue-des-contrôles)) | Tests du jeu de test, scénarios S-04 |
-| Nouvelle affectation, jamais d'écrasement | Verrou `EmpreinteVerrou`, succession `AffectationRemplacee` ([8.4](spec.md#84-contrats-détaillés)) | Tests du jeu de test, scénario S-06 |
-| CV et données personnelles cloisonnés | Matrice d'accès, permissions par élément, aucune colonne personnelle dans Power BI, OLS ([7](spec.md#7-sécurité--groupes-niveaux-dautorisation-matrice-daccès), [9.6](spec.md#96-sécurité-du-modèle-rls--ols)) | Tests de matrice, contrôleur PBIP |
-| Champs protégés et colonnes techniques non falsifiables | Statut de référence tiré de l'historique, reprise de l'existant sans passage en corbeille, rétablissement des colonnes techniques, rapprochement quotidien ([6.5](spec.md#65-formats-des-empreintes-p-09), [8.1](spec.md#81-socle-commun-sapplique-à-tous-les-flux)) | Contrôleur des flux, tests de contrat |
+| Décisions humaines jamais automatisées | Le rôle `FLUX` est absent de toute transition de décision humaine ([\[6.1\]](spec.md#61-règles-générales)) | Extracteur, contrôleur des flux, tests hors ligne |
+| « Intégrée » seulement après les formalités | Règle de validation de liste et contrôle `G_INTEGRATION` ([\[6.6\]](spec.md#66-catalogue-des-contrôles)) | Tests du jeu de test, scénarios S-04 |
+| Nouvelle affectation, jamais d'écrasement | Verrou `EmpreinteVerrou`, succession `AffectationRemplacee` ([\[8.4\]](spec.md#84-contrats-détaillés)) | Tests du jeu de test, scénario S-06 |
+| CV et données personnelles cloisonnés | Matrice d'accès, permissions par élément, aucune colonne personnelle dans Power BI, OLS ([\[7\]](spec.md#7-sécurité--groupes-niveaux-dautorisation-matrice-daccès), [\[9.6\]](spec.md#96-sécurité-du-modèle-rls--ols)) | Tests de matrice, contrôleur PBIP |
+| Champs protégés et colonnes techniques non falsifiables | Statut de référence tiré de l'historique, reprise de l'existant sans passage en corbeille, rétablissement des colonnes techniques, rapprochement quotidien ([\[6.5\]](spec.md#65-formats-des-empreintes-p-09), [\[8.1\]](spec.md#81-socle-commun-sapplique-à-tous-les-flux)) | Contrôleur des flux, tests de contrat |
 
 ## 2. Ce qui reste à valider
 
@@ -50,7 +50,7 @@ Ce document distingue clairement ce qui est **terminé et vérifié hors ligne**
 
 ### 2.2 Limites connues
 
-- Contrôle des transitions a posteriori : un statut non autorisé reste visible quelques secondes avant d'être rétabli ([13](spec.md#13-hypothèses-et-décisions-à-confirmer), H-17).
+- Contrôle des transitions a posteriori : un statut non autorisé reste visible quelques secondes avant d'être rétabli ([\[13\]](spec.md#13-hypothèses-et-décisions-à-confirmer), H-17).
 - Une exécution de flux resoumise peut renvoyer une notification déjà envoyée lorsqu'aucun marqueur n'est prévu (H-56).
 - Une première modification non autorisée d'un élément jamais initialisé est acceptée comme valeur initiale ; l'initialisation horaire des empreintes réduit cette fenêtre (H-55).
 - La lecture des documents des livrables par la Direction est acceptée (H-54).
@@ -60,7 +60,7 @@ Ce document distingue clairement ce qui est **terminé et vérifié hors ligne**
 
 ## 3. Décisions encore ouvertes
 
-Toutes les hypothèses implémentées en attente d'arbitrage sont tenues au [13](spec.md#13-hypothèses-et-décisions-à-confirmer) (H-01 à H-57). Les plus structurantes, à traiter en atelier de validation du lot 0 :
+Toutes les hypothèses implémentées en attente d'arbitrage sont tenues au [\[13\]](spec.md#13-hypothèses-et-décisions-à-confirmer) (H-01 à H-57). Les plus structurantes, à traiter en atelier de validation du lot 0 :
 
 | Thème | Hypothèses | Responsable attendu |
 | --- | --- | --- |

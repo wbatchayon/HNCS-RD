@@ -1,6 +1,6 @@
 # PA-00F : Droits des propriétaires de modèles
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([\[8.4\]](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -11,7 +11,7 @@
 
 ## Objectif
 
-Réserver la modification d'un modèle à son propriétaire ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)) : élément du registre et fichiers de « 03 : Modèles R&D » liés.
+Réserver la modification d'un modèle à son propriétaire ([\[7.4\]](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)) : élément du registre et fichiers de « 03 : Modèles R&D » liés.
 
 ## Déclencheur(s)
 
@@ -27,7 +27,7 @@ Réserver la modification d'un modèle à son propriétaire ([7.4](../../spec.md
 1. `IdHNCS` (`MOD-…`) si vide.
 2. Rompre l'héritage de l'élément (copie) et donner CSS au `Proprietaire`.
 3. Même attribution sur chaque fichier de `ModelesRD` dont la colonne `Modele` désigne l'élément.
-4. L'ancien propriétaire n'est pas retiré automatiquement (revue des accès, [7.1](../../spec.md#71-groupes-sharepoint)) ; `JournalFlux` Info.
+4. L'ancien propriétaire n'est pas retiré automatiquement (revue des accès, [\[7.1\]](../../spec.md#71-groupes-sharepoint)) ; `JournalFlux` Info.
 
 ## Sorties
 

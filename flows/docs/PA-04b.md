@@ -1,6 +1,6 @@
 # PA-04b : Activation des alternants et rappels d'actions
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([\[8.4\]](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |
@@ -24,7 +24,7 @@ Activer les alternants à leur date de début et rappeler les actions de checkli
 ## Traitement pas à pas
 
 1. Alternants « À intégrer » dont `DateDebut` ≤ aujourd'hui (heure de Paris) → « Actif » (ALT-T02, FLUX, `G_DATE_DEBUT_ATTEINTE`), N-18 au référent principal.
-2. Actions (tous contextes) non terminées dont l'échéance est dans `Delai.RappelActionJours` jours ou dépassée → N-19 au responsable (à défaut, résolution [8.1](../../spec.md#81-socle-commun-sapplique-à-tous-les-flux) du rôle responsable : ADMIN, RD et DIRECTION_RD → destinataires paramétrés, PROPRIETAIRE → `Destinataires.Support`, ECOLES → G_ECO), au plus une fois par jour (`DernierRappel` = `Rappel:AAAA-MM-JJ`).
+2. Actions (tous contextes) non terminées dont l'échéance est dans `Delai.RappelActionJours` jours ou dépassée → N-19 au responsable (à défaut, résolution [\[8.1\]](../../spec.md#81-socle-commun-sapplique-à-tous-les-flux) du rôle responsable : ADMIN, RD et DIRECTION_RD → destinataires paramétrés, PROPRIETAIRE → `Destinataires.Support`, ECOLES → G_ECO), au plus une fois par jour (`DernierRappel` = `Rappel:AAAA-MM-JJ`).
 
 ## Sorties
 

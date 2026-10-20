@@ -44,7 +44,7 @@ tests-synchro:
     - python --version
     - python -m unittest discover -s gitlab/sync/tests -v
 
-# Synchronisation planifiée (quotidien 05:30, avant l'actualisation Power BI de 06:00 : spec § 9.1).
+# Synchronisation planifiée (quotidien 05:30, avant l'actualisation Power BI de 07:45 : spec § 9.1).
 synchro-gitlab-sharepoint:
   stage: sync
   rules:

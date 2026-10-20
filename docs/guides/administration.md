@@ -6,7 +6,7 @@
 
 ## 1. Votre rôle dans le processus
 
-L'administration prend le relais de la R&D dès qu'un profil est **présélectionné** et transmis (RACI [7.6](../../spec.md#76-matrice-raci-et-implémentation) : « R » sur les
+L'administration prend le relais de la R&D dès qu'un profil est **présélectionné** et transmis (RACI [\[7.6\]](../../spec.md#76-matrice-raci-et-implémentation) : « R » sur les
 entretiens, la sélection et les formalités) :
 
 - elle **planifie les entretiens** et **saisit leur résultat** ;
@@ -22,7 +22,7 @@ interviennent hors outil ou par l'intermédiaire de l'administration (H-32).
 
 ## 2. Ce que vous voyez et ne voyez pas
 
-D'après la matrice d'accès (spec [7.3](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
+D'après la matrice d'accès (spec [\[7.3\]](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([\[7.4\]](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
 
 | Accès | Listes et bibliothèques |
 | --- | --- |
@@ -144,14 +144,14 @@ générées ensuite.
    - « Bloquée » si vous êtes empêché.
 3. Déposez les pièces dans « 02 - Administration » (« Type de document » : Contrat, Convention, Pièce administrative…). La
    « Description » d'une action ne contient **aucune donnée sensible** : les pièces restent dans la bibliothèque. Ne déposez
-   jamais de pièce dans la bibliothèque « Documents » par défaut du site, lisible par tous les groupes (spec [7.2](../../spec.md#72-niveaux-dautorisation)).
+   jamais de pièce dans la bibliothèque « Documents » par défaut du site, lisible par tous les groupes (spec [\[7.2\]](../../spec.md#72-niveaux-dautorisation)).
 
 **Champs protégés** (`G_ACTION_FORMALITE`, P-09) : pour les formalités d'intégration, **seule l'administration** peut décocher
 « Bloquante pour l'étape » ou passer une action bloquante en « Non applicable » ; le passage à « Terminée » est possible par
 l'administration ou par le responsable désigné. Toute autre modification est rétablie et signalée (N-92).
 
 Rappels : **N-19** deux jours avant l'échéance (`Delai.RappelActionJours`) puis chaque jour en cas de retard (au-delà, l'action
-apparaît dans la synthèse du Comité R&D, [7.7](../../spec.md#77-circuit-descalade)). Quand toutes les actions bloquantes sont terminées ou justifiées, **N-17**
+apparaît dans la synthèse du Comité R&D, [\[7.7\]](../../spec.md#77-circuit-descalade)). Quand toutes les actions bloquantes sont terminées ou justifiées, **N-17**
 vous invite à confirmer l'intégration. Aucun statut ne change automatiquement : la confirmation reste votre décision.
 
 ### 3.7 Confirmer l'intégration
@@ -271,7 +271,7 @@ historisée dans **« Historique des statuts »** (lecture pour vous), en plus d
 
 ## 6. Vos vues Power BI
 
-Rôle Power BI **Administration** : pages 2, 3 et 5 (audience de l'application, spec [9.7](../../spec.md#97-pages-du-rapport)). Les candidatures sont limitées à celles qui vous ont été
+Rôle Power BI **Administration** : pages 2, 3 et 5 (audience de l'application, spec [\[9.7\]](../../spec.md#97-pages-du-rapport)). Les candidatures sont limitées à celles qui vous ont été
 **transmises** ; les données de livrables, comptes rendus, mobilisations et GitLab sont masquées pour ce rôle.
 
 | Page | Usage pour vous |

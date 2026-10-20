@@ -2,17 +2,17 @@
 
 Système de suivi du Département R&D de HNCS Groupe sous Microsoft 365. Il couvre tout le parcours : réception d'une candidature (site HNCS, LinkedIn, France Travail), analyse et présélection par la R&D, transmission à l'administration, entretiens, formalités et relation avec l'école, intégration de l'alternant, affectation à un pôle, un référent et un sujet, production et validation des livrables, comptes rendus périodiques, capitalisation et reporting Power BI.
 
-La **source de vérité** du projet est [`spec.md`](spec.md). Toute évolution commence par la spec, puis se répercute dans le code ([14.2](spec.md#142-règle-de-changement)).
+La **source de vérité** du projet est [`spec.md`](spec.md). Toute évolution commence par la spec, puis se répercute dans le code ([\[14.2\]](spec.md#142-règle-de-changement)).
 
 ## Principes
 
 | Principe | Mise en œuvre |
 | --- | --- |
-| Les décisions humaines ne sont jamais automatisées | Les flux notifient, tracent et ne font avancer un statut qu'après une action humaine ([1](spec.md#1-principes-directeurs-non-négociables), [6.1](spec.md#61-règles-générales)) |
-| Une candidature ne passe à « Intégrée » que si les formalités sont au bon stade | Règle de validation de liste et contrôle `G_INTEGRATION` ([6.6](spec.md#66-catalogue-des-contrôles)) |
-| Un changement de sujet ou de référent crée une nouvelle affectation | Affectation verrouillée dès son activation, succession par `AffectationRemplacee` ([8.4](spec.md#84-contrats-détaillés)) |
-| Les CV et les données personnelles restent cloisonnés | Matrice d'accès, permissions par élément, Power BI sans donnée personnelle ([7.3](spec.md#73-matrice-daccès), [7.5](spec.md#75-sécurité-des-données-personnelles), [9.2](spec.md#92-tables-importées)) |
-| Les champs de décision et les colonnes techniques sont protégés | Empreintes, statut de référence tiré de l'historique, rapprochement quotidien ([6.5](spec.md#65-formats-des-empreintes-p-09), [8.1](spec.md#81-socle-commun-sapplique-à-tous-les-flux)) |
+| Les décisions humaines ne sont jamais automatisées | Les flux notifient, tracent et ne font avancer un statut qu'après une action humaine ([\[1\]](spec.md#1-principes-directeurs-non-négociables), [\[6.1\]](spec.md#61-règles-générales)) |
+| Une candidature ne passe à « Intégrée » que si les formalités sont au bon stade | Règle de validation de liste et contrôle `G_INTEGRATION` ([\[6.6\]](spec.md#66-catalogue-des-contrôles)) |
+| Un changement de sujet ou de référent crée une nouvelle affectation | Affectation verrouillée dès son activation, succession par `AffectationRemplacee` ([\[8.4\]](spec.md#84-contrats-détaillés)) |
+| Les CV et les données personnelles restent cloisonnés | Matrice d'accès, permissions par élément, Power BI sans donnée personnelle ([\[7.3\]](spec.md#73-matrice-daccès), [\[7.5\]](spec.md#75-sécurité-des-données-personnelles), [\[9.2\]](spec.md#92-tables-importées)) |
+| Les champs de décision et les colonnes techniques sont protégés | Empreintes, statut de référence tiré de l'historique, rapprochement quotidien ([\[6.5\]](spec.md#65-formats-des-empreintes-p-09), [\[8.1\]](spec.md#81-socle-commun-sapplique-à-tous-les-flux)) |
 
 ## Socle technique
 
@@ -70,4 +70,4 @@ Ces contrôles sont exécutés par l'intégration continue (`.github/workflows/c
 
 ## Confidentialité
 
-Les documents de cadrage sources sont confidentiels et ne sont pas versionnés ([13](spec.md#13-hypothèses-et-décisions-à-confirmer), H-30). Toutes les données du dépôt sont fictives.
+Les documents de cadrage sources sont confidentiels et ne sont pas versionnés ([\[13\]](spec.md#13-hypothèses-et-décisions-à-confirmer), H-30). Toutes les données du dépôt sont fictives.

@@ -40,11 +40,11 @@ Règles :
   SharePoint depuis la v1.2.0 : c'est `tests/offline` qui le vérifie).
 - `StatutPrecedent` n'est jamais renseigné : l'import le pose **égal à** `Statut` (données « déjà validées »).
 - Les colonnes `flux` sont renseignées comme si les flux étaient passés (dates de transmission, empreintes…).
-- Les empreintes calculées suivent les formats de la spec ([6.5](../spec.md#65-formats-des-empreintes-p-09)).
+- Les empreintes calculées suivent les formats de la spec ([\[6.5\]](../spec.md#65-formats-des-empreintes-p-09)).
   `Livrables.EmpreinteRevue` et `ComptesRendus.EmpreinteRevue` sont laissées **vides** : une empreinte vide signifie
   « non encore initialisée » et PA-00D l'initialise à partir des valeurs courantes, sans rien rétablir (H-55).
 - Chaque élément d'un objet à statut contrôlé possède un historique complet : son `Statut` est le dernier
-  `StatutApres` accepté de `HistoriqueStatuts`, statut de référence des flux ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)).
+  `StatutApres` accepté de `HistoriqueStatuts`, statut de référence des flux ([\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)).
   Les chaînes non scénarisées sont des parcours valides du graphe des transitions, attribués aux personas habilitées.
 - Listes sans `IdHNCS` : clé d'idempotence `FluxRunId` (`HistoriqueStatuts`), `RunUrl` (`JournalFlux`),
   `CleSynchro` (`GitlabSync`).
@@ -88,7 +88,7 @@ Les valeurs attendues des mesures Power BI sur ce jeu sont figées dans `tests/o
 
 Prérequis : PowerShell 7.4, PnP.PowerShell 2.x, site provisionné (`provisioning/Deploy-HNCSRD.ps1`), compte membre de
 `HNCS-RD-Proprietaires`. **Désactiver les flux** pendant l'import, ou l'exécuter sous le compte de service : ses
-écritures ne déclenchent aucun flux (spec [8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)). Le script refuse une URL sans marqueur de recette (`recette`, `test`,
+écritures ne déclenchent aucun flux (spec [\[8.1\]](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)). Le script refuse une URL sans marqueur de recette (`recette`, `test`,
 `qualif`, `dev`), sauf `-Force`.
 
 ```powershell
@@ -97,7 +97,7 @@ Copy-Item ./testdata/personas.sample.json ./testdata/personas.json
 # 2. Fichier des membres des groupes, puis ajout des membres (provisionnement)
 pwsh ./testdata/Import-TestData.ps1 -ExporterMembres ./provisioning/config/membres.json
 pwsh ./provisioning/Set-HNCSRDMembres.ps1 -ConfigPath ./provisioning/config/tenant.json -MembresPath ./provisioning/config/membres.json
-# 3. Import (simulation, puis réel) avec émulation des permissions par élément de [7.4](../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)
+# 3. Import (simulation, puis réel) avec émulation des permissions par élément (spec, section 7.4)
 pwsh ./testdata/Import-TestData.ps1 -ConfigPath ./provisioning/config/tenant.json -SiteUrl https://contoso.sharepoint.com/sites/HNCS-RD-Recette -WhatIf
 pwsh ./testdata/Import-TestData.ps1 -ConfigPath ./provisioning/config/tenant.json -SiteUrl https://contoso.sharepoint.com/sites/HNCS-RD-Recette -PermissionsElement
 # 4. Réinitialisation : supprime (corbeille) UNIQUEMENT les éléments dont la clé figure dans le jeu
@@ -113,7 +113,7 @@ Comportement :
 1. ordre d'import **topologique** calculé depuis les lookups du modèle (et les jetons `@id:`), les lookups vers la
    même liste (`AffectationRemplacee`, `LivrableOrigine`) étant posés en seconde passe ;
 2. chaque élément est retrouvé par sa clé puis **mis à jour**, sinon créé : un second import ne crée aucun doublon ;
-3. `-PermissionsElement` reproduit les attributions par élément de [7.4](../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux) (candidatures transmises, affectations,
+3. `-PermissionsElement` reproduit les attributions par élément de [\[7.4\]](../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux) (candidatures transmises, affectations,
    livrables, comptes rendus, communications, fiches alternants, actions, bilans, modèles, entretiens) ; les
    permissions de **dossiers** restent du ressort des flux ou de la procédure manuelle du lot 1
    (`docs/exploitation.md`) ;

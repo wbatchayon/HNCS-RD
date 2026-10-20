@@ -24,7 +24,7 @@ au canal Teams « Alternants » de l'équipe « HNCS R&D », poste de travail et
 
 ## 2. Ce que vous voyez et ne voyez pas
 
-D'après la matrice d'accès (spec [7.3](../../spec.md#73-matrice-daccès)) et les permissions posées pour vous par les flux ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
+D'après la matrice d'accès (spec [\[7.3\]](../../spec.md#73-matrice-daccès)) et les permissions posées pour vous par les flux ([\[7.4\]](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
 
 | Accès | Ce que c'est |
 | --- | --- |
@@ -93,7 +93,7 @@ dépassée (à vous et au référent). Un livrable soumis à revue n'est plus co
 
 Ne déposez **jamais** un document de travail dans la bibliothèque « Documents » créée par défaut avec le site, ni dans les
 fichiers de l'équipe Teams : elles ne sont pas protégées par les droits du système et ne doivent contenir aucune donnée
-métier (spec [7.2](../../spec.md#72-niveaux-dautorisation), H-44). Votre seul espace de dépôt est le dossier de votre sujet dans « 04 - Livrables R&D » (et votre
+métier (spec [\[7.2\]](../../spec.md#72-niveaux-dautorisation), H-44). Votre seul espace de dépôt est le dossier de votre sujet dans « 04 - Livrables R&D » (et votre
 dossier de suivi dans « 05 - Suivi des alternants »).
 
 Ce que fait le système (PA-07b) : il complète l'identifiant et le sujet du document et, si le champ « Document (SharePoint) »
@@ -271,7 +271,7 @@ l'ancienne affectation est conservé.
 
 ### Où ranger les identifiants de ma machine virtuelle de démonstration ?
 
-Nulle part dans SharePoint, GitLab ou les documents : aucun secret n'y est stocké (spec [10.1](../../spec.md#101-principes)). Suivez les consignes de
+Nulle part dans SharePoint, GitLab ou les documents : aucun secret n'y est stocké (spec [\[10.1\]](../../spec.md#101-principes)). Suivez les consignes de
 l'équipe technique.
 
 ### Qui voit mes comptes rendus ?

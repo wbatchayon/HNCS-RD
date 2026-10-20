@@ -1,7 +1,7 @@
 # Sous-spécification : Référentiels initiaux
 
 > Alignée sur `spec.md` (qui prévaut). Lue par `tools/spec_extract.py` et injectée par le provisioning (étape « référentiels »).
-> Toutes les valeurs ci-dessous sont des **propositions** à valider (spec [13](../spec.md#13-hypothèses-et-décisions-à-confirmer), H-22 à H-24). Le provisioning n'écrase **jamais** une valeur non vide d'une clé existante (idempotence : une valeur modifiée par la Direction R&D est conservée) ; il complète en revanche une valeur **vide** lorsque la configuration la fournit (ex. `Lien.RapportPowerBI` renseigné après le lot 4).
+> Toutes les valeurs ci-dessous sont des **propositions** à valider (spec [\[13\]](../spec.md#13-hypothèses-et-décisions-à-confirmer), H-22 à H-24). Le provisioning n'écrase **jamais** une valeur non vide d'une clé existante (idempotence : une valeur modifiée par la Direction R&D est conservée) ; il complète en revanche une valeur **vide** lorsque la configuration la fournit (ex. `Lien.RapportPowerBI` renseigné après le lot 4).
 
 ## Paramètres
 
@@ -31,7 +31,7 @@ Les valeurs `<…>` sont des marqueurs remplacés au déploiement à partir de `
 | Fonction.InformationCandidatAuto | Non | Fonctionnalités | Information automatique du candidat à la clôture (H-09) |
 | Fonction.CreationReunionTeams | Non | Fonctionnalités | Création de la réunion Teams par PA-03 |
 | Fonction.NotificationsTeams | Oui | Fonctionnalités | Doubler les notifications nominatives par un message Teams |
-| Fonction.Lot2Actif | Non | Fonctionnalités | Passé à Oui par l'administrateur à l'activation du lot 2, avant l'exécution manuelle de PA-00D : déclenche l'initialisation des empreintes et l'écriture des entrées `REPRISE` ([6.1](../spec.md#61-règles-générales), point 3 ter) |
+| Fonction.Lot2Actif | Non | Fonctionnalités | Passé à Oui par l'administrateur à l'activation du lot 2, avant l'exécution manuelle de PA-00D : déclenche l'initialisation des empreintes et l'écriture des entrées `REPRISE` (spec, section 6.1, point 3 ter) |
 | Fonction.RepriseExistantActive | Non | Fonctionnalités | Autorise DIRECTION_RD à créer un alternant sans candidature (reprise de l'existant, `G_SOURCE_ALTERNANT`, H-12) |
 | Recrutement.PartageTransmission | Groupe | Fonctionnalités | Portée du partage à la transmission (PA-02) : Groupe (G_ADM) ou Destinataire (`DestinataireAdmin` seul) (H-45) |
 | Conservation.CandidatureNonRetenueMois |  | Conservation | Vide tant que la durée n'est pas validée (H-10) ; PA-13 inactif si vide |
@@ -67,7 +67,7 @@ Les valeurs `<…>` sont des marqueurs remplacés au déploiement à partir de `
 | DOM-2026-0006 | Démonstrateurs d'infrastructure | POL-P1 | Oui | Actif |
 | DOM-2026-0007 | Valorisation et communication technique | POL-P3 | Non | Actif |
 
-La colonne `Pole` contient l'`IdHNCS` du pôle ; le provisioning le résout en ID SharePoint. Les `IdHNCS` des référentiels sont **réservés** (spec [2.2](../spec.md#22-conventions-de-nommage)) : recherche par `Title`, identifiant renseigné s'il est vide, erreur s'il est déjà porté par un autre élément.
+La colonne `Pole` contient l'`IdHNCS` du pôle ; le provisioning le résout en ID SharePoint. Les `IdHNCS` des référentiels sont **réservés** (spec [\[2.2\]](../spec.md#22-conventions-de-nommage)) : recherche par `Title`, identifiant renseigné s'il est vide, erreur s'il est déjà porté par un autre élément.
 
 ## Modèles de checklists (proposition, H-23)
 

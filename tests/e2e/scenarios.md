@@ -1,6 +1,6 @@
 # Scénarios de recette de bout en bout : HNCS-RD
 
-> Référence : `spec.md` [12.1](../../spec.md#121-scénarios-de-recette) (S-01 à S-15, repris du cadrage § 10.1) et scénarios complémentaires S-16 à S-26.
+> Référence : `spec.md` [\[12.1\]](../../spec.md#121-scénarios-de-recette) (S-01 à S-15, repris du cadrage § 10.1) et scénarios complémentaires S-16 à S-26.
 > Spec en vigueur : v1.7.0. En cas d'écart, la spec prévaut.
 > Tous les scénarios s'exécutent sur un **site de recette** (URL contenant « recette », « test », « qualif » ou « dev »),
 > avec le jeu de test fictif de `testdata/` et les personas de `testdata/personas.json`.
@@ -53,7 +53,7 @@ Automatisation : `Invoke-Pester ./tests/e2e/HNCSRD.E2E.Tests.ps1` (scénarios) e
 | S-23 | Champs protégés (P-09) : référent principal, réviseur, échéance | 2 | `S-06 / S-23`, `S-07 / S-13` |
 | S-24 | Permissions de dossiers des bibliothèques | 2 | manuel |
 | S-25 | Lot 1 sans flux : procédure manuelle de partage (H-50) | 1 | manuel |
-| S-26 | Refus d'une création (corbeille, [6.1](../../spec.md#61-règles-générales), règle 3 bis) | 2 | `S-26` |
+| S-26 | Refus d'une création (corbeille, [\[6.1\]](../../spec.md#61-règles-générales), règle 3 bis) | 2 | `S-26` |
 
 ---
 
@@ -94,7 +94,7 @@ Automatisation : `Invoke-Pester ./tests/e2e/HNCSRD.E2E.Tests.ps1` (scénarios) e
 
 ## S-03 : Présélection transmise à l'administration ; entretien et décision traçables
 
-- **Références** : CAND-T04, CAND-T05 (FLUX), CAND-T07, CAND-T09, CAND-T10, CAND-T11, N-05, N-11, N-12, N-13, [7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux), H-45.
+- **Références** : CAND-T04, CAND-T05 (FLUX), CAND-T07, CAND-T09, CAND-T10, CAND-T11, N-05, N-11, N-12, N-13, [\[7.4\]](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux), H-45.
 - **Personas** : RD1, ADMIN_CARINE, DIRECTION, RD2 (participant d'un entretien).
 
 | # | Étape | Résultat attendu |
@@ -128,7 +128,7 @@ Automatisation : `Invoke-Pester ./tests/e2e/HNCSRD.E2E.Tests.ps1` (scénarios) e
 
 ## S-05 : Une école rattachée à plusieurs alternants sans doublon ; convention avec son propre statut
 
-- **Références** : [4](../../spec.md#4-modèle-de-données--listes-sharepoint) (lookup `Etablissement`), CONV-T01 à CONV-T05, `G_PREUVE_SIGNATURE`.
+- **Références** : [\[4\]](../../spec.md#4-modèle-de-données--listes-sharepoint) (lookup `Etablissement`), CONV-T01 à CONV-T05, `G_PREUVE_SIGNATURE`.
 - **Persona** : ECOLES, ADMIN_CARINE ; jeu : ECO-2026-9001 (4 alternants), CONV-2026-9001 / 9002.
 
 | # | Étape | Résultat attendu |
@@ -184,7 +184,7 @@ Automatisation : `Invoke-Pester ./tests/e2e/HNCSRD.E2E.Tests.ps1` (scénarios) e
 
 ## S-09 : Power BI cohérent avec SharePoint, sans CV ni commentaire d'entretien pour les non-habilités
 
-- **Références** : [9.2](../../spec.md#92-tables-importées), [9.5](../../spec.md#95-mesures), [9.6](../../spec.md#96-sécurité-du-modèle-rls--ols), P-04, H-16, H-48 ; `tests/e2e/reconciliation/`.
+- **Références** : [\[9.2\]](../../spec.md#92-tables-importées), [\[9.5\]](../../spec.md#95-mesures), [\[9.6\]](../../spec.md#96-sécurité-du-modèle-rls--ols), P-04, H-16, H-48 ; `tests/e2e/reconciliation/`.
 - **Personas** : DIR_RD (PilotageRD), DIRECTION (Direction), ADMIN_CARINE (Administration), REF1 (Referent), ECOLES (RelationEcoles).
 
 | # | Étape | Résultat attendu |
@@ -197,7 +197,7 @@ Automatisation : `Invoke-Pester ./tests/e2e/HNCSRD.E2E.Tests.ps1` (scénarios) e
 
 ## S-10 : Un flux échoue : échec visible, responsable notifié, reprise maîtrisée
 
-- **Références** : [8.1](../../spec.md#81-socle-commun-sapplique-à-tous-les-flux) (gestion d'erreur, reprise), PA-00C, PA-00E, N-98, N-99 ; jeu : `JournalFlux` « À reprendre » sur CAND-2026-9007.
+- **Références** : [\[8.1\]](../../spec.md#81-socle-commun-sapplique-à-tous-les-flux) (gestion d'erreur, reprise), PA-00C, PA-00E, N-98, N-99 ; jeu : `JournalFlux` « À reprendre » sur CAND-2026-9007.
 - **Personas** : IT, DIR_RD (lecture du journal), RD1 (aucun accès au journal).
 
 | # | Étape | Résultat attendu |
@@ -251,11 +251,11 @@ Automatisation : `Invoke-Pester ./tests/e2e/HNCSRD.E2E.Tests.ps1` (scénarios) e
 
 ## S-15 : Droits d'accès persona par persona
 
-- **Références** : [7.2](../../spec.md#72-niveaux-dautorisation) à [7.5](../../spec.md#75-sécurité-des-données-personnelles), H-14, H-18, H-28, H-29, H-45, H-54.
+- **Références** : [\[7.2\]](../../spec.md#72-niveaux-dautorisation) à [\[7.5\]](../../spec.md#75-sécurité-des-données-personnelles), H-14, H-18, H-28, H-29, H-45, H-54.
 - **Automatisation** : `Invoke-Pester ./tests/e2e/Access.Tests.ps1 -Output Detailed` (une authentification par persona).
 - **Principe** : pour chaque persona × objet de la matrice (`model.generated.json`, clé `matrix`), le niveau attendu est le
   maximum des niveaux de ses groupes ; le test lit les permissions effectives (`EffectiveBasePermissions`) au niveau
-  liste puis, pour `IL(x)` / `R+IL(x)`, au niveau de chaque élément du jeu de test (règles [7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
+  liste puis, pour `IL(x)` / `R+IL(x)`, au niveau de chaque élément du jeu de test (règles [\[7.4\]](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)).
 
 | Persona | Points de contrôle manuels complémentaires |
 | --- | --- |
@@ -355,7 +355,7 @@ Attendu : l'administration accède à la seule candidature partagée ; aucune au
 versioning (pas de `HistoriqueStatuts` sans flux). Les contrôles P-01 à P-03 et P-09 ne sont **pas** effectifs : le
 consigner dans le procès-verbal de recette du lot 1.
 
-### S-26 : Refus d'une création ([6.1](../../spec.md#61-règles-générales), règle 3 bis)
+### S-26 : Refus d'une création ([\[6.1\]](../../spec.md#61-règles-générales), règle 3 bis)
 
 Persona DIR_RD, `Fonction.RepriseExistantActive` = Non. Créer une fiche `Alternants` sans candidature source.
 Attendu : l'élément est envoyé à la **corbeille du site** par le compte de service (récupérable), historique

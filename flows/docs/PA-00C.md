@@ -1,6 +1,6 @@
 # PA-00C : Journaliser une erreur
 
-> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([8.4](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
+> Fiche générée par `flows/tools/generate_flows.py` à partir de la spec ([\[8.4\]](../../spec.md#84-contrats-détaillés)) : ne pas modifier à la main.
 
 | Élément | Valeur |
 | --- | --- |

@@ -1,6 +1,6 @@
 # Sous-spécification : Rapport Power BI (visuels)
 
-> Alignée sur `spec.md` [9](../spec.md#9-modèle-power-bi-et-mesures-dax) (qui prévaut). Toutes les mesures citées sont définies dans `spec.md` [9.5](../spec.md#95-mesures) ; aucun visuel ne crée de mesure implicite sur une colonne `perso` ou `confidentiel` (aucune n'est importée).
+> Alignée sur `spec.md` [\[9\]](../spec.md#9-modèle-power-bi-et-mesures-dax) (qui prévaut). Toutes les mesures citées sont définies dans `spec.md` [\[9.5\]](../spec.md#95-mesures) ; aucun visuel ne crée de mesure implicite sur une colonne `perso` ou `confidentiel` (aucune n'est importée).
 
 ## Règles de présentation
 

@@ -1,7 +1,7 @@
 # Power BI : HNCS-RD (lot 4)
 
 Projet Power BI du système de suivi R&D, au format **PBIP** : modèle sémantique en **TMDL**, rapport au format
-**PBIR**. Il met en œuvre `spec.md` [9](../spec.md#9-modèle-power-bi-et-mesures-dax) (v1.6.0, qui prévaut) et `specs/powerbi-rapport.md`. Reporting **en lecture
+**PBIR**. Il met en œuvre `spec.md` [\[9\]](../spec.md#9-modèle-power-bi-et-mesures-dax) (v1.6.0, qui prévaut) et `specs/powerbi-rapport.md`. Reporting **en lecture
 seule** : aucune réécriture vers SharePoint.
 
 ## 1. Structure
@@ -48,16 +48,16 @@ modification faite dans Desktop puis enregistrée doit être reportée dans le g
 `check_pbip.py` (bibliothèque standard, indépendant du générateur) vérifie notamment :
 
 - JSON valides et `$schema` officiels ;
-- chaque mesure de `model.powerbi.measures` présente avec le **même nom** et le **même DAX** que [9.5](../spec.md#95-mesures) (espaces
+- chaque mesure de `model.powerbi.measures` présente avec le **même nom** et le **même DAX** que [\[9.5\]](../spec.md#95-mesures) (espaces
   ignorés), aucune mesure hors spec ;
-- colonnes importées = `PBI_TABLES` (types, clés, `sourceColumn`), colonnes calculées = [9.4](../spec.md#94-colonnes-calculées) (DAX identique),
+- colonnes importées = `PBI_TABLES` (types, clés, `sourceColumn`), colonnes calculées = [\[9.4\]](../spec.md#94-colonnes-calculées) (DAX identique),
   `Calendrier`, `Objectifs` et colonne masquée `Mesures[DerniereActualisation]` (`DateTimeZone.FixedUtcNow`) ;
 - lecture SharePoint par `GetList` sur le **nom interne** (jamais `getbytitle`), `$select` limité aux colonnes
   autorisées, aucune colonne `perso`/`confidentiel` (sauf `Alternants.Title` → `NomAffichage`), conversion en heure
   de Paris de chaque colonne `Date` / `DateTime`, `GitlabSync` seule liste facultative ;
 - relations et état actif = `PBI_RELATIONS`, filtrage simple ;
 - 5 rôles, RLS et OLS = `PBI_ROLES` ;
-- 8 pages de [9.7](../spec.md#97-pages-du-rapport) ; chaque visuel ne référence que des mesures / colonnes existantes ; **`NomAffichage` dans aucun
+- 8 pages de [\[9.7\]](../spec.md#97-pages-du-rapport) ; chaque visuel ne référence que des mesures / colonnes existantes ; **`NomAffichage` dans aucun
   visuel** ; chaque mesure `[X]` et colonne `Table[Colonne]` citée par `specs/powerbi-rapport.md` présente sur sa
   page ; `[Dernière actualisation]` sur chaque page ;
 - équilibre des parenthèses / crochets / accolades du DAX et du M ;
@@ -86,7 +86,7 @@ modification faite dans Desktop puis enregistrée doit être reportée dans le g
   Le chemin du site est dérivé de `SiteUrl` (`Uri.Parts(SiteUrl)[Path]`) ; les bibliothèques (aucune importée à ce
   jour) utilisent `GetList('<chemin du site>/<NomInterne>')` (5ᵉ paramètre `bibliotheque`). L'URL de base étant le
   paramètre `SiteUrl`, la requête est **actualisable dans le service** (pas de source dynamique).
-- Les listes sont désignées par leur **nom interne** (URL, [2.2](../spec.md#22-conventions-de-nommage)), jamais par leur titre affiché : un renommage du
+- Les listes sont désignées par leur **nom interne** (URL, [\[2.2\]](../spec.md#22-conventions-de-nommage)), jamais par leur titre affiché : un renommage du
   titre n'a pas d'effet.
 - **Pagination** : suivi de `odata.nextLink` ; seul le `$skiptoken` en est extrait et réinjecté dans `Query`.
 - **Minimisation (P-04)** : chaque table ne demande que ses colonnes de `PBI_TABLES` (`$select` explicite). Aucune
@@ -99,7 +99,7 @@ modification faite dans Desktop puis enregistrée doit être reportée dans le g
 - **Dates** : SharePoint renvoie l'UTC (une colonne « date seule » vaut minuit heure de Paris exprimé en UTC, ex.
   `2026-10-13T22:00:00Z` pour le 14/10). `fnHeureParis` convertit explicitement en heure de Paris (règle de l'heure
   d'été européenne), indépendamment du fuseau de la machine d'actualisation ; les colonnes `Date` deviennent des
-  dates locales ([9.1](../spec.md#91-projet)).
+  dates locales ([\[9.1\]](../spec.md#91-projet)).
 - **Types** (`fnTyperColonnes`) : `Id` et recherches en Int64, nombres sans décimale en Int64, booléens (vide → faux),
   dates, date-heures, texte, URL.
 - `SujetDomaine` : développement de `SujetsRD.DomainesId` (recherche multiple) en couples `SujetId` / `DomaineId`.
@@ -108,17 +108,17 @@ modification faite dans Desktop puis enregistrée doit être reportée dans le g
 
 ## 4. Modèle sémantique
 
-- Tables : celles de `PBI_TABLES` ([9.2](../spec.md#92-tables-importées)), plus `Mesures` (table de mesures ; colonne masquée
+- Tables : celles de `PBI_TABLES` ([\[9.2\]](../spec.md#92-tables-importées)), plus `Mesures` (table de mesures ; colonne masquée
   `DerniereActualisation` = `DateTimeZone.FixedUtcNow` converti en heure de Paris). `Calendrier` est une table
   calculée DAX (années complètes couvrant les données, au moins 2025-2028, plafonnées à 2020-2035 ; `Semaine` au
   format ISO `AAAA-Snn`, `AnneeMois` `AAAA-MM`, `Mois` trié par `NumMois`), marquée table de dates. `Objectifs` est un
-  `DATATABLE` des 7 cibles de [9.5](../spec.md#95-mesures) (H-20).
-- Colonnes calculées : exactement [9.4](../spec.md#94-colonnes-calculées) (dates ramenées au jour par `DATE ( YEAR, MONTH, DAY )` ; `PoleNom`
+  `DATATABLE` des 7 cibles de [\[9.5\]](../spec.md#95-mesures) (H-20).
+- Colonnes calculées : exactement [\[9.4\]](../spec.md#94-colonnes-calculées) (dates ramenées au jour par `DATE ( YEAR, MONTH, DAY )` ; `PoleNom`
   dénormalisé sur `SujetsRD`, `Offres`, `Candidatures`).
 - Relations : exactement `PBI_RELATIONS` (plusieurs-à-un, filtrage simple, inactives activables par
   `USERELATIONSHIP`).
-- Mesures : les 60 mesures de [9.5](../spec.md#95-mesures), noms et DAX identiques, rangées en dossiers Recrutement / Effectifs / Livrables /
-  Comptes rendus / Écoles / Communications / Qualité / Objectifs / Technique (sections de [9.5](../spec.md#95-mesures)). Détail : `MESURES.md`.
+- Mesures : les 60 mesures de [\[9.5\]](../spec.md#95-mesures), noms et DAX identiques, rangées en dossiers Recrutement / Effectifs / Livrables /
+  Comptes rendus / Écoles / Communications / Qualité / Objectifs / Technique (sections de [\[9.5\]](../spec.md#95-mesures)). Détail : `MESURES.md`.
 - Mesures implicites désactivées (`discourageImplicitMeasures`) ; date/heure automatique désactivée.
 
 **Portée du filtre `Calendrier`** (relations actives) : candidatures par `DateReceptionJour`, livrables et comptes
@@ -147,7 +147,7 @@ la période sélectionnée). Les relations communications → livrable source et
   RLS (`Administration`, `RelationEcoles`, `Referent`).
 - `NomAffichage` n'est utilisé par aucun visuel : l'OLS est une défense en profondeur, et aucun visuel n'est en erreur.
   Règle (RX-03) : la colonne est masquée par OLS pour **tout rôle dont le groupe SharePoint n'a pas d'accès à la liste
-  `Alternants`** (matrice [7.3](../spec.md#73-matrice-daccès) : G_DIR et G_ECO → `Direction`, `RelationEcoles`) ; `check_pbip.py` la vérifie à partir
+  `Alternants`** (matrice [\[7.3\]](../spec.md#73-matrice-daccès) : G_DIR et G_ECO → `Direction`, `RelationEcoles`) ; `check_pbip.py` la vérifie à partir
   de la matrice. Les tableaux identifient les alternants par leur `IdHNCS`.
 - RX-04 : les rôles `Direction`, `RelationEcoles` et `Referent` ne voient de `Parametres` que la clé du seuil d'attente
   (utilisée par `[Seuil attente (j)]`) et aucune ligne de `HistoriqueStatuts` (`[Transitions refusées]` vide).
@@ -157,7 +157,7 @@ la période sélectionnée). Les relations communications → livrable source et
 
 La RLS et l'OLS protègent les **données**, pas les **pages** : un membre d'un rôle voit toutes les pages du
 rapport (avec des données filtrées). La restriction des pages par public se fait par les **audiences de
-l'application Power BI** publiée depuis l'espace « HNCS-R&D Pilotage » (spec [9.7](../spec.md#97-pages-du-rapport)) :
+l'application Power BI** publiée depuis l'espace « HNCS-R&D Pilotage » (spec [\[9.7\]](../spec.md#97-pages-du-rapport)) :
 
 | Audience (= rôle) | Pages visibles |
 | --- | --- |
@@ -169,10 +169,10 @@ l'application Power BI** publiée depuis l'espace « HNCS-R&D Pilotage » (spec 
 
 Mise en place (manuelle, après publication) : *Espace de travail > Créer une application > Audience* : une audience
 par public ci-dessus, pages masquées / affichées en conséquence, accès donné aux mêmes groupes Entra que le rôle RLS
-correspondant. Chaque membre d'une audience doit aussi être affecté au rôle de même nom ([5](../spec.md#5-bibliothèques-documentaires)) ; une personne relève
+correspondant. Chaque membre d'une audience doit aussi être affecté au rôle de même nom ([\[5\]](../spec.md#5-bibliothèques-documentaires)) ; une personne relève
 d'une seule audience et d'un seul rôle. Les audiences ne sont pas une mesure de sécurité : la sécurité reste la
 RLS / OLS. Les liens `LienDocument` (page 4) sont visibles de la Direction, qui a la lecture sur « 04 - Livrables R&D »
-(travaux sans donnée personnelle, spec [9.7](../spec.md#97-pages-du-rapport)).
+(travaux sans donnée personnelle, spec [\[9.7\]](../spec.md#97-pages-du-rapport)).
 
 ## 6. Rapport
 
@@ -215,7 +215,7 @@ d'éléments Fabric peuvent exiger un espace sur capacité (Fabric, Premium ou P
 
 ### 7.2 Alternative manuelle
 
-Ouvrir le PBIP dans Desktop ([2](../spec.md#2-architecture-et-conventions-de-nommage)), actualiser, *Fichier > Publier* vers « HNCS-R&D Pilotage ».
+Ouvrir le PBIP dans Desktop ([\[2\]](../spec.md#2-architecture-et-conventions-de-nommage)), actualiser, *Fichier > Publier* vers « HNCS-R&D Pilotage ».
 
 ### 7.3 Étapes manuelles dans le service (après la première publication)
 
@@ -225,7 +225,7 @@ Ouvrir le PBIP dans Desktop ([2](../spec.md#2-architecture-et-conventions-de-nom
    en cas d'échec, si `-ConfigurerPlanification` n'a pas pu l'appliquer (identifiants absents).
 3. **Rôles** : affecter les groupes Entra / personnes à `Direction`, `PilotageRD`, `Administration`,
    `RelationEcoles`, `Referent` (H-16), une personne dans un seul rôle.
-4. **Application et audiences** : publier l'application de l'espace avec les audiences du [5.1](../spec.md#5-bibliothèques-documentaires) ; lien de
+4. **Application et audiences** : publier l'application de l'espace avec les audiences du [\[5.1\]](../spec.md#5-bibliothèques-documentaires) ; lien de
    l'application dans le paramètre `Lien.RapportPowerBI` (synthèses PA-11).
 
 ## 8. Actualisation
@@ -307,7 +307,7 @@ Le projet n'a plus **aucune** surcharge de mesure ni mesure hors spec.
 
 ### 10.2 Points E-01 à E-05 : intégrés en v1.3.0
 
-E-01 section « Technique » de [9.5](../spec.md#95-mesures), E-02 tableau des communications publiées avec colonne `Externe`, E-03
+E-01 section « Technique » de [\[9.5\]](../spec.md#95-mesures), E-02 tableau des communications publiées avec colonne `Externe`, E-03
 `LienDocument` visible de la Direction (accepté), E-04 taux de capitalisation (effet voulu), E-05 RLS Administration
 sans filtre des actions (documenté). v1.3.0 ajoute `Candidatures.DoublonVerifie` et le filtre correspondant de
 `[Doublons signalés]`. v1.6.0 (revue croisée) : RX-03 OLS `NomAffichage` pour RelationEcoles, RX-04 `Parametres` /

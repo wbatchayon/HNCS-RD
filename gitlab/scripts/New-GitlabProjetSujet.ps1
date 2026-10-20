@@ -88,7 +88,6 @@ param(
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-$script:Tiret = [string][char]0x2014          # «, » des titres de jalons (spec § 10.2)
 $script:RegexLivrable = 'LIV-\d{4}-\d{4,}'
 $script:CouleursLabels = @{ sujet = '#1F6FEB'; livrable = '#D29922'; pole = '#8957E5'; type = '#2DA44E' }
 
@@ -137,7 +136,7 @@ function Get-HNCSTypeLabel {
 
 function Get-HNCSTitreJalon {
     param([string]$IdLivrable, [string]$Titre)
-    $t = '{0} {1} {2}' -f $IdLivrable, $script:Tiret, $Titre
+    $t = '{0} : {1}' -f $IdLivrable, $Titre
     if ($t.Length -gt 255) { $t = $t.Substring(0, 255) }
     return $t
 }
@@ -479,7 +478,7 @@ if ($null -eq $projet) {
     }
 }
 if ($null -eq $projet) {
-    $description = '{0} {1} {2}. Sujet R&D HNCS (fiche SharePoint : {3}/Lists/SujetsRD/DispForm.aspx?ID={4}).' -f $IdSujet, $script:Tiret, $titreSujet, $SiteUrl, $sujet.Id
+    $description = '{0} : {1}. Sujet R&D HNCS (fiche SharePoint : {2}/Lists/SujetsRD/DispForm.aspx?ID={3}).' -f $IdSujet, $titreSujet, $SiteUrl, $sujet.Id
     if ($PSCmdlet.ShouldProcess(('{0}/{1}' -f $groupeGitlab.full_path, $cheminProjet), 'Créer le projet GitLab')) {
         $projet = Invoke-HNCSGitlab -Methode POST -Chemin '/projects' -Corps @{
             name                   = $cheminProjet

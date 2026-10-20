@@ -6,7 +6,7 @@
 
 ## 1. Votre rôle dans le processus
 
-L'équipe R&D est la porte d'entrée et le chef d'orchestre du parcours (RACI [7.6](../../spec.md#76-matrice-raci-et-implémentation) : « R » sur l'enregistrement, l'analyse,
+L'équipe R&D est la porte d'entrée et le chef d'orchestre du parcours (RACI [\[7.6\]](../../spec.md#76-matrice-raci-et-implémentation) : « R » sur l'enregistrement, l'analyse,
 la présélection et l'affectation, sous la responsabilité de la Direction R&D) :
 
 - **Recrutement côté R&D** : vous enregistrez les candidatures reçues, qualifiez l'identité du candidat, les attribuez, les
@@ -17,11 +17,11 @@ la présélection et l'affectation, sous la responsabilité de la Direction R&D)
 - **Portefeuille** : vous proposez et suivez les sujets R&D (leur arbitrage revient à la Direction), les livrables, les
   comptes rendus, la fin et l'éventuelle prolongation des alternances.
 
-Groupe SharePoint : `HNCS-RD-EquipeRD` (rôle `RD` dans les transitions de la spec [6](../../spec.md#6-statuts-et-transitions-autorisées)).
+Groupe SharePoint : `HNCS-RD-EquipeRD` (rôle `RD` dans les transitions de la spec [\[6\]](../../spec.md#6-statuts-et-transitions-autorisées)).
 
 ## 2. Ce que vous voyez et ne voyez pas
 
-D'après la matrice d'accès (spec [7.3](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)). « Modification » = niveau « HNCS -
+D'après la matrice d'accès (spec [\[7.3\]](../../spec.md#73-matrice-daccès)) et les permissions posées par les flux ([\[7.4\]](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)). « Modification » = niveau « HNCS -
 Contribution sans suppression » : vous créez et modifiez, vous ne supprimez pas.
 
 | Accès | Listes et bibliothèques |
@@ -41,7 +41,7 @@ Contribution sans suppression » : vous créez et modifiez, vous ne supprimez pa
   concernés et de la Direction R&D ;
 - en sens inverse, l'administration ne voit une candidature et son CV **qu'à partir de sa transmission** (H-29).
 
-Les modèles R&D ne sont modifiables que par leur propriétaire et la Direction R&D ([7.4](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux), PA-00F).
+Les modèles R&D ne sont modifiables que par leur propriétaire et la Direction R&D ([\[7.4\]](../../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux), PA-00F).
 
 ## 3. Vos tâches pas à pas
 
@@ -74,7 +74,7 @@ responsable reçoit **N-03**.
 
 **Dernière étape** : ouvrez le lien « CV (lien sécurisé) » et déposez-y le CV et les pièces, avec « Type de document » = CV
 (ou Lettre de motivation, Portfolio…) et « Candidature » = l'identifiant. Ne rangez jamais un CV ailleurs, en particulier
-pas dans la bibliothèque « Documents » par défaut du site, lisible par tous (spec [7.2](../../spec.md#72-niveaux-dautorisation)), et ne l'envoyez jamais en pièce
+pas dans la bibliothèque « Documents » par défaut du site, lisible par tous (spec [\[7.2\]](../../spec.md#72-niveaux-dautorisation)), et ne l'envoyez jamais en pièce
 jointe.
 
 #### Option B : Boîte mail R&D
@@ -218,7 +218,7 @@ poser « En cours » (`SUJ-T04`, depuis « Priorisé » ou « Bloqué »), « Bl
 « Terminé » (`SUJ-T08`).
 
 Projet GitLab : à la demande du référent du sujet, un membre de l'équipe R&D propriétaire du groupe GitLab `hncs-rd` lance le
-script de création de projet (spec [10.3](../../spec.md#103-composants-livrés)), avec son jeton personnel (jamais stocké) ; il reporte l'URL et l'identifiant dans « Projet GitLab » et « ID projet GitLab ». Nom
+script de création de projet (spec [\[10.3\]](../../spec.md#103-composants-livrés)), avec son jeton personnel (jamais stocké) ; il reporte l'URL et l'identifiant dans « Projet GitLab » et « ID projet GitLab ». Nom
 du projet : `suj-aaaa-nnnn-<slug>` dans le groupe `hncs-rd`.
 
 ### 3.11 Créer et activer une affectation
@@ -393,7 +393,7 @@ origine « Humain », résultat), en plus du versioning de l'élément. Vous con
 
 ## 6. Vos vues Power BI
 
-Rôle Power BI **PilotageRD** (Direction R&D et équipe R&D) : aucune restriction de lignes, accès aux 8 pages (spec [9.7](../../spec.md#97-pages-du-rapport)).
+Rôle Power BI **PilotageRD** (Direction R&D et équipe R&D) : aucune restriction de lignes, accès aux 8 pages (spec [\[9.7\]](../../spec.md#97-pages-du-rapport)).
 
 | Page | Usage pour vous |
 | --- | --- |
