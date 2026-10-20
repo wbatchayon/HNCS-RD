@@ -1,6 +1,6 @@
 # Mesures du modèle Power BI HNCS-RD
 
-> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` [9.5](../spec.md#95-mesures) (qui prévaut), sans écart (spec v1.6.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, [8.2](../spec.md#82-partition-des-statuts-cibles) indicateurs recommandés), document source non versionné (H-30).
+> Généré à partir du TMDL (`HNCS-RD.SemanticModel/definition/tables/Mesures.tmdl`) : le DAX ci-dessous est celui qui est **implémenté**. Les noms et le DAX sont ceux de `spec.md` [9.5](../spec.md#95-mesures) (qui prévaut), sans écart (spec v1.7.0). Les définitions et points de vigilance reprennent, en les reformulant, le cadrage (§ 2.4 objectifs, § 8.2 indicateurs recommandés), document source non versionné (H-30).
 
 Conventions communes :
 
