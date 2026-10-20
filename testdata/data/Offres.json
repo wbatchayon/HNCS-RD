@@ -1,7 +1,7 @@
 [
   {
     "IdHNCS": "OFF-2026-9001",
-    "Title": "Alternance — ingénieur infrastructure (POC et démonstrateurs)",
+    "Title": "Alternance : ingénieur infrastructure (POC et démonstrateurs)",
     "TypeOffre": "Alternance",
     "Pole": "POL-P1",
     "Competences": "Virtualisation, sauvegarde, scripts (offre fictive).",
@@ -17,7 +17,7 @@
   },
   {
     "IdHNCS": "OFF-2026-9002",
-    "Title": "Stage — plan de stratégie sauvegarde et PRA",
+    "Title": "Stage : plan de stratégie sauvegarde et PRA",
     "TypeOffre": "Stage",
     "Pole": "POL-P2",
     "DateDebutPeriode": "@J-300",
@@ -30,7 +30,7 @@
   },
   {
     "IdHNCS": "OFF-2026-9003",
-    "Title": "Alternance — communication technique R&D",
+    "Title": "Alternance : communication technique R&D",
     "TypeOffre": "Alternance",
     "Pole": "POL-P3",
     "DateDebutPeriode": "@J+30",
@@ -39,7 +39,7 @@
   },
   {
     "IdHNCS": "OFF-2026-9004",
-    "Title": "Stage — cartographie des réseaux d'entreprise",
+    "Title": "Stage : cartographie des réseaux d'entreprise",
     "TypeOffre": "Stage",
     "Pole": "POL-P2",
     "DateDebutPeriode": "@J-250",

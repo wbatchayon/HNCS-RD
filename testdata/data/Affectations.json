@@ -1,7 +1,7 @@
 [
   {
     "IdHNCS": "AFF-2026-9001",
-    "Title": "ALT-2026-9001 – SUJ-2026-9001",
+    "Title": "ALT-2026-9001 / SUJ-2026-9001",
     "Alternant": "ALT-2026-9001",
     "Sujet": "SUJ-2026-9001",
     "Referent": "REF-2026-9001",
@@ -17,7 +17,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9002",
-    "Title": "ALT-2026-9002 – SUJ-2026-9002",
+    "Title": "ALT-2026-9002 / SUJ-2026-9002",
     "Alternant": "ALT-2026-9002",
     "Sujet": "SUJ-2026-9002",
     "Referent": "REF-2026-9002",
@@ -33,7 +33,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9003",
-    "Title": "ALT-2026-9003 – SUJ-2026-9004",
+    "Title": "ALT-2026-9003 / SUJ-2026-9004",
     "Alternant": "ALT-2026-9003",
     "Sujet": "SUJ-2026-9004",
     "Referent": "REF-2026-9001",
@@ -49,7 +49,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9004",
-    "Title": "ALT-2026-9003 – SUJ-2026-9001",
+    "Title": "ALT-2026-9003 / SUJ-2026-9001",
     "Alternant": "ALT-2026-9003",
     "Sujet": "SUJ-2026-9001",
     "Referent": "REF-2026-9001",
@@ -66,7 +66,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9005",
-    "Title": "ALT-2026-9003 – SUJ-2026-9001",
+    "Title": "ALT-2026-9003 / SUJ-2026-9001",
     "Alternant": "ALT-2026-9003",
     "Sujet": "SUJ-2026-9001",
     "Referent": "REF-2026-9002",
@@ -83,7 +83,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9006",
-    "Title": "ALT-2026-9004 – SUJ-2026-9006",
+    "Title": "ALT-2026-9004 / SUJ-2026-9006",
     "Alternant": "ALT-2026-9004",
     "Sujet": "SUJ-2026-9006",
     "Referent": "REF-2026-9002",
@@ -97,7 +97,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9007",
-    "Title": "ALT-2026-9005 – SUJ-2026-9002",
+    "Title": "ALT-2026-9005 / SUJ-2026-9002",
     "Alternant": "ALT-2026-9005",
     "Sujet": "SUJ-2026-9002",
     "Referent": "REF-2026-9003",
@@ -113,7 +113,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9008",
-    "Title": "ALT-2026-9006 – SUJ-2026-9005",
+    "Title": "ALT-2026-9006 / SUJ-2026-9005",
     "Alternant": "ALT-2026-9006",
     "Sujet": "SUJ-2026-9005",
     "Referent": "REF-2026-9002",
@@ -128,7 +128,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9009",
-    "Title": "ALT-2026-9008 – SUJ-2026-9004",
+    "Title": "ALT-2026-9008 / SUJ-2026-9004",
     "Alternant": "ALT-2026-9008",
     "Sujet": "SUJ-2026-9004",
     "Referent": "REF-2026-9001",
@@ -144,7 +144,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9010",
-    "Title": "ALT-2026-9007 – SUJ-2026-9003",
+    "Title": "ALT-2026-9007 / SUJ-2026-9003",
     "Alternant": "ALT-2026-9007",
     "Sujet": "SUJ-2026-9003",
     "Referent": "REF-2026-9002",
@@ -159,7 +159,7 @@
   },
   {
     "IdHNCS": "AFF-2026-9011",
-    "Title": "ALT-2026-9002 – SUJ-2026-9003",
+    "Title": "ALT-2026-9002 / SUJ-2026-9003",
     "Alternant": "ALT-2026-9002",
     "Sujet": "SUJ-2026-9003",
     "DateDebut": "@J+61",

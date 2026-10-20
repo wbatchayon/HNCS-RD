@@ -3,11 +3,11 @@
     Droits d'accès persona par persona, PILOTÉS PAR LA MATRICE du modèle généré (spec § 7.3 et § 7.4).
 .DESCRIPTION
     Pour chaque persona de testdata/personas.json et chaque objet de « matrix » (provisioning/model/model.generated.json) :
-      - niveau de base attendu = maximum des niveaux des groupes de la persona (FC > CSS > R > —) ;
+      - niveau de base attendu = maximum des niveaux des groupes de la persona (FC > CSS > R > -) ;
       - FC  : lecture, ajout, modification, gestion des permissions ;
       - CSS : lecture, ajout, modification, PAS de suppression ;
       - R   : lecture, ni ajout ni modification (tentative d'ajout refusée) ;
-      - —   : aucune lecture au niveau liste (aucun élément visible hors IL) ;
+      - « - » : aucune lecture au niveau liste (aucun élément visible hors IL) ;
       - IL(x) : pour chaque élément du jeu de test, accès x si la règle § 7.4 l'accorde à la persona, sinon aucun accès ;
       - R+IL(x) : lecture de toute la liste, écriture x seulement sur les éléments dont la persona est responsable.
     Prérequis : site de recette provisionné, membres ajoutés (Set-HNCSRDMembres.ps1 avec le fichier produit par
@@ -118,7 +118,7 @@ Describe 'Matrice § 7.3 / § 7.4 : accès au niveau élément (IL)' -Tag 'Acces
                 $perm.Modification | Should -Be ($attendu -eq 'CSS') -Because "$($it.IdHNCS) : niveau $attendu"
                 $perm.Suppression | Should -BeFalse
             }
-            elseif ($Base -eq '—') {
+            elseif ($Base -eq '-') {
                 $perm.Lecture | Should -BeFalse -Because "$($it.IdHNCS) ne doit pas être visible pour $Persona"
             }
             else {

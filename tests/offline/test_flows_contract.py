@@ -147,6 +147,25 @@ class TestManifesteFlux(unittest.TestCase):
                         with self.subTest(flux=e["id"], statut=s):
                             self.assertIn((lst, s), allowed, f"{e['id']} écrit la décision humaine {lst} / {s}")
 
+    def test_aucun_declencheur_ne_conditionne_sur_statut_precedent(self):
+        """RX-02 (v1.6.0, § 8.1) : sur une liste à statut contrôlé, la condition de déclenchement est uniquement
+        l'anti-boucle ; le statut de référence est la dernière transition acceptée de HistoriqueStatuts,
+        jamais StatutPrecedent (colonne technique, P-09)."""
+        listes_controlees = {p["list"] for p in self.m["partition"]}
+        for e in self.manifest:
+            if (e.get("trigger") or {}).get("list") not in listes_controlees:
+                continue
+            p = FLOWS / "src" / e["id"] / "workflow.json"
+            if not p.is_file():
+                continue
+            wf = json.loads(p.read_text(encoding="utf-8-sig"))
+            for path, node in walk(wf):
+                if "triggers" not in path or "conditions" not in node:
+                    continue
+                with self.subTest(flux=e["id"], declencheur="/".join(map(str, path))):
+                    self.assertNotIn("StatutPrecedent", json.dumps(node["conditions"], ensure_ascii=False),
+                                     "condition de déclenchement fondée sur StatutPrecedent")
+
     def test_pa13_desactive_par_defaut(self):
         for e in self.manifest:
             if e["code"] == "PA-13":

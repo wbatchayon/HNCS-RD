@@ -9,7 +9,7 @@
 Set-StrictMode -Version 2.0
 
 $script:E2EConnexions = @{}
-$script:E2ERang = @{ '—' = 0; 'R' = 1; 'CSS' = 2; 'FC' = 3 }
+$script:E2ERang = @{ '-' = 0; 'R' = 1; 'CSS' = 2; 'FC' = 3 }
 
 function Read-E2EJson([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path)) { throw "Fichier introuvable : $Path" }
@@ -113,17 +113,17 @@ function Get-E2EPermissions {
 }
 
 function Get-E2EAttendu {
-    <# Niveau attendu d'une persona sur un objet d'après la matrice § 7.3 : Base (FC/CSS/R/—) et niveaux IL accordables. #>
+    <# Niveau attendu d'une persona sur un objet d'après la matrice § 7.3 : Base (FC/CSS/R/-) et niveaux IL accordables. #>
     param([Parameter(Mandatory = $true)]$Model, [Parameter(Mandatory = $true)]$Persona, [Parameter(Mandatory = $true)][string]$Objet)
     $ligne = $Model.matrix.$Objet
-    $base = '—'; $il = @()
+    $base = '-'; $il = @()
     foreach ($g in @($Persona.groupes)) {
         $niveau = [string]$ligne.$g
-        # Notations § 7.2 : FC, CSS, R, —, IL(x) et R+IL(x) (lecture de la liste + x sur les éléments dont on est responsable)
+        # Notations § 7.2 : FC, CSS, R, -, IL(x) et R+IL(x) (lecture de la liste + x sur les éléments dont on est responsable)
         $m = [regex]::Match($niveau, '^(?:(R)\+)?IL\((\w+)\)$')
         if ($m.Success) {
             $il += [pscustomobject]@{ Groupe = $g; Niveau = $m.Groups[2].Value }
-            if ($m.Groups[1].Success) { $niveau = 'R' } else { $niveau = '—' }
+            if ($m.Groups[1].Success) { $niveau = 'R' } else { $niveau = '-' }
         }
         if ($script:E2ERang[$niveau] -gt $script:E2ERang[$base]) { $base = $niveau }
     }

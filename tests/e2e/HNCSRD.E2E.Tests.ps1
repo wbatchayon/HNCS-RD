@@ -60,22 +60,22 @@ Describe 'S-01 Une candidature de chaque canal est enregistrée sans intégratio
 
 Describe 'S-11 Candidature de plateforme sans identité (G_IDENTITE)' -Tag 'Flux', 'Recrutement' {
     It 'Le passage en analyse est refusé tant que l''identité n''est pas qualifiée' {
-        $v = @{ Title = "À qualifier – <$($script:Marqueur)@mail.example.org>"; Canal = 'LinkedIn'; ModeReception = 'Saisie manuelle'; DateReception = (Get-Date) }
+        $v = @{ Title = "À qualifier : <$($script:Marqueur)@mail.example.org>"; Canal = 'LinkedIn'; ModeReception = 'Saisie manuelle'; DateReception = (Get-Date) }
         $id = [int](Add-PnPListItem -List (Url 'Candidatures') -Values $v -Connection (Conn 'RD1')).Id
         $it = Attendre { $i = Lire 'Candidatures' $id; if ($i['IdHNCS']) { $i } } 'IdHNCS'
         Set-PnPListItem -List (Url 'Candidatures') -Identity $id -Values @{ ResponsableAnalyse = (Upn 'RD1'); Statut = "En cours d'analyse" } -Connection (Conn 'RD1') | Out-Null
         Attendre-Statut 'Candidatures' $id 'Reçue' | Out-Null
-        (Attendre-Historique ([string]$it['IdHNCS']) "En cours d'analyse" 'Refusée — annulée')['Motif'] | Should -Match 'G_IDENTITE'
+        (Attendre-Historique ([string]$it['IdHNCS']) "En cours d'analyse" 'Refusée et annulée')['Motif'] | Should -Match 'G_IDENTITE'
     }
 }
 
 Describe 'S-16 Transition interdite annulée et historisée' -Tag 'Flux', 'Recrutement' {
-    It 'Reçue → Intégrée est rétablie à « Reçue » avec historique « Refusée — annulée »' {
+    It 'Reçue → Intégrée est rétablie à « Reçue » avec historique « Refusée et annulée »' {
         $id = Nouvelle-Candidature -Canal 'Site HNCS'
         $it = Attendre { $i = Lire 'Candidatures' $id; if ($i['IdHNCS']) { $i } } 'IdHNCS'
         Set-PnPListItem -List (Url 'Candidatures') -Identity $id -Values @{ Statut = 'Intégrée'; DateDemarrageConfirmee = (Get-Date).AddDays(10); DateFinPrevue = (Get-Date).AddDays(300) } -Connection (Conn 'RD1') | Out-Null
         Attendre-Statut 'Candidatures' $id 'Reçue' | Out-Null
-        $h = Attendre-Historique ([string]$it['IdHNCS']) 'Intégrée' 'Refusée — annulée'
+        $h = Attendre-Historique ([string]$it['IdHNCS']) 'Intégrée' 'Refusée et annulée'
         [string]$h['Motif'] | Should -Not -BeNullOrEmpty
         [string]$h['Origine'] | Should -Be 'Humain'
     }
@@ -96,7 +96,7 @@ Describe 'S-02 Candidature non présélectionnée : clôture et cloisonnement du
         [string]$i['DecisionPreselection'] | Should -Be 'Écartée'
     }
     It 'Ni l''administration ni la Direction ne voient la candidature' {
-        Get-E2EItemById -Connection (Conn 'ADMIN_KARINE') -Model $script:Model -Liste 'Candidatures' -Id $script:S02 | Should -BeNullOrEmpty
+        Get-E2EItemById -Connection (Conn 'ADMIN_CARINE') -Model $script:Model -Liste 'Candidatures' -Id $script:S02 | Should -BeNullOrEmpty
         Get-E2EItemById -Connection (Conn 'DIRECTION') -Model $script:Model -Liste 'Candidatures' -Id $script:S02 | Should -BeNullOrEmpty
     }
 }
@@ -116,46 +116,46 @@ Describe 'S-03 / S-04 Parcours : présélection, entretien, décision, formalit�
         [string](Attendre-Historique $script:PId "Transmise à l'administration" 'Acceptée')['Origine'] | Should -Be 'Flux'
     }
     It 'S-03 L''administration voit désormais la candidature, la Direction toujours pas' {
-        Get-E2EItemById -Connection (Conn 'ADMIN_KARINE') -Model $script:Model -Liste 'Candidatures' -Id $script:P | Should -Not -BeNullOrEmpty
+        Get-E2EItemById -Connection (Conn 'ADMIN_CARINE') -Model $script:Model -Liste 'Candidatures' -Id $script:P | Should -Not -BeNullOrEmpty
         Get-E2EItemById -Connection (Conn 'DIRECTION') -Model $script:Model -Liste 'Candidatures' -Id $script:P | Should -BeNullOrEmpty
     }
     It 'S-03 Entretien planifié puis réalisé : la candidature suit (CAND-T07, CAND-T09) et l''entretien est historisé' {
         $e = Add-PnPListItem -List (Url 'Entretiens') -Values @{ Title = "$($script:Marqueur) entretien"; Candidature = $script:P; DateHeure = (Get-Date).AddHours(2)
-            TypeEntretien = 'Premier entretien'; Modalite = 'Teams'; Participants = @((Upn 'ADMIN_KARINE')) } -Connection (Conn 'ADMIN_KARINE')
+            TypeEntretien = 'Premier entretien'; Modalite = 'Teams'; Participants = @((Upn 'ADMIN_CARINE')) } -Connection (Conn 'ADMIN_CARINE')
         $script:Ent = [int]$e.Id
         Attendre-Statut 'Candidatures' $script:P 'Entretien planifié' | Out-Null
-        Set-PnPListItem -List (Url 'Entretiens') -Identity $script:Ent -Values @{ Statut = 'Réalisé'; Resultat = 'Favorable' } -Connection (Conn 'ADMIN_KARINE') | Out-Null
+        Set-PnPListItem -List (Url 'Entretiens') -Identity $script:Ent -Values @{ Statut = 'Réalisé'; Resultat = 'Favorable' } -Connection (Conn 'ADMIN_CARINE') | Out-Null
         Attendre-Statut 'Candidatures' $script:P 'Entretien réalisé' | Out-Null
         $entId = [string](Attendre { $x = Lire 'Entretiens' $script:Ent; if ($x['IdHNCS']) { $x } } 'IdHNCS entretien')['IdHNCS']
         @(Historique $entId | Where-Object { [string]$_['Objet'] -eq 'Entretien' -and [string]$_['StatutApres'] -eq 'Réalisé' }).Count | Should -BeGreaterThan 0
     }
     It 'S-03 Décision finale par l''administration (CAND-T11)' {
-        Set-PnPListItem -List (Url 'Candidatures') -Identity $script:P -Values @{ DecideurFinal = (Upn 'ADMIN_KARINE'); Statut = 'Retenue' } -Connection (Conn 'ADMIN_KARINE') | Out-Null
+        Set-PnPListItem -List (Url 'Candidatures') -Identity $script:P -Values @{ DecideurFinal = (Upn 'ADMIN_CARINE'); Statut = 'Retenue' } -Connection (Conn 'ADMIN_CARINE') | Out-Null
         [string](Attendre-Historique $script:PId 'Retenue' 'Acceptée')['CodeTransition'] | Should -Match '^CAND-T11'
         Attendre { $x = Lire 'Candidatures' $script:P; if ($x['DateDecisionFinale']) { $x } } 'DateDecisionFinale' | Should -Not -BeNullOrEmpty
     }
     It 'S-04 Lancement des formalités : checklist générée depuis ModelesActions (CAND-T13)' {
         Set-PnPListItem -List (Url 'Candidatures') -Identity $script:P -Values @{ Statut = 'Formalités en cours'; Etablissement = (IdSP 'Etablissements' 'ECO-2026-9001')
             PolePressenti = (IdSP 'Poles' 'POL-P1'); ReferentPressenti = (IdSP 'Referents' 'REF-2026-9001')
-            DateDemarrageConfirmee = (Get-Date).AddDays(20).Date; DateFinPrevue = (Get-Date).AddDays(380).Date } -Connection (Conn 'ADMIN_KARINE') | Out-Null
+            DateDemarrageConfirmee = (Get-Date).AddDays(20).Date; DateFinPrevue = (Get-Date).AddDays(380).Date } -Connection (Conn 'ADMIN_CARINE') | Out-Null
         $q = "<View><Query><Where><Eq><FieldRef Name='Candidature' LookupId='TRUE' /><Value Type='Lookup'>$($script:P)</Value></Eq></Where></Query></View>"
         $script:Actions = Attendre { $a = @(Get-PnPListItem -List (Url 'ActionsIntegration') -Query $q -Connection (Conn 'IT')); if ($a.Count -ge 5) { , $a } } 'actions de formalités'
         @($script:Actions | ForEach-Object { [string]$_['CodeModeleAction'] }) | Should -Contain 'FORM-01'
     }
     It 'S-04 / S-17 « Intégrée » est refusée tant que les actions bloquantes ne sont pas terminées avec preuve' {
-        Set-PnPListItem -List (Url 'Candidatures') -Identity $script:P -Values @{ Statut = 'Intégrée' } -Connection (Conn 'ADMIN_KARINE') | Out-Null
+        Set-PnPListItem -List (Url 'Candidatures') -Identity $script:P -Values @{ Statut = 'Intégrée' } -Connection (Conn 'ADMIN_CARINE') | Out-Null
         Attendre-Statut 'Candidatures' $script:P 'Formalités en cours' | Out-Null
-        [string](Attendre-Historique $script:PId 'Intégrée' 'Refusée — annulée')['Motif'] | Should -Match 'G_INTEGRATION|FORM-'
+        [string](Attendre-Historique $script:PId 'Intégrée' 'Refusée et annulée')['Motif'] | Should -Match 'G_INTEGRATION|FORM-'
         [string](Lire 'Candidatures' $script:P)['IdAlternant'] | Should -BeNullOrEmpty -Because 'aucune fiche alternant avant confirmation valide'
     }
     It 'S-04 Formalités complètes puis confirmation : l''alternant est créé « À intégrer » (ALT-T01)' {
         foreach ($a in $script:Actions) {
             if ($a['Bloquante']) {
-                Set-PnPListItem -List (Url 'ActionsIntegration') -Identity $a.Id -Values @{ Statut = 'Terminée'; Preuve = "$($script:Cfg.SiteUrl)/Administration/e2e-preuve.pdf, preuve" } -Connection (Conn 'ADMIN_KARINE') | Out-Null
+                Set-PnPListItem -List (Url 'ActionsIntegration') -Identity $a.Id -Values @{ Statut = 'Terminée'; Preuve = "$($script:Cfg.SiteUrl)/Administration/e2e-preuve.pdf, preuve" } -Connection (Conn 'ADMIN_CARINE') | Out-Null
             }
         }
         Start-Sleep -Seconds ([int]$script:Cfg.IntervalleSondageSecondes)
-        Set-PnPListItem -List (Url 'Candidatures') -Identity $script:P -Values @{ Statut = 'Intégrée' } -Connection (Conn 'ADMIN_KARINE') | Out-Null
+        Set-PnPListItem -List (Url 'Candidatures') -Identity $script:P -Values @{ Statut = 'Intégrée' } -Connection (Conn 'ADMIN_CARINE') | Out-Null
         $c = Attendre { $x = Lire 'Candidatures' $script:P; if ($x['IdAlternant']) { $x } } 'IdAlternant renseigné par PA-04'
         [string]$c['Statut'] | Should -Be 'Intégrée'
         $alt = Get-E2EItem -Connection (Conn 'IT') -Model $script:Model -Liste 'Alternants' -IdHNCS ([string]$c['IdAlternant'])
@@ -221,7 +221,7 @@ Describe 'S-07 / S-13 Livrable retourné en correction puis validé' -Tag 'Flux'
     It 'S-13 L''alternant ne peut pas valider son propre livrable (G_VALIDEUR_LEGITIME)' {
         Set-PnPListItem -List (Url 'Livrables') -Identity $script:L -Values @{ Statut = 'Validé' } -Connection (Conn 'ALT1') | Out-Null
         Attendre-Statut 'Livrables' $script:L 'Soumis à revue' | Out-Null
-        Attendre-Historique $script:LId 'Validé' 'Refusée — annulée' | Should -Not -BeNullOrEmpty
+        Attendre-Historique $script:LId 'Validé' 'Refusée et annulée' | Should -Not -BeNullOrEmpty
     }
     It 'S-13 L''alternant ne peut pas se désigner réviseur (P-09, N-92)' {
         Set-PnPListItem -List (Url 'Livrables') -Identity $script:L -Values @{ Reviseur = (Upn 'ALT1') } -Connection (Conn 'ALT1') -ErrorAction SilentlyContinue | Out-Null
@@ -258,7 +258,7 @@ Describe 'S-14 / S-19 Partenariats : signature et décision réservées' -Tag 'F
         $c = Attendre { $x = Lire 'Conventions' $id; if ($x['IdHNCS']) { $x } } 'IdHNCS convention'
         Set-PnPListItem -List (Url 'Conventions') -Identity $id -Values @{ DateSignature = (Get-Date).Date; PreuveSignature = "$($script:Cfg.SiteUrl)/EcolesPartenariats/e2e.pdf, preuve"; Statut = 'Signée / active' } -Connection (Conn 'ECOLES') | Out-Null
         Attendre { $x = Lire 'Conventions' $id; if ([string]$x['Statut'] -ne 'Signée / active') { $x } } 'statut rétabli' | Should -Not -BeNullOrEmpty
-        [string](Attendre-Historique ([string]$c['IdHNCS']) 'Signée / active' 'Refusée — annulée')['Motif'] | Should -Match 'G_DECISION_PARTENARIAT'
+        [string](Attendre-Historique ([string]$c['IdHNCS']) 'Signée / active' 'Refusée et annulée')['Motif'] | Should -Match 'G_DECISION_PARTENARIAT'
     }
 }
 
@@ -268,9 +268,9 @@ Describe 'S-22 Arbitrage du portefeuille de sujets' -Tag 'Flux', 'Sujets' {
         $id = [int](Add-PnPListItem -List (Url 'SujetsRD') -Values $v -Connection (Conn 'RD1')).Id
         $s = Attendre { $x = Lire 'SujetsRD' $id; if ($x['IdHNCS']) { $x } } 'IdHNCS sujet'
         Set-PnPListItem -List (Url 'SujetsRD') -Identity $id -Values @{ Statut = 'Priorisé' } -Connection (Conn 'REF1') | Out-Null
-        Attendre-Historique ([string]$s['IdHNCS']) 'Priorisé' 'Refusée — annulée' | Should -Not -BeNullOrEmpty
+        Attendre-Historique ([string]$s['IdHNCS']) 'Priorisé' 'Refusée et annulée' | Should -Not -BeNullOrEmpty
         Set-PnPListItem -List (Url 'SujetsRD') -Identity $id -Values @{ Statut = 'Abandonné' } -Connection (Conn 'DIR_RD') | Out-Null
-        [string](Attendre-Historique ([string]$s['IdHNCS']) 'Abandonné' 'Refusée — annulée')['Motif'] | Should -Match 'G_MOTIF_DECISION'
+        [string](Attendre-Historique ([string]$s['IdHNCS']) 'Abandonné' 'Refusée et annulée')['Motif'] | Should -Match 'G_MOTIF_DECISION'
     }
 }
 
@@ -332,6 +332,6 @@ Describe 'S-21 Fin d''alternance' -Tag 'Flux', 'Destructif', 'Alternants' {
         ([datetime]$aff['DateFin']).Date | Should -Be $fin
         Set-PnPListItem -List (Url 'Alternants') -Identity $id -Values @{ Statut = 'Clôturé' } -Connection (Conn 'RD1') | Out-Null
         Attendre-Statut 'Alternants' $id 'Terminé' | Out-Null
-        [string](Attendre-Historique 'ALT-2026-9007' 'Clôturé' 'Refusée — annulée')['Motif'] | Should -Match 'G_CLOTURE_ALTERNANCE'
+        [string](Attendre-Historique 'ALT-2026-9007' 'Clôturé' 'Refusée et annulée')['Motif'] | Should -Match 'G_CLOTURE_ALTERNANCE'
     }
 }

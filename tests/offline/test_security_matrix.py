@@ -8,7 +8,7 @@ import unittest
 
 from hncs_offline import ROOT, load_model, load_personas
 
-RANK = {"—": 0, "R": 1, "CSS": 2, "FC": 3}
+RANK = {"-": 0, "R": 1, "CSS": 2, "FC": 3}
 # « IL(x) » ou « R+IL(x) » (§ 7.2) : groupe 1 = niveau de base éventuel, groupe 2 = niveau par élément.
 IL = re.compile(r"^(?:(R)\+)?IL\((\w+)\)$")
 # Bénéficiaires désignés nominativement sur l'élément (pas un groupe) : vérifiés par les tests E2E.
@@ -52,13 +52,13 @@ def parse_74() -> list[dict]:
 
 def effective(matrix_row: dict, groups: list[str]) -> tuple[str, list[str]]:
     """Niveau de base effectif (max des groupes) et niveaux par élément (IL) accordables."""
-    base, il = "—", []
+    base, il = "-", []
     for g in groups:
-        lvl = matrix_row.get(g, "—")
+        lvl = matrix_row.get(g, "-")
         m = IL.match(lvl)
         if m:
             il.append(m.group(2))
-            lvl = m.group(1) or "—"
+            lvl = m.group(1) or "-"
         if RANK[lvl] > RANK[base]:
             base = lvl
     return base, il
@@ -121,12 +121,12 @@ class TestMatriceEtPermissionsElement(unittest.TestCase):
         for obj in ("Candidatures", "Entretiens", "Alternants", "Affectations", "Livrables", "ComptesRendus",
                     "BilansAlternance", "SuiviAlternants", "LivrablesRD", "Administration", "Recrutement"):
             lvl = self.m["matrix"][obj]["G_ALT"]
-            self.assertTrue(lvl == "—" or lvl.startswith("IL("), f"{obj} : G_ALT {lvl}")
+            self.assertTrue(lvl == "-" or lvl.startswith("IL("), f"{obj} : G_ALT {lvl}")
 
     def test_direction_sans_liste_nominative(self):
         """§ 7.5 : la Direction n'accède à aucune liste nominative dans SharePoint."""
         for obj in ("Candidatures", "Entretiens", "Alternants", "Livrables", "Etablissements", "BilansAlternance"):
-            self.assertEqual(self.m["matrix"][obj]["G_DIR"], "—", obj)
+            self.assertEqual(self.m["matrix"][obj]["G_DIR"], "-", obj)
 
 
 class TestPersonas(unittest.TestCase):
@@ -157,13 +157,13 @@ class TestPersonas(unittest.TestCase):
         mx = self.m["matrix"]
         dirp = next(p for p in self.personas.values() if p["groupes"] == ["G_DIR"])
         for obj in ("Candidatures", "Entretiens", "Alternants", "Recrutement", "Livrables", "Etablissements"):
-            self.assertEqual(effective(mx[obj], dirp["groupes"]), ("—", []), obj)
+            self.assertEqual(effective(mx[obj], dirp["groupes"]), ("-", []), obj)
         adm = next(p for p in self.personas.values() if p["groupes"] == ["G_ADM"])
-        self.assertEqual(effective(mx["Candidatures"], adm["groupes"]), ("—", ["CSS"]))
+        self.assertEqual(effective(mx["Candidatures"], adm["groupes"]), ("-", ["CSS"]))
         self.assertEqual(effective(mx["Entretiens"], adm["groupes"]), ("CSS", []))
         ref = next(p for p in self.personas.values() if p["groupes"] == ["G_REF"])
         self.assertEqual(effective(mx["ActionsIntegration"], ref["groupes"]), ("R", ["CSS"]))
-        self.assertEqual(effective(mx["Alternants"], ref["groupes"]), ("—", ["R"]))
+        self.assertEqual(effective(mx["Alternants"], ref["groupes"]), ("-", ["R"]))
 
     def test_membres_sample_du_provisioning(self):
         p = ROOT / "provisioning" / "config" / "membres.sample.json"

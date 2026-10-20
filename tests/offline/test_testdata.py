@@ -26,7 +26,7 @@ NON_PERSISTANTS = {"G_ENTRETIEN_PLANIFIE", "G_AUCUN_ENTRETIEN_ACTIF", "G_DATE_FI
 OBJET_LISTE = {"Candidature": "Candidatures", "Livrable": "Livrables", "CompteRendu": "ComptesRendus",
                "Affectation": "Affectations", "Alternant": "Alternants", "Communication": "CommunicationsRD",
                "Convention": "Conventions", "Sujet": "SujetsRD", "Entretien": "Entretiens"}
-MOTIF_REFERENT = "Changement de référent principal"
+CODE_REFERENT = "REF-PRINCIPAL"  # § 6.5 (b) : changement de référent principal
 # Empreintes calculées à l'import (format documenté dans testdata/README.md).
 EMPREINTES_CALCULEES = {("Affectations", "EmpreinteVerrou"), ("ActionsIntegration", "EmpreinteAction")}
 
@@ -623,10 +623,10 @@ class TestCouverture(unittest.TestCase):
         self.assertTrue([a for a in self.j.items("Affectations") if a.get("AffectationRemplacee")])
 
     def test_transition_refusee_historisee(self):
-        self.assertTrue([h for h in self.j.items("HistoriqueStatuts") if h["Resultat"] == "Refusée — annulée"])
+        self.assertTrue([h for h in self.j.items("HistoriqueStatuts") if h["Resultat"] == "Refusée et annulée"])
 
     def test_candidature_de_plateforme_a_qualifier(self):
-        """S-11 : courriel de plateforme sans identité, « À qualifier – … » sans e-mail, bloqué en « Reçue »."""
+        """S-11 : courriel de plateforme sans identité, « À qualifier : … » sans e-mail, bloqué en « Reçue »."""
         aq = [c for c in self.j.items("Candidatures") if c["Title"].startswith("À qualifier") and is_blank(c.get("Email"))]
         self.assertTrue(aq)
         for c in aq:
@@ -823,6 +823,15 @@ class TestReglesMetier(unittest.TestCase):
                 self.assertEqual(c.get("EmpreinteDecision"), c["DecisionPartenariat"], c["IdHNCS"])
                 self.assertIn(persona_key(c.get("DecideurPartenariat")), roles_ok, c["IdHNCS"])
 
+    def test_gitlab_sync_orpheline(self):
+        """RX-07 : chaque ligne GitlabSync porte la colonne Orpheline ; une ligne orpheline est conservée."""
+        lignes = self.j.items("GitlabSync")
+        if not lignes:
+            self.skipTest("aucune ligne GitlabSync")
+        for g in lignes:
+            self.assertIsInstance(g.get("Orpheline"), bool, g["CleSynchro"])
+        self.assertTrue([g for g in lignes if g["Orpheline"]], "au moins une ligne orpheline (exclue des indicateurs)")
+
     def test_gitlab_sync_coherent(self):
         for g in self.j.items("GitlabSync"):
             suj = self.j.get(g["Sujet"])
@@ -872,9 +881,14 @@ class TestAffectationsP03(unittest.TestCase):
                 cur = self.affs.get(cur["AffectationRemplacee"])
 
     def test_dates_non_chevauchantes_par_alternant(self):
+        """H-42 (v1.6.0) : les affectations concomitantes sont admises ; seules celles d'une même chaîne de
+        remplacement (AffectationRemplacee) ne se chevauchent pas."""
         par_alt = {}
         for a in self.affs.values():
-            par_alt.setdefault(a["Alternant"], []).append(a)
+            racine = a
+            while racine.get("AffectationRemplacee"):
+                racine = self.affs[racine["AffectationRemplacee"]]
+            par_alt.setdefault((a["Alternant"], racine["IdHNCS"]), []).append(a)
         far = dt.date.max
         for alt, lst in par_alt.items():
             lst.sort(key=lambda a: self.d(a, "DateDebut"))
@@ -954,7 +968,7 @@ class TestHistorique(unittest.TestCase):
 
     def statuts(self):
         """Entrées de changement de statut (hors changements de référent principal, historisés à part par PA-05)."""
-        return [h for h in self.entries() if h.get("Motif") != MOTIF_REFERENT]
+        return [h for h in self.entries() if h.get("CodeTransition") != CODE_REFERENT]
 
     def test_coherence_avec_le_modele(self):
         objets_transitions = {t["object"] for t in self.m["transitions"]}
@@ -999,7 +1013,7 @@ class TestHistorique(unittest.TestCase):
     def test_changements_de_referent_principal(self):
         """PA-05 : StatutAvant / StatutApres = IdHNCS des référents, par le compte de service ; le dernier = référent courant."""
         derniers = {}
-        for h in sorted([h for h in self.entries() if h.get("Motif") == MOTIF_REFERENT],
+        for h in sorted([h for h in self.entries() if h.get("CodeTransition") == CODE_REFERENT],
                         key=lambda h: self.j.v("HistoriqueStatuts", h, "DateChangement")):
             self.assertEqual(h["Objet"], "Alternant", h["FluxRunId"])
             self.assertEqual(h["Origine"], "Flux", h["FluxRunId"])
@@ -1009,6 +1023,30 @@ class TestHistorique(unittest.TestCase):
         self.assertTrue(derniers, "au moins un changement de référent principal historisé")
         for alt, ref in derniers.items():
             self.assertEqual(self.j.get(alt)["ReferentPrincipal"], ref, alt)
+
+    def test_statut_de_reference_derniere_transition_acceptee(self):
+        """RX-02 (§ 8.1 v1.6.0) : pour chaque élément d'un objet à statut contrôlé, le statut courant est le dernier
+        StatutApres accepté de HistoriqueStatuts (sinon le rapprochement quotidien de PA-00E le rétablirait)."""
+        derniers = {}
+        for h in sorted(self.statuts(), key=lambda h: self.j.v("HistoriqueStatuts", h, "DateChangement")):
+            if h["Resultat"] == "Acceptée":
+                derniers[h["Title"]] = h["StatutApres"]
+        objets = {t["object"] for t in self.m["transitions"]}
+        for obj in objets:
+            for it in self.j.items(OBJET_LISTE[obj]):
+                with self.subTest(element=it["IdHNCS"]):
+                    self.assertIn(it["IdHNCS"], derniers, "aucune transition acceptée historisée")
+                    self.assertEqual(derniers[it["IdHNCS"]], it["Statut"])
+
+    def test_historisations_hors_statut(self):
+        """§ 6.5 : résultat d'entretien (Motif « Résultat : {Resultat} ») et changement de référent (REF-PRINCIPAL)."""
+        for h in self.entries():
+            if h["Objet"] == "Entretien" and h.get("Motif", "").startswith("Résultat"):
+                ent = self.j.get(h["Title"])
+                self.assertEqual(h["Motif"], f"Résultat : {ent['Resultat']}", h["FluxRunId"])
+            if h.get("CodeTransition") == CODE_REFERENT:
+                self.assertEqual(h["Objet"], "Alternant", h["FluxRunId"])
+        self.assertTrue([h for h in self.entries() if h["Objet"] == "Entretien" and h.get("Motif", "").startswith("Résultat : ")])
 
     def test_aucune_decision_humaine_historisee_par_flux(self):
         decisions = {(d["object"], d["status"]) for d in self.m["humanDecisions"]}

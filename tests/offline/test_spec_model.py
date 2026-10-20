@@ -15,7 +15,7 @@ CANDIDATURE_STATUTS = [
     "Entretien planifié", "Entretien réalisé", "En attente de décision", "Retenue", "Formalités en cours",
     "Intégrée", "Non retenue", "Clôturée",
 ]
-LEVEL_RANK = {"—": 0, "R": 1, "CSS": 2, "FC": 3}
+LEVEL_RANK = {"-": 0, "R": 1, "CSS": 2, "FC": 3}
 
 
 class TestExtracteur(unittest.TestCase):
@@ -248,14 +248,14 @@ class TestSecuriteModele(unittest.TestCase):
         """P-04 : G_DIR n'a aucun accès aux objets de recrutement et de suivi nominatif."""
         for name in ("Candidatures", "Entretiens", "Recrutement", "Administration", "Alternants", "SuiviAlternants",
                      "Livrables", "Etablissements", "BilansAlternance"):
-            self.assertEqual(self.m["matrix"][name]["G_DIR"], "—", name)
+            self.assertEqual(self.m["matrix"][name]["G_DIR"], "-", name)
 
     def test_entretiens_et_administration_reserves(self):
         for name in ("Entretiens", "Administration"):
             row = self.m["matrix"][name]
             others = {g: lvl for g, lvl in row.items() if g not in ("G_PROP", "G_ADM")}
             # seuls des accès ciblés par élément ou dossier (IL) sont admis hors administration (ex. dossier Operationnel)
-            self.assertTrue(all(v == "—" or v.startswith("IL(") for v in others.values()), f"{name} : {others}")
+            self.assertTrue(all(v == "-" or v.startswith("IL(") for v in others.values()), f"{name} : {others}")
 
     def test_journal_et_historique_sans_donnees_personnelles(self):
         for name in ("HistoriqueStatuts", "JournalFlux"):

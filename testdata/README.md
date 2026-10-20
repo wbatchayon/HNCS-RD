@@ -2,7 +2,7 @@
 
 Jeu de données **100 % fictif** (le dépôt est public, H-30) pour la recette du système de suivi R&D : noms inventés,
 e-mails des candidats et contacts en `@example.org`, comptes internes désignés uniquement par des **clés de persona**.
-Il est aligné sur la spec **v1.3.0** et vérifié hors ligne par `tests/offline/test_testdata.py`.
+Il est aligné sur la spec **v1.7.0** et vérifié hors ligne par `tests/offline/test_testdata.py`.
 
 ## Contenu
 
@@ -10,7 +10,7 @@ Il est aligné sur la spec **v1.3.0** et vérifié hors ligne par `tests/offline
 | --- | --- |
 | `data/<NomInterneListe>.json` | Un tableau d'éléments par liste, colonnes désignées par leur **nom interne** |
 | `personas.sample.json` | Modèle des personas de recette (clé → `upn`, `groupes`, `description`, `compteService`) |
-| `personas.json` | Vraies adresses des comptes de recette — **ignoré par git**, à créer à partir du modèle |
+| `personas.json` | Vraies adresses des comptes de recette : **ignoré par git**, à créer à partir du modèle |
 | `Import-TestData.ps1` | Chargement idempotent dans un site de recette, réinitialisation, export des membres |
 
 Les référentiels livrés par le provisionnement (`Poles`, `DomainesCibles`, `ModelesActions`, `RegistreModeles`,
@@ -40,8 +40,12 @@ Règles :
   SharePoint depuis la v1.2.0 : c'est `tests/offline` qui le vérifie).
 - `StatutPrecedent` n'est jamais renseigné : l'import le pose **égal à** `Statut` (données « déjà validées »).
 - Les colonnes `flux` sont renseignées comme si les flux étaient passés (dates de transmission, empreintes…).
-- `Livrables.EmpreinteRevue` et `ComptesRendus.EmpreinteRevue` sont laissées **vides** : leur format JSON n'est pas
-  figé par la spec (voir le rapport de tests) ; les flux les initialisent à la première modification.
+- Les empreintes calculées suivent les formats de la spec ([6.5](../spec.md#65-formats-des-empreintes-p-09)).
+  `Livrables.EmpreinteRevue` et `ComptesRendus.EmpreinteRevue` sont laissées **vides** : une empreinte vide signifie
+  « non encore initialisée » et PA-00D l'initialise à partir des valeurs courantes, sans rien rétablir (H-55).
+- Chaque élément d'un objet à statut contrôlé possède un historique complet : son `Statut` est le dernier
+  `StatutApres` accepté de `HistoriqueStatuts`, statut de référence des flux ([8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)).
+  Les chaînes non scénarisées sont des parcours valides du graphe des transitions, attribués aux personas habilitées.
 - Listes sans `IdHNCS` : clé d'idempotence `FluxRunId` (`HistoriqueStatuts`), `RunUrl` (`JournalFlux`),
   `CleSynchro` (`GitlabSync`).
 
@@ -72,7 +76,7 @@ Les valeurs attendues des mesures Power BI sur ce jeu sont figées dans `tests/o
 | `SVC` | G_PROP | Compte de service (rôle FLUX), acteur des transitions automatiques |
 | `DIR_RD` | G_DRD | Direction R&D : réouverture, arbitrages, décisions de partenariat |
 | `RD1`, `RD2` | G_RD | Analyse des candidatures, affectations ; `RD2` est l'ancien référent REF-2026-9003 |
-| `ADMIN_KARINE` | G_ADM | Administration (exemple : Karine) : entretiens, décisions, formalités |
+| `ADMIN_CARINE` | G_ADM | Administration (exemple : Carine) : entretiens, décisions, formalités |
 | `REF1`, `REF2` | G_REF | Référents REF-2026-9001 et REF-2026-9002 |
 | `ALT1` … `ALT5` | G_ALT | Alternants ALT-2026-9001, 9002, 9003, 9006, 9007 |
 | `ALT_FIN` | G_ALT | Alternant terminé ALT-2026-9005 (accès non encore retirés) |
@@ -84,7 +88,7 @@ Les valeurs attendues des mesures Power BI sur ce jeu sont figées dans `tests/o
 
 Prérequis : PowerShell 7.4, PnP.PowerShell 2.x, site provisionné (`provisioning/Deploy-HNCSRD.ps1`), compte membre de
 `HNCS-RD-Proprietaires`. **Désactiver les flux** pendant l'import, ou l'exécuter sous le compte de service : ses
-écritures ne déclenchent aucun flux (spec § 8.1). Le script refuse une URL sans marqueur de recette (`recette`, `test`,
+écritures ne déclenchent aucun flux (spec [8.1](../spec.md#81-socle-commun-sapplique-à-tous-les-flux)). Le script refuse une URL sans marqueur de recette (`recette`, `test`,
 `qualif`, `dev`), sauf `-Force`.
 
 ```powershell
@@ -93,7 +97,7 @@ Copy-Item ./testdata/personas.sample.json ./testdata/personas.json
 # 2. Fichier des membres des groupes, puis ajout des membres (provisionnement)
 pwsh ./testdata/Import-TestData.ps1 -ExporterMembres ./provisioning/config/membres.json
 pwsh ./provisioning/Set-HNCSRDMembres.ps1 -ConfigPath ./provisioning/config/tenant.json -MembresPath ./provisioning/config/membres.json
-# 3. Import (simulation, puis réel) avec émulation des permissions par élément de § 7.4
+# 3. Import (simulation, puis réel) avec émulation des permissions par élément de [7.4](../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux)
 pwsh ./testdata/Import-TestData.ps1 -ConfigPath ./provisioning/config/tenant.json -SiteUrl https://contoso.sharepoint.com/sites/HNCS-RD-Recette -WhatIf
 pwsh ./testdata/Import-TestData.ps1 -ConfigPath ./provisioning/config/tenant.json -SiteUrl https://contoso.sharepoint.com/sites/HNCS-RD-Recette -PermissionsElement
 # 4. Réinitialisation : supprime (corbeille) UNIQUEMENT les éléments dont la clé figure dans le jeu
@@ -109,7 +113,7 @@ Comportement :
 1. ordre d'import **topologique** calculé depuis les lookups du modèle (et les jetons `@id:`), les lookups vers la
    même liste (`AffectationRemplacee`, `LivrableOrigine`) étant posés en seconde passe ;
 2. chaque élément est retrouvé par sa clé puis **mis à jour**, sinon créé : un second import ne crée aucun doublon ;
-3. `-PermissionsElement` reproduit les attributions par élément de § 7.4 (candidatures transmises, affectations,
+3. `-PermissionsElement` reproduit les attributions par élément de [7.4](../spec.md#74-permissions-au-niveau-élément-ou-dossier-posées-par-les-flux) (candidatures transmises, affectations,
    livrables, comptes rendus, communications, fiches alternants, actions, bilans, modèles, entretiens) ; les
    permissions de **dossiers** restent du ressort des flux ou de la procédure manuelle du lot 1
    (`docs/exploitation.md`) ;

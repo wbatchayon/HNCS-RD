@@ -196,8 +196,8 @@ class Mesures:
         # ---------------- Actions et qualité des données
         r["Actions en retard"] = sum(1 for a in self.L("ActionsIntegration") if a["Statut"] in ("À faire", "En cours", "Bloquée")
                                      and a.get("Echeance") and v("ActionsIntegration", a, "Echeance") < self.today)
-        r["Transitions refusées"] = sum(1 for h in self.L("HistoriqueStatuts") if h["Resultat"] == "Refusée — annulée")
-        r["Écarts d'échéance GitLab"] = sum(1 for g in self.L("GitlabSync") if g.get("EcartEcheance"))
+        r["Transitions refusées"] = sum(1 for h in self.L("HistoriqueStatuts") if h["Resultat"] == self.j.model["enums"]["RESULTAT_TRANSITION"][1])
+        r["Écarts d'échéance GitLab"] = sum(1 for g in self.L("GitlabSync") if g.get("EcartEcheance") and not g.get("Orpheline"))
         return r
 
 

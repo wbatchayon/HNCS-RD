@@ -26,10 +26,10 @@
     "groupes": ["G_RD"],
     "description": "Second membre de l'équipe R&D ; ancien référent (REF-2026-9003, inactif)"
   },
-  "ADMIN_KARINE": {
-    "upn": "karine.admin@contoso.onmicrosoft.com",
+  "ADMIN_CARINE": {
+    "upn": "carine.admin@contoso.onmicrosoft.com",
     "groupes": ["G_ADM"],
-    "description": "Administration (exemple : Karine) : entretiens, décision finale, formalités, conventions"
+    "description": "Administration (exemple : Carine) : entretiens, décision finale, formalités, conventions"
   },
   "REF1": {
     "upn": "referent.un@contoso.onmicrosoft.com",

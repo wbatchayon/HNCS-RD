@@ -74,9 +74,7 @@ class TestModeleSemantique(unittest.TestCase):
                 self.assertIn(t["table"], self.tables, "table absente")
                 cols = self.tables[t["table"]]["columns"]
                 for c in t["columns"]:
-                    # Le modèle peut absorber un commentaire de la spec (« Cible — cibles indicatives… ») :
-                    # seul le nom avant « — » est comparé (signalé dans le rapport de tests).
-                    name = c["name"].split(" — ")[0].strip()
+                    name = c["name"]
                     self.assertIn(name, cols, f"colonne {name} absente")
 
     def test_aucune_colonne_perso_ou_confidentielle_importee(self):
@@ -97,12 +95,15 @@ class TestModeleSemantique(unittest.TestCase):
                     self.assertNotRegex(tbl["partition"], rf"\"{re.escape(s)}(?:/[A-Za-z]+)?\"",
                                         f"colonne {s} sélectionnée par la requête M")
 
-    def test_nom_affichage_masque_pour_direction(self):
-        p = SM / "roles" / "Direction.tmdl"
-        self.assertTrue(p.is_file())
-        text = p.read_text(encoding="utf-8-sig")
-        self.assertRegex(text, r"tablePermission\s+'?Alternants'?")
-        self.assertRegex(text, r"columnPermission\s+'?NomAffichage'?\s*(?:=\s*none|\n\s+metadataPermission:\s*none)")
+    def test_nom_affichage_masque_par_ols(self):
+        """RX-03 (9.2, v1.6.0) : NomAffichage masqué (OLS) pour tout rôle sans accès SharePoint aux alternants."""
+        roles = [r["role"] for r in self.m["powerbi"]["roles"] if "NomAffichage" in r["ols"]]
+        self.assertTrue({"Direction", "RelationEcoles"} <= set(roles), roles)
+        for role in roles:
+            text = (SM / "roles" / f"{role}.tmdl").read_text(encoding="utf-8-sig")
+            with self.subTest(role=role):
+                self.assertRegex(text, r"tablePermission\s+'?Alternants'?")
+                self.assertRegex(text, r"columnPermission\s+'?NomAffichage'?\s*(?:=\s*none|\n\s+metadataPermission:\s*none)")
 
     def test_roles_presents(self):
         for r in self.m["powerbi"]["roles"]:
@@ -111,14 +112,55 @@ class TestModeleSemantique(unittest.TestCase):
                 self.assertTrue(p.is_file())
                 self.assertRegex(p.read_text(encoding="utf-8-sig"), re.compile(rf"^role\s+'?{r['role']}'?\s*$", re.M))
 
-    def test_filtres_rls(self):
-        adm = (SM / "roles" / "Administration.tmdl").read_text(encoding="utf-8-sig")
+    @staticmethod
+    def _filtres_tmdl(text: str) -> dict:
+        """tablePermission <table> = <expression DAX> (expression éventuellement sur plusieurs lignes)."""
+        out, cur = {}, None
+        for line in text.splitlines():
+            m = re.match(r"^\ttablePermission\s+'?([^'=]+?)'?\s*=\s*(.*)$", line)
+            if m:
+                cur = m.group(1).strip()
+                out[cur] = m.group(2)
+                continue
+            if cur and line.startswith("\t\t"):
+                out[cur] += " " + line.strip()
+            else:
+                cur = None
+        return out
+
+    @staticmethod
+    def _norm(expr: str) -> str:
+        return re.sub(r"\s+", "", expr.replace("'", ""))
+
+    def test_filtres_rls_conformes_au_modele(self):
+        """9.6 : chaque filtre de rôle de la spec existe dans le TMDL, à l'identique (espaces et apostrophes ignorés)."""
+        for r in self.m["powerbi"]["roles"]:
+            attendus = dict(re.findall(r"`([A-Za-z]+)` : `([^`]+)`", r["filters"]))
+            text = (SM / "roles" / f"{r['role']}.tmdl").read_text(encoding="utf-8-sig")
+            reels = self._filtres_tmdl(text)
+            for table, expr in attendus.items():
+                with self.subTest(role=r["role"], table=table):
+                    self.assertIn(table, reels, "filtre absent du TMDL")
+                    self.assertEqual(self._norm(reels[table]), self._norm(expr))
+
+    def test_tables_techniques_filtrees(self):
+        """RX-04 : HistoriqueStatuts à FALSE() et Parametres filtré pour Direction, RelationEcoles et Referent."""
+        for role in ("Direction", "RelationEcoles", "Referent"):
+            reels = self._filtres_tmdl((SM / "roles" / f"{role}.tmdl").read_text(encoding="utf-8-sig"))
+            with self.subTest(role=role):
+                self.assertEqual(self._norm(reels.get("HistoriqueStatuts", "")), "FALSE()")
+                self.assertIn("Parametres", reels)
+                self.assertIn("Parametres[Cle]", self._norm(reels["Parametres"]))
+
+    def test_actions_filtrees_pour_les_referents(self):
+        """RX-05 : ActionsIntegration filtré (actions des alternants encadrés), et non FALSE(), pour Referent."""
+        reels = self._filtres_tmdl((SM / "roles" / "Referent.tmdl").read_text(encoding="utf-8-sig"))
+        self.assertIn("ActionsIntegration", reels)
+        self.assertNotEqual(self._norm(reels["ActionsIntegration"]), "FALSE()")
+        self.assertIn("USERPRINCIPALNAME", reels["ActionsIntegration"])
+        adm = self._filtres_tmdl((SM / "roles" / "Administration.tmdl").read_text(encoding="utf-8-sig"))
         for t in ("Livrables", "ComptesRendus", "Mobilisations", "GitlabSync"):
-            self.assertRegex(adm, rf"tablePermission\s+'?{t}'?\s*=\s*FALSE\s*\(\s*\)", t)
-        ref = (SM / "roles" / "Referent.tmdl").read_text(encoding="utf-8-sig")
-        self.assertIn("USERPRINCIPALNAME", ref)
-        for t in ("Candidatures", "Entretiens", "ActionsIntegration"):
-            self.assertRegex(ref, rf"tablePermission\s+'?{t}'?\s*=\s*FALSE\s*\(\s*\)", t)
+            self.assertEqual(self._norm(adm.get(t, "")), "FALSE()", t)
 
     def test_relations(self):
         p = SM / "relationships.tmdl"
