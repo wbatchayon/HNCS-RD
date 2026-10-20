@@ -1,0 +1,112 @@
+[
+  {
+    "IdHNCS": "COM-2026-9001",
+    "Title": "Publication : démonstrateur de sauvegarde et PRA",
+    "LivrableSource": "LIV-2026-9001",
+    "Sujet": "SUJ-2026-9001",
+    "Canal": "Publication LinkedIn HNCS",
+    "Externe": true,
+    "Auteur": "@persona:RD1",
+    "DatePrevue": "@J-12",
+    "DateEffective": "@J-12",
+    "ValidationInterne": "@persona:DIR_RD",
+    "DateValidation": "@J-14T13:20",
+    "AutorisationsTiers": "Obtenue",
+    "PreuveAutorisation": "@site:/EcolesPartenariats/autorisation-client-fictif.pdf",
+    "UrlPublication": "https://www.example.org/hncs/publications/com-2026-9001",
+    "Statut": "Publiée"
+  },
+  {
+    "IdHNCS": "COM-2026-9002",
+    "Title": "Article : automatiser le déploiement",
+    "LivrableSource": "LIV-2026-9009",
+    "Sujet": "SUJ-2026-9004",
+    "Canal": "Article site HNCS",
+    "Externe": true,
+    "Auteur": "@persona:ALT3",
+    "DatePrevue": "@J+10",
+    "ValidationInterne": "@persona:DIRECTION",
+    "DateValidation": "@J-1T09:00",
+    "AutorisationsTiers": "Non requise",
+    "Statut": "Validée"
+  },
+  {
+    "IdHNCS": "COM-2026-9003",
+    "Title": "Article technique : méthodologie PRA",
+    "LivrableSource": "LIV-2026-9002",
+    "Sujet": "SUJ-2026-9001",
+    "Canal": "Article technique",
+    "Externe": true,
+    "Auteur": "@persona:RD1",
+    "DatePrevue": "@J+5",
+    "ValidationInterne": "@persona:DIR_RD",
+    "DateValidation": "@J-3T11:00",
+    "AutorisationsTiers": "Non requise",
+    "Statut": "Programmée"
+  },
+  {
+    "IdHNCS": "COM-2026-9004",
+    "Title": "Retour d'expérience d'alternant",
+    "Sujet": "SUJ-2026-9001",
+    "Canal": "Publication LinkedIn HNCS",
+    "Externe": true,
+    "Auteur": "@persona:ALT1",
+    "DatePrevue": "@J+15",
+    "ValidationInterne": "@persona:DIR_RD",
+    "AutorisationsTiers": "Non requise",
+    "Statut": "En revue"
+  },
+  {
+    "IdHNCS": "COM-2026-9005",
+    "Title": "Synthèse du plan de migration",
+    "Sujet": "SUJ-2026-9002",
+    "Canal": "Article technique",
+    "Externe": true,
+    "Auteur": "@persona:ALT2",
+    "DatePrevue": "@J+30",
+    "AutorisationsTiers": "Non requise",
+    "Statut": "En rédaction"
+  },
+  {
+    "IdHNCS": "COM-2026-9006",
+    "Title": "Participation au forum étudiant",
+    "Canal": "Événement",
+    "Externe": true,
+    "Auteur": "@persona:ECOLES",
+    "DatePrevue": "@J+45",
+    "AutorisationsTiers": "Demandée",
+    "Statut": "À préparer"
+  },
+  {
+    "IdHNCS": "COM-2026-9007",
+    "Title": "Idée : série « coulisses de la R&D »",
+    "Canal": "Publication LinkedIn HNCS",
+    "Externe": true,
+    "Auteur": "@persona:RD2",
+    "AutorisationsTiers": "Non requise",
+    "Statut": "Idée"
+  },
+  {
+    "IdHNCS": "COM-2026-9008",
+    "Title": "Étude de cas client",
+    "LivrableSource": "LIV-2026-9001",
+    "Canal": "Article site HNCS",
+    "Externe": true,
+    "Auteur": "@persona:RD1",
+    "AutorisationsTiers": "Refusée",
+    "Commentaire": "Le client fictif n'autorise pas la citation.",
+    "Statut": "Suspendue / refusée"
+  },
+  {
+    "IdHNCS": "COM-2026-9009",
+    "Title": "Synthèse interne du trimestre",
+    "Canal": "Synthèse interne",
+    "Externe": false,
+    "Auteur": "@persona:DIR_RD",
+    "DateEffective": "@J-30",
+    "ValidationInterne": "@persona:DIRECTION",
+    "DateValidation": "@J-31T09:00",
+    "AutorisationsTiers": "Non requise",
+    "Statut": "Publiée"
+  }
+]

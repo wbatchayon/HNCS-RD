@@ -1,0 +1,125 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "68c87641aff6122fdd12",
+  "position": {
+    "x": 16,
+    "y": 460,
+    "z": 17000,
+    "height": 250,
+    "width": 410,
+    "tabOrder": 17000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SujetsRD"
+                    }
+                  },
+                  "Property": "IdHNCS"
+                }
+              },
+              "queryRef": "SujetsRD.IdHNCS"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SujetsRD"
+                    }
+                  },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "SujetsRD.Title",
+              "displayName": "Sujet"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SujetsRD"
+                    }
+                  },
+                  "Property": "Statut"
+                }
+              },
+              "queryRef": "SujetsRD.Statut"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Mesures"
+                    }
+                  },
+                  "Property": "Livrables"
+                }
+              },
+              "queryRef": "Mesures.Livrables"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Mesures"
+                    }
+                  },
+                  "Property": "Livrables validés"
+                }
+              },
+              "queryRef": "Mesures.Livrables validés"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Mesures"
+                    }
+                  },
+                  "Property": "Avancement moyen (dernier CR)"
+                }
+              },
+              "queryRef": "Mesures.Avancement moyen (dernier CR)"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Avancement par sujet'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

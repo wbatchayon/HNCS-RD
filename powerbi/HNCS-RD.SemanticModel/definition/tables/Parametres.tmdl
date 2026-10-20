@@ -1,0 +1,32 @@
+table Parametres
+	lineageTag: 7c52f8b8-3d88-5973-9460-87e448dfa385
+
+	column Cle
+		dataType: string
+		lineageTag: 23e426b8-6337-5e70-9f04-c227573cec6e
+		summarizeBy: none
+		sourceColumn: Cle
+
+		annotation SummarizationSetBy = Automatic
+
+	column Valeur
+		dataType: string
+		lineageTag: c6e6efa4-cf1d-5f68-912f-c50a450e07b3
+		summarizeBy: none
+		sourceColumn: Valeur
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Parametres = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Parametres", {"Title", "Valeur"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Title", "text"}, {"Valeur", "text"}}),
+					Renommee = Table.RenameColumns(Typee, {{"Title", "Cle"}}),
+					Resultat = Table.SelectColumns(Renommee, {"Cle", "Valeur"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

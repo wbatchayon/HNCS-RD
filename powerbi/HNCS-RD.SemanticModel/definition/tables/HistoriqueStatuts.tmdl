@@ -1,0 +1,82 @@
+table HistoriqueStatuts
+	lineageTag: 2a950bc1-481c-5992-a74b-de06a8f1c1dc
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 7faee693-422f-5697-a7f5-ff544433e7cb
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 0efa2d29-c306-5074-b7a9-452a5dfd6f51
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column Objet
+		dataType: string
+		lineageTag: 0f6958fb-3e8f-5759-aa70-a036a3489182
+		summarizeBy: none
+		sourceColumn: Objet
+
+		annotation SummarizationSetBy = Automatic
+
+	column StatutAvant
+		dataType: string
+		lineageTag: ec19e416-0ffe-566b-9340-928f783dd593
+		summarizeBy: none
+		sourceColumn: StatutAvant
+
+		annotation SummarizationSetBy = Automatic
+
+	column StatutApres
+		dataType: string
+		lineageTag: f4e7312e-d07e-5ce1-872f-0f292e89b919
+		summarizeBy: none
+		sourceColumn: StatutApres
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateChangement
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: de717a83-b9f3-5b44-b7de-b087855d4cb1
+		summarizeBy: none
+		sourceColumn: DateChangement
+
+		annotation SummarizationSetBy = Automatic
+
+	column Origine
+		dataType: string
+		lineageTag: 19d22ad0-d838-5cc9-8b88-34887c3be6e6
+		summarizeBy: none
+		sourceColumn: Origine
+
+		annotation SummarizationSetBy = Automatic
+
+	column Resultat
+		dataType: string
+		lineageTag: 80152b35-207b-5b07-9847-0e11a9d0d313
+		summarizeBy: none
+		sourceColumn: Resultat
+
+		annotation SummarizationSetBy = Automatic
+
+	partition HistoriqueStatuts = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("HistoriqueStatuts", {"Id", "Title", "Objet", "StatutAvant", "StatutApres", "DateChangement", "Origine", "Resultat"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"Title", "text"}, {"Objet", "text"}, {"StatutAvant", "text"}, {"StatutApres", "text"}, {"DateChangement", "datetime"}, {"Origine", "text"}, {"Resultat", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "Title", "Objet", "StatutAvant", "StatutApres", "DateChangement", "Origine", "Resultat"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

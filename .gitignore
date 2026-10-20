@@ -1,4 +1,4 @@
-# Documents sources confidentiels (cadrage HNCS) : jamais versionnés (spec § 13, H-30)
+# Documents sources confidentiels (cadrage HNCS) : jamais versionnés (spec, section 13, H-30)
 *.docx
 Processus.md
 
@@ -7,6 +7,7 @@ provisioning/config/tenant.json
 provisioning/config/membres.json
 testdata/personas.json
 tests/e2e/config.json
+flows/deploy/deploymentSettings.json
 
 # Artefacts de build
 flows/dist/

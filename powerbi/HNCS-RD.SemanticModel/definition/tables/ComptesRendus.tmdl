@@ -1,0 +1,137 @@
+table ComptesRendus
+	lineageTag: 04bfc7f5-557c-5d12-a7da-9d6ba3c95e0b
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: d5202fbd-af6a-5d5e-b27a-c00b07a2aff0
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 09e4b221-ce66-5956-a3dc-90ace560f67a
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column AffectationId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 23fa7150-5fe8-5547-882c-9b5c52b7c4d3
+		summarizeBy: none
+		sourceColumn: AffectationId
+
+		annotation SummarizationSetBy = Automatic
+
+	column AlternantId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a86df52d-6d32-507f-96ca-ebae4c457c35
+		summarizeBy: none
+		sourceColumn: AlternantId
+
+		annotation SummarizationSetBy = Automatic
+
+	column PeriodeDebut
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 729871a3-a0d7-571a-8a0c-6ec3c4d6a018
+		summarizeBy: none
+		sourceColumn: PeriodeDebut
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column PeriodeFin
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 5593723f-2724-5976-a550-651499ef0018
+		summarizeBy: none
+		sourceColumn: PeriodeFin
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Echeance
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 73e2f348-f335-5b79-adb1-151f3605dd2b
+		summarizeBy: none
+		sourceColumn: Echeance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateRemise
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 5593f298-5355-5541-b86b-0413d9f16ef8
+		summarizeBy: none
+		sourceColumn: DateRemise
+
+		annotation SummarizationSetBy = Automatic
+
+	column EtatGeneral
+		dataType: string
+		lineageTag: 7b23d895-3981-5595-901d-ef0f9c434c19
+		summarizeBy: none
+		sourceColumn: EtatGeneral
+
+		annotation SummarizationSetBy = Automatic
+
+	column Avancement
+		dataType: int64
+		formatString: 0
+		lineageTag: 2362b8af-b01e-57cc-ad3c-1b8407920bc6
+		summarizeBy: none
+		sourceColumn: Avancement
+
+		annotation SummarizationSetBy = Automatic
+
+	column BlocageSignale
+		dataType: boolean
+		lineageTag: d35b3053-c15c-5b5d-b8e6-d5c0b0f10034
+		summarizeBy: none
+		sourceColumn: BlocageSignale
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateValidation
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 0c8e2eae-75c7-5d68-b5ae-7eb954d84f08
+		summarizeBy: none
+		sourceColumn: DateValidation
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 70a0f3fd-6922-5985-8581-2a8479bc9d77
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition ComptesRendus = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("ComptesRendus", {"Id", "IdHNCS", "AffectationId", "AlternantId", "PeriodeDebut", "PeriodeFin", "Echeance", "DateRemise", "EtatGeneral", "Avancement", "BlocageSignale", "DateValidation", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"AffectationId", "int"}, {"AlternantId", "int"}, {"PeriodeDebut", "date"}, {"PeriodeFin", "date"}, {"Echeance", "date"}, {"DateRemise", "datetime"}, {"EtatGeneral", "text"}, {"Avancement", "int"}, {"BlocageSignale", "bool"}, {"DateValidation", "datetime"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "AffectationId", "AlternantId", "PeriodeDebut", "PeriodeFin", "Echeance", "DateRemise", "EtatGeneral", "Avancement", "BlocageSignale", "DateValidation", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

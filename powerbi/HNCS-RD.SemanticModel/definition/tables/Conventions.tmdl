@@ -1,0 +1,111 @@
+table Conventions
+	lineageTag: b53445da-7b42-5d83-8e7c-8ea9f2de961a
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 736804cc-bb3e-507d-9e72-30136fd9fa68
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: be8c7b2f-67a3-5a00-99a1-7012cdd89bd7
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column EtablissementId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: cd7fcfe4-0534-5e02-90e5-752a743387da
+		summarizeBy: none
+		sourceColumn: EtablissementId
+
+		annotation SummarizationSetBy = Automatic
+
+	column TypeConvention
+		dataType: string
+		lineageTag: cebad062-9af0-57d6-8995-f972c17038ca
+		summarizeBy: none
+		sourceColumn: TypeConvention
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateDebut
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 379c9026-cc89-5ac3-add6-bee9d2c79d7a
+		summarizeBy: none
+		sourceColumn: DateDebut
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateFin
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 8ab489d7-6692-526f-aa62-837281e15749
+		summarizeBy: none
+		sourceColumn: DateFin
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateSignature
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: c2c4a4e3-8b23-5f03-99f3-acc23df0527f
+		summarizeBy: none
+		sourceColumn: DateSignature
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DecisionPartenariat
+		dataType: string
+		lineageTag: c3d03f9e-25de-5988-b959-6c24842840b8
+		summarizeBy: none
+		sourceColumn: DecisionPartenariat
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateDecisionPartenariat
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 6027d926-3730-5a2e-a066-a8dd5a1e8c05
+		summarizeBy: none
+		sourceColumn: DateDecisionPartenariat
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Statut
+		dataType: string
+		lineageTag: bf323e7d-7bd3-5cdd-910a-7702500f09a1
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Conventions = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Conventions", {"Id", "IdHNCS", "EtablissementId", "TypeConvention", "DateDebut", "DateFin", "DateSignature", "DecisionPartenariat", "DateDecisionPartenariat", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"EtablissementId", "int"}, {"TypeConvention", "text"}, {"DateDebut", "date"}, {"DateFin", "date"}, {"DateSignature", "date"}, {"DecisionPartenariat", "text"}, {"DateDecisionPartenariat", "date"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "EtablissementId", "TypeConvention", "DateDebut", "DateFin", "DateSignature", "DecisionPartenariat", "DateDecisionPartenariat", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

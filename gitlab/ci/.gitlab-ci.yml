@@ -1,0 +1,72 @@
+# Pipeline GitLab de la synchronisation GitLab -> SharePoint (spec § 10.3, lot 5).
+#
+# À déposer à la racine du projet d'outillage GitLab (ex. `hncs-rd/outillage-suivi-rd`) qui contient
+# une copie du dossier `gitlab/` de ce dépôt (même arborescence : `gitlab/sync/...`).
+#
+# Planification : CI/CD > Schedules > « Synchronisation GitLab -> SharePoint »
+#   - intervalle : 30 5 * * *   (quotidien 05:30)
+#   - fuseau     : Europe/Paris
+#   - variable   : SCHEDULE_TYPE = gitlab-sync
+#
+# Variables CI/CD (Settings > CI/CD > Variables), toutes « Protected » ; les secrets « Masked » :
+#   GITLAB_URL           URL de l'instance GitLab (ex. https://gitlab.example.com)        non secret
+#   GITLAB_TOKEN         jeton d'accès du groupe hncs-rd, rôle Reporter, portée read_api  MASQUÉE
+#   HNCS_TENANT_ID       identifiant du tenant Entra                                      non secret
+#   HNCS_CLIENT_ID       identifiant de l'application Entra                               non secret
+#                        (Lists.SelectedOperations.Selected recommandé, sinon Sites.Selected write : H-31)
+#   HNCS_CLIENT_SECRET   secret de l'application Entra                                    MASQUÉE
+#                        (inutile si l'identité fédérée OIDC ci-dessous est utilisée, recommandée)
+#   HNCS_SITE_URL        https://<tenant>.sharepoint.com/sites/HNCS-RD                    non secret
+#   HNCS_SITE_ID, HNCS_LISTE_ID_SUJETSRD, HNCS_LISTE_ID_LIVRABLES, HNCS_LISTE_ID_GITLABSYNC
+#                        identifiants Graph, obligatoires avec Lists.SelectedOperations.Selected  non secrets
+# Aucun secret ne doit figurer dans ce fichier ni dans le dépôt (spec § 10.1).
+
+stages:
+  - test
+  - sync
+
+default:
+  image: python:3.12-slim
+  interruptible: true
+
+variables:
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+# Tests hors ligne (aucun réseau, aucun secret) à chaque push et merge request.
+tests-synchro:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "gitlab-sync"
+  script:
+    - python --version
+    - python -m unittest discover -s gitlab/sync/tests -v
+
+# Synchronisation planifiée (quotidien 05:30, avant l'actualisation Power BI de 07:45 : spec § 9.1).
+synchro-gitlab-sharepoint:
+  stage: sync
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "gitlab-sync"
+  resource_group: gitlab-sharepoint-sync   # jamais deux synchronisations simultanées
+  timeout: 30 minutes
+  # Variante sans secret (recommandée) : identité fédérée Entra <- GitLab OIDC.
+  # Décommenter, déclarer l'identifiant fédéré sur l'application Entra (émetteur = GITLAB_URL,
+  # sujet = project_path:<groupe>/<projet>:ref_type:branch:ref:main, audience ci-dessous),
+  # puis supprimer la variable HNCS_CLIENT_SECRET : le script utilise alors HNCS_CLIENT_ASSERTION.
+  # id_tokens:
+  #   HNCS_CLIENT_ASSERTION:
+  #     aud: api://AzureADTokenExchange
+  script:
+    - python gitlab/sync/sync_gitlab_sharepoint.py
+
+# Simulation manuelle (aucune écriture) : CI/CD > Pipelines > Run pipeline, variable SYNC_DRY_RUN = 1.
+synchro-simulation:
+  stage: sync
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web" && $SYNC_DRY_RUN == "1"
+  resource_group: gitlab-sharepoint-sync
+  timeout: 30 minutes
+  script:
+    - python gitlab/sync/sync_gitlab_sharepoint.py --dry-run --verbose

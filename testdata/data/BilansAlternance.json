@@ -1,0 +1,46 @@
+[
+  {
+    "IdHNCS": "BIL-2026-9001",
+    "Title": "Bilan ALT-2026-9005",
+    "Alternant": "ALT-2026-9005",
+    "Etablissement": "ECO-2026-9006",
+    "Referent": "REF-2026-9003",
+    "SyntheseParcours": "Synthèse confidentielle fictive.",
+    "LivrablesClotures": false,
+    "DocumentationCapitalisee": true,
+    "QualiteCollaborationEcole": "À améliorer",
+    "Contributeurs": [
+      "@persona:RD2",
+      "@persona:RD1"
+    ],
+    "Statut": "En cours"
+  },
+  {
+    "IdHNCS": "BIL-2026-9002",
+    "Title": "Bilan ALT-2026-9007",
+    "Alternant": "ALT-2026-9007",
+    "Etablissement": "ECO-2026-9001",
+    "Referent": "REF-2026-9002",
+    "Statut": "À réaliser"
+  },
+  {
+    "IdHNCS": "BIL-2026-9003",
+    "Title": "Bilan ALT-2026-9008",
+    "Alternant": "ALT-2026-9008",
+    "Etablissement": "ECO-2026-9003",
+    "Referent": "REF-2026-9001",
+    "DateBilan": "@J-152",
+    "SyntheseParcours": "Synthèse confidentielle fictive.",
+    "LivrablesClotures": true,
+    "DocumentationCapitalisee": true,
+    "RetourExperience": "Retour d'expérience positif (fictif).",
+    "QualiteCollaborationEcole": "Très satisfaisante",
+    "RecommandationPartenariat": "À étudier",
+    "JustificationRecommandation": "Formation alignée avec le pôle réseaux (fictif).",
+    "Contributeurs": [
+      "@persona:REF1",
+      "@persona:RD1"
+    ],
+    "Statut": "Réalisé"
+  }
+]

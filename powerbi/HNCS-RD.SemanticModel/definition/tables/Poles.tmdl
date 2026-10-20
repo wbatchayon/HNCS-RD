@@ -1,0 +1,57 @@
+table Poles
+	lineageTag: f1be9e73-75d1-5f84-b50e-602e9d829584
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 81341734-3f50-540a-a71a-91e679577718
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 1deac73f-738d-53bc-a030-63b1bc8d3de4
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 74e0c2ad-af0d-58ba-824b-0026baa40fe5
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column CodePole
+		dataType: string
+		lineageTag: 6ae88f2f-93e0-5ed4-a27e-e487437ce836
+		summarizeBy: none
+		sourceColumn: CodePole
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 4a0a9f0d-de26-50ee-b8a0-f81fc1e61255
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Poles = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("Poles", {"Id", "IdHNCS", "Title", "CodePole", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"CodePole", "text"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "CodePole", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

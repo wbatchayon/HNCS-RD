@@ -1,0 +1,131 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "847d94116b978fc261b0",
+  "position": {
+    "x": 640,
+    "y": 214,
+    "z": 7000,
+    "height": 496,
+    "width": 624,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "HistoriqueStatuts"
+                    }
+                  },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "HistoriqueStatuts.Title",
+              "displayName": "IdHNCS"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "HistoriqueStatuts"
+                    }
+                  },
+                  "Property": "Objet"
+                }
+              },
+              "queryRef": "HistoriqueStatuts.Objet"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "HistoriqueStatuts"
+                    }
+                  },
+                  "Property": "StatutApres"
+                }
+              },
+              "queryRef": "HistoriqueStatuts.StatutApres",
+              "displayName": "Statut demandé"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "HistoriqueStatuts"
+                    }
+                  },
+                  "Property": "DateChangement"
+                }
+              },
+              "queryRef": "HistoriqueStatuts.DateChangement"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Mesures"
+                    }
+                  },
+                  "Property": "Transitions refusées"
+                }
+              },
+              "queryRef": "Mesures.Transitions refusées"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "HistoriqueStatuts"
+                  }
+                },
+                "Property": "DateChangement"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Transitions refusées'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

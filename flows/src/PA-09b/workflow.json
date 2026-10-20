@@ -1,0 +1,1206 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_outlook"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      },
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "hncs_SiteUrl (hncs_SiteUrl)": {
+          "defaultValue": "https://contoso.sharepoint.com/sites/HNCS-RD",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_SiteUrl",
+            "description": "URL du site SharePoint HNCS-R&D (sans barre finale)"
+          }
+        },
+        "hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)": {
+          "defaultValue": "svc-hncs-rd@contoso.com",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_ServiceAccountEmail",
+            "description": "Adresse du compte de service des flux (rôle FLUX)"
+          }
+        }
+      },
+      "triggers": {
+        "Recurrence": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Day",
+            "interval": 1,
+            "schedule": {
+              "hours": [
+                "6"
+              ],
+              "minutes": [
+                50
+              ]
+            },
+            "timeZone": "Romance Standard Time"
+          }
+        }
+      },
+      "actions": {
+        "Principal": {
+          "type": "Scope",
+          "actions": {
+            "Lire_parametres": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Paramètres",
+                  "$filter": "Categorie eq 'Destinataires' or Categorie eq 'Délais' or Categorie eq 'Fonctionnalités' or Categorie eq 'Conservation' or Categorie eq 'Liens' or Categorie eq 'Gouvernance' or Categorie eq 'Canaux'",
+                  "$top": 500
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {}
+            },
+            "Parametres_cles_valeurs": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Lire_parametres')?['value']",
+                "select": "@concat('\"', replace(item()?['Title'], '\"', ''), '\":', if(empty(item()?['Valeur']), 'null', concat('\"', replace(replace(item()?['Valeur'], '\\', '\\\\'), '\"', '\\\"'), '\"')))"
+              },
+              "runAfter": {
+                "Lire_parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parametres": {
+              "type": "Compose",
+              "inputs": "@json(concat('{', join(body('Parametres_cles_valeurs'), ','), '}'))",
+              "runAfter": {
+                "Parametres_cles_valeurs": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Aujourdhui": {
+              "type": "Compose",
+              "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')",
+              "runAfter": {
+                "Parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Membres_G_RD": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "parameters/method": "GET",
+                  "parameters/uri": "_api/web/sitegroups/getbyname('HNCS-RD-EquipeRD')/users?$select=Email",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata",
+                    "Content-Type": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Aujourdhui": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Emails_G_RD": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Membres_G_RD')?['value']",
+                "select": "@toLower(coalesce(item()?['Email'], ''))"
+              },
+              "runAfter": {
+                "Membres_G_RD": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Niveau_CSS": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "parameters/method": "GET",
+                  "parameters/uri": "_api/web/roledefinitions/getbyname('HNCS - Contribution sans suppression')?$select=Id",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata",
+                    "Content-Type": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Emails_G_RD": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Alternants_actifs": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Alternants",
+                  "$filter": "Statut eq 'Actif'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Niveau_CSS": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Fin_approchante": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Alternants_actifs')?['value']",
+                "where": "@and(not(empty(item()?['DateFin'])), lessOrEquals(if(empty(item()?['DateFin']), '', formatDateTime(convertTimeZone(item()?['DateFin'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), addDays(outputs('Aujourdhui'), int(coalesce(outputs('Parametres')?['Fin.AnticipationJours'], '30')), 'yyyy-MM-dd')))"
+              },
+              "runAfter": {
+                "Alternants_actifs": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Pour_alternant": {
+              "type": "Foreach",
+              "foreach": "@body('Fin_approchante')",
+              "actions": {
+                "Verifier_ALT_T04": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "fa7991cb-62cf-5740-a458-f1a6db5ab0eb"
+                    },
+                    "body": {
+                      "Objet": "Alternant",
+                      "StatutAvant": "@{'Actif'}",
+                      "StatutApres": "@{'Fin planifiée'}",
+                      "ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                      "ItemAuteurEmail": "@{coalesce('', '')}",
+                      "ItemValideurEmail": "@{coalesce('', '')}"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Controles_ALT_T04": {
+                  "type": "Compose",
+                  "inputs": "@split(replace(coalesce(body('Verifier_ALT_T04')?['Controles'], ''), ' ', ''), ';')",
+                  "runAfter": {
+                    "Verifier_ALT_T04": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Controles_inconnus_ALT_T04": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@outputs('Controles_ALT_T04')",
+                    "where": "@and(not(empty(item())), not(contains(createArray(), item())))"
+                  },
+                  "runAfter": {
+                    "Controles_ALT_T04": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Controles_echec_ALT_T04": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@createArray()",
+                    "where": "@not(empty(item()))"
+                  },
+                  "runAfter": {
+                    "Controles_inconnus_ALT_T04": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Si_ALT_T04_autorisee": {
+                  "type": "If",
+                  "expression": "@and(equals(toLower(string(coalesce(body('Verifier_ALT_T04')?['Autorise'], false))), 'true'), and(empty(body('Controles_echec_ALT_T04')), empty(body('Controles_inconnus_ALT_T04'))))",
+                  "actions": {
+                    "Statut_ALT_T04": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Alternants",
+                          "id": "@items('Pour_alternant')?['ID']",
+                          "item/Statut/Value": "Fin planifiée",
+                          "item/DateDebut": "@items('Pour_alternant')?['DateDebut']",
+                          "item/DateFin": "@items('Pour_alternant')?['DateFin']",
+                          "item/Etablissement/Id": "@items('Pour_alternant')?['Etablissement']?['Id']",
+                          "item/Pole/Id": "@items('Pour_alternant')?['Pole']?['Id']",
+                          "item/Title": "@items('Pour_alternant')?['Title']"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Historiser_ALT_T04": {
+                      "type": "Workflow",
+                      "inputs": {
+                        "host": {
+                          "workflowReferenceName": "d12115ea-8f45-524c-b8b1-f7a45e1e278d"
+                        },
+                        "body": {
+                          "Liste": "Alternants",
+                          "ItemId": "@int(items('Pour_alternant')?['ID'])",
+                          "IdObjet": "@{coalesce(items('Pour_alternant')?['IdHNCS'], string(items('Pour_alternant')?['ID']))}",
+                          "Objet": "Alternant",
+                          "StatutAvant": "@{'Actif'}",
+                          "StatutApres": "@{'Fin planifiée'}",
+                          "Accepte": "@true",
+                          "CodeTransition": "@{coalesce(body('Verifier_ALT_T04')?['CodeTransition'], '')}",
+                          "ActeurEmail": "@{parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)')}",
+                          "Origine": "Flux",
+                          "Motif": "@{coalesce('', '')}",
+                          "RunId": "@{workflow()?['run']?['name']}"
+                        }
+                      },
+                      "runAfter": {
+                        "Statut_ALT_T04": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Referent_auto": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Référents",
+                          "$filter": "ID eq @{coalesce(items('Pour_alternant')?['ReferentPrincipal']?['Id'], 0)}",
+                          "$top": 1
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Historiser_ALT_T04": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Etablissement_auto": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Écoles et établissements",
+                          "$filter": "ID eq @{coalesce(items('Pour_alternant')?['Etablissement']?['Id'], 0)}",
+                          "$top": 1
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Referent_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Modeles_clo_auto": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Modèles de checklists",
+                          "$filter": "Contexte eq 'Clôture d''alternance' and Actif eq 1",
+                          "$orderby": "Ordre asc",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Etablissement_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Pour_modele_clo_auto": {
+                      "type": "Foreach",
+                      "foreach": "@body('Modeles_clo_auto')?['value']",
+                      "actions": {
+                        "Existe_clo_auto": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "GetItems"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Actions d'intégration et checklists",
+                              "$filter": "AlternantId eq @{items('Pour_alternant')?['ID']} and Contexte eq 'Clôture d''alternance' and CodeModeleAction eq '@{replace(string(items('Pour_modele_clo_auto')?['Code']), '''', '''''')}'",
+                              "$top": 5000
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Si_action_absente_clo_auto": {
+                          "type": "If",
+                          "expression": "@equals(length(body('Existe_clo_auto')?['value']), 0)",
+                          "actions": {
+                            "Creer_action_clo_auto": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PostItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Actions d'intégration et checklists",
+                                  "item/Title": "@{items('Pour_modele_clo_auto')?['Title']}",
+                                  "item/Contexte/Value": "Clôture d'alternance",
+                                  "item/Categorie/Value": "@items('Pour_modele_clo_auto')?['Categorie']?['Value']",
+                                  "item/Description": "@items('Pour_modele_clo_auto')?['Description']",
+                                  "item/RoleResponsable/Value": "@items('Pour_modele_clo_auto')?['RoleResponsable']?['Value']",
+                                  "item/Echeance": "@{addDays(if(empty(items('Pour_alternant')?['DateFin']), '', formatDateTime(convertTimeZone(items('Pour_alternant')?['DateFin'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), int(coalesce(items('Pour_modele_clo_auto')?['DelaiJours'], 0)), 'yyyy-MM-dd')}",
+                                  "item/Bloquante": "@coalesce(items('Pour_modele_clo_auto')?['Bloquante'], false)",
+                                  "item/PreuveAttendue": "@items('Pour_modele_clo_auto')?['PreuveAttendue']",
+                                  "item/CodeModeleAction": "@{items('Pour_modele_clo_auto')?['Code']}",
+                                  "item/Statut/Value": "À faire",
+                                  "item/Alternant/Id": "@items('Pour_alternant')?['ID']"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "IdHNCS_Creer_action_clo_auto": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PatchItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Actions d'intégration et checklists",
+                                  "id": "@body('Creer_action_clo_auto')?['ID']",
+                                  "item/IdHNCS": "@{concat('ACT-', formatDateTime(convertTimeZone(body('Creer_action_clo_auto')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(body('Creer_action_clo_auto')?['ID']), '0000'))}",
+                                  "item/Contexte/Value": "@{body('Creer_action_clo_auto')?['Contexte']?['Value']}",
+                                  "item/Statut/Value": "@{body('Creer_action_clo_auto')?['Statut']?['Value']}",
+                                  "item/Title": "@body('Creer_action_clo_auto')?['Title']"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {
+                                "Creer_action_clo_auto": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Empreinte_action_clo_auto": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "PatchItem"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "table": "Actions d'intégration et checklists",
+                                  "id": "@body('Creer_action_clo_auto')?['ID']",
+                                  "item/EmpreinteAction": "@{concat('{\"Bloquante\":', if(equals(body('Creer_action_clo_auto')?['Bloquante'], true), 'true', 'false'), ',\"Statut\":\"', coalesce(body('Creer_action_clo_auto')?['Statut']?['Value'], ''), '\"}')}",
+                                  "item/Contexte/Value": "@{body('Creer_action_clo_auto')?['Contexte']?['Value']}",
+                                  "item/Statut/Value": "@{body('Creer_action_clo_auto')?['Statut']?['Value']}",
+                                  "item/Title": "@body('Creer_action_clo_auto')?['Title']"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {
+                                "IdHNCS_Creer_action_clo_auto": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Si_responsable_clo_auto": {
+                              "type": "If",
+                              "expression": "@not(empty(if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'ADMIN'), coalesce(coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'RD'), coalesce(coalesce(outputs('Parametres')?['Destinataires.DirectionRD'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'DIRECTION_RD'), coalesce(coalesce(outputs('Parametres')?['Destinataires.DirectionRD'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'PROPRIETAIRE'), coalesce(coalesce(outputs('Parametres')?['Destinataires.Support'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'REFERENT'), coalesce(first(body('Referent_auto')?['value'])?['Compte']?['Email'], ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'ECOLES'), coalesce(first(body('Etablissement_auto')?['value'])?['ResponsableHNCS']?['Email'], ''), ''))))))))",
+                              "actions": {
+                                "Responsable_action_clo_auto": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                      "connectionName": "shared_sharepointonline",
+                                      "operationId": "PatchItem"
+                                    },
+                                    "parameters": {
+                                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                      "table": "Actions d'intégration et checklists",
+                                      "id": "@body('Creer_action_clo_auto')?['ID']",
+                                      "item/Responsable/Claims": "@{if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'ADMIN'), coalesce(coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'RD'), coalesce(coalesce(outputs('Parametres')?['Destinataires.DirectionRD'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'DIRECTION_RD'), coalesce(coalesce(outputs('Parametres')?['Destinataires.DirectionRD'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'PROPRIETAIRE'), coalesce(coalesce(outputs('Parametres')?['Destinataires.Support'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'REFERENT'), coalesce(first(body('Referent_auto')?['value'])?['Compte']?['Email'], ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'ECOLES'), coalesce(first(body('Etablissement_auto')?['value'])?['ResponsableHNCS']?['Email'], ''), ''))))))}",
+                                      "item/Contexte/Value": "@{body('Creer_action_clo_auto')?['Contexte']?['Value']}",
+                                      "item/Statut/Value": "@{body('Creer_action_clo_auto')?['Statut']?['Value']}",
+                                      "item/Title": "@body('Creer_action_clo_auto')?['Title']"
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {}
+                                },
+                                "Rompre_heritage_action_clo_auto": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                      "connectionName": "shared_sharepointonline",
+                                      "operationId": "HttpRequest"
+                                    },
+                                    "parameters": {
+                                      "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                      "parameters/method": "POST",
+                                      "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/ActionsIntegration'), ''')/items(', string(body('Creer_action_clo_auto')?['ID']), ')'), '/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)')}",
+                                      "parameters/headers": {
+                                        "Accept": "application/json;odata=nometadata",
+                                        "Content-Type": "application/json;odata=nometadata"
+                                      }
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "retryPolicy": {
+                                      "type": "exponential",
+                                      "count": 4,
+                                      "interval": "PT10S"
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "Responsable_action_clo_auto": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "Si_utilisateur_action_clo_auto_1": {
+                                  "type": "If",
+                                  "expression": "@not(empty(if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'ADMIN'), coalesce(coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'RD'), coalesce(coalesce(outputs('Parametres')?['Destinataires.DirectionRD'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'DIRECTION_RD'), coalesce(coalesce(outputs('Parametres')?['Destinataires.DirectionRD'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'PROPRIETAIRE'), coalesce(coalesce(outputs('Parametres')?['Destinataires.Support'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'REFERENT'), coalesce(first(body('Referent_auto')?['value'])?['Compte']?['Email'], ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'ECOLES'), coalesce(first(body('Etablissement_auto')?['value'])?['ResponsableHNCS']?['Email'], ''), ''))))))))",
+                                  "actions": {
+                                    "Utilisateur_action_clo_auto_1": {
+                                      "type": "OpenApiConnection",
+                                      "inputs": {
+                                        "host": {
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                          "connectionName": "shared_sharepointonline",
+                                          "operationId": "HttpRequest"
+                                        },
+                                        "parameters": {
+                                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                          "parameters/method": "POST",
+                                          "parameters/uri": "_api/web/ensureuser",
+                                          "parameters/headers": {
+                                            "Accept": "application/json;odata=nometadata",
+                                            "Content-Type": "application/json;odata=nometadata"
+                                          },
+                                          "parameters/body": "@{concat('{\"logonName\":\"i:0#.f|membership|', toLower(if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'ADMIN'), coalesce(coalesce(outputs('Parametres')?['Destinataires.Administration'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'RD'), coalesce(coalesce(outputs('Parametres')?['Destinataires.DirectionRD'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'DIRECTION_RD'), coalesce(coalesce(outputs('Parametres')?['Destinataires.DirectionRD'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'PROPRIETAIRE'), coalesce(coalesce(outputs('Parametres')?['Destinataires.Support'], ''), ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'REFERENT'), coalesce(first(body('Referent_auto')?['value'])?['Compte']?['Email'], ''), if(equals(items('Pour_modele_clo_auto')?['RoleResponsable']?['Value'], 'ECOLES'), coalesce(first(body('Etablissement_auto')?['value'])?['ResponsableHNCS']?['Email'], ''), ''))))))), '\"}')}"
+                                        },
+                                        "authentication": "@parameters('$authentication')",
+                                        "retryPolicy": {
+                                          "type": "exponential",
+                                          "count": 4,
+                                          "interval": "PT10S"
+                                        }
+                                      },
+                                      "runAfter": {}
+                                    },
+                                    "Attribuer_action_clo_auto_U1_CSS": {
+                                      "type": "OpenApiConnection",
+                                      "inputs": {
+                                        "host": {
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                          "connectionName": "shared_sharepointonline",
+                                          "operationId": "HttpRequest"
+                                        },
+                                        "parameters": {
+                                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                          "parameters/method": "POST",
+                                          "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/ActionsIntegration'), ''')/items(', string(body('Creer_action_clo_auto')?['ID']), ')'), '/roleassignments/addroleassignment(principalid=', string(body('Utilisateur_action_clo_auto_1')?['Id']), ',roledefid=', string(body('Niveau_CSS')?['Id']), ')')}",
+                                          "parameters/headers": {
+                                            "Accept": "application/json;odata=nometadata",
+                                            "Content-Type": "application/json;odata=nometadata"
+                                          }
+                                        },
+                                        "authentication": "@parameters('$authentication')",
+                                        "retryPolicy": {
+                                          "type": "exponential",
+                                          "count": 4,
+                                          "interval": "PT10S"
+                                        }
+                                      },
+                                      "runAfter": {
+                                        "Utilisateur_action_clo_auto_1": [
+                                          "Succeeded"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "else": {
+                                    "actions": {}
+                                  },
+                                  "runAfter": {
+                                    "Rompre_heritage_action_clo_auto": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                }
+                              },
+                              "else": {
+                                "actions": {}
+                              },
+                              "runAfter": {
+                                "Empreinte_action_clo_auto": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          },
+                          "runAfter": {
+                            "Existe_clo_auto": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 1
+                        }
+                      },
+                      "runAfter": {
+                        "Modeles_clo_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Bilan_existant_auto": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Bilans d'alternance",
+                          "$filter": "AlternantId eq @{items('Pour_alternant')?['ID']}",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Pour_modele_clo_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Si_bilan_absent_auto": {
+                      "type": "If",
+                      "expression": "@equals(length(body('Bilan_existant_auto')?['value']), 0)",
+                      "actions": {
+                        "Creer_bilan_auto": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PostItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Bilans d'alternance",
+                              "item/Alternant/Id": "@items('Pour_alternant')?['ID']",
+                              "item/Etablissement/Id": "@items('Pour_alternant')?['Etablissement']?['Id']",
+                              "item/Referent/Id": "@items('Pour_alternant')?['ReferentPrincipal']?['Id']",
+                              "item/Title": "@{concat('Bilan ', coalesce(items('Pour_alternant')?['IdHNCS'], string(items('Pour_alternant')?['ID'])))}",
+                              "item/Statut/Value": "À réaliser"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "IdHNCS_Creer_bilan_auto": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "table": "Bilans d'alternance",
+                              "id": "@body('Creer_bilan_auto')?['ID']",
+                              "item/IdHNCS": "@{concat('BIL-', formatDateTime(convertTimeZone(body('Creer_bilan_auto')?['Created'], 'UTC', 'Romance Standard Time'), 'yyyy'), '-', formatNumber(int(body('Creer_bilan_auto')?['ID']), '0000'))}",
+                              "item/Alternant/Id": "@body('Creer_bilan_auto')?['Alternant']?['Id']",
+                              "item/Statut/Value": "@{body('Creer_bilan_auto')?['Statut']?['Value']}"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {
+                            "Creer_bilan_auto": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Rompre_heritage_bilan_auto": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "HttpRequest"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                              "parameters/method": "POST",
+                              "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/BilansAlternance'), ''')/items(', string(body('Creer_bilan_auto')?['ID']), ')'), '/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)')}",
+                              "parameters/headers": {
+                                "Accept": "application/json;odata=nometadata",
+                                "Content-Type": "application/json;odata=nometadata"
+                              }
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {
+                            "IdHNCS_Creer_bilan_auto": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Si_utilisateur_bilan_auto_1": {
+                          "type": "If",
+                          "expression": "@not(empty(first(body('Referent_auto')?['value'])?['Compte']?['Email']))",
+                          "actions": {
+                            "Utilisateur_bilan_auto_1": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "HttpRequest"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "parameters/method": "POST",
+                                  "parameters/uri": "_api/web/ensureuser",
+                                  "parameters/headers": {
+                                    "Accept": "application/json;odata=nometadata",
+                                    "Content-Type": "application/json;odata=nometadata"
+                                  },
+                                  "parameters/body": "@{concat('{\"logonName\":\"i:0#.f|membership|', toLower(first(body('Referent_auto')?['value'])?['Compte']?['Email']), '\"}')}"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {}
+                            },
+                            "Attribuer_bilan_auto_U1_CSS": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                                  "connectionName": "shared_sharepointonline",
+                                  "operationId": "HttpRequest"
+                                },
+                                "parameters": {
+                                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                                  "parameters/method": "POST",
+                                  "parameters/uri": "@{concat(concat('_api/web/GetList(''', concat(uriPath(parameters('hncs_SiteUrl (hncs_SiteUrl)')), '/Lists/BilansAlternance'), ''')/items(', string(body('Creer_bilan_auto')?['ID']), ')'), '/roleassignments/addroleassignment(principalid=', string(body('Utilisateur_bilan_auto_1')?['Id']), ',roledefid=', string(body('Niveau_CSS')?['Id']), ')')}",
+                                  "parameters/headers": {
+                                    "Accept": "application/json;odata=nometadata",
+                                    "Content-Type": "application/json;odata=nometadata"
+                                  }
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "retryPolicy": {
+                                  "type": "exponential",
+                                  "count": 4,
+                                  "interval": "PT10S"
+                                }
+                              },
+                              "runAfter": {
+                                "Utilisateur_bilan_auto_1": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          },
+                          "runAfter": {
+                            "Rompre_heritage_bilan_auto": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Bilan_existant_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Bilan_auto": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Bilans d'alternance",
+                          "$filter": "AlternantId eq @{items('Pour_alternant')?['ID']}",
+                          "$top": 1
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Si_bilan_absent_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Checklist_clo_auto": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItems"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                          "table": "Actions d'intégration et checklists",
+                          "$filter": "AlternantId eq @{items('Pour_alternant')?['ID']} and Contexte eq 'Clôture d''alternance'",
+                          "$orderby": "Echeance asc",
+                          "$top": 5000
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {
+                        "Bilan_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Tableau_clo_auto": {
+                      "type": "Table",
+                      "inputs": {
+                        "from": "@body('Checklist_clo_auto')?['value']",
+                        "format": "HTML",
+                        "columns": [
+                          {
+                            "header": "Action",
+                            "value": "@concat(coalesce(item()?['IdHNCS'], ''), ' : ', item()?['Title'])"
+                          },
+                          {
+                            "header": "Responsable",
+                            "value": "@coalesce(item()?['Responsable']?['DisplayName'], '')"
+                          },
+                          {
+                            "header": "Échéance",
+                            "value": "@if(empty(item()?['Echeance']), '', formatDateTime(convertTimeZone(item()?['Echeance'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))"
+                          },
+                          {
+                            "header": "Bloquante",
+                            "value": "@if(equals(item()?['Bloquante'], true), 'Oui', 'Non')"
+                          },
+                          {
+                            "header": "Statut",
+                            "value": "@item()?['Statut']?['Value']"
+                          }
+                        ]
+                      },
+                      "runAfter": {
+                        "Checklist_clo_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Dest_N35": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@split(concat(coalesce(first(body('Referent_auto')?['value'])?['Compte']?['Email'], ''), ';', coalesce(join(body('Emails_G_RD'), ';'), ''), ';', coalesce(first(body('Etablissement_auto')?['value'])?['ResponsableHNCS']?['Email'], '')), ';')",
+                        "select": "@toLower(trim(item()))"
+                      },
+                      "runAfter": {
+                        "Tableau_clo_auto": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "DestOK_N35": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Dest_N35')",
+                        "where": "@not(empty(item()))"
+                      },
+                      "runAfter": {
+                        "Dest_N35": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Si_destinataires_N35": {
+                      "type": "If",
+                      "expression": "@greater(length(body('DestOK_N35')), 0)",
+                      "actions": {
+                        "Envoyer_N35": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                              "connectionName": "shared_office365",
+                              "operationId": "SharedMailboxSendEmailV2"
+                            },
+                            "parameters": {
+                              "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                              "body/To": "@{join(union(body('DestOK_N35'), body('DestOK_N35')), ';')}",
+                              "body/Subject": "[HNCS-R&D][N-35] Fin d'alternance planifiée : @{coalesce(items('Pour_alternant')?['IdHNCS'], string(items('Pour_alternant')?['ID']))}",
+                              "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-35] Fin d'alternance planifiée : @{coalesce(items('Pour_alternant')?['IdHNCS'], string(items('Pour_alternant')?['ID']))}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>L'alternance <strong>@{coalesce(items('Pour_alternant')?['IdHNCS'], string(items('Pour_alternant')?['ID']))}</strong> (@{items('Pour_alternant')?['Title']}) se termine le @{if(empty(items('Pour_alternant')?['DateFin']), '', formatDateTime(convertTimeZone(items('Pour_alternant')?['DateFin'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}.</p>\n<p>Checklist de clôture :</p>@{body('Tableau_clo_auto')}\n<p>Bilan à réaliser : @{coalesce(first(body('Bilan_auto')?['value'])?['IdHNCS'], '')} : <a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/BilansAlternance/DispForm.aspx?ID=', string(coalesce(first(body('Bilan_auto')?['value'])?['ID'], 0)))}\">ouvrir le bilan</a></p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/Alternants/DispForm.aspx?ID=', string(items('Pour_alternant')?['ID']))}\">Ouvrir la fiche alternant</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                              "body/Importance": "Normal"
+                            },
+                            "authentication": "@parameters('$authentication')",
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 4,
+                              "interval": "PT10S"
+                            }
+                          },
+                          "runAfter": {}
+                        }
+                      },
+                      "else": {
+                        "actions": {
+                          "Sans_destinataire_N35": {
+                            "type": "Workflow",
+                            "inputs": {
+                              "host": {
+                                "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                              },
+                              "body": {
+                                "CodeFlux": "PA-09b",
+                                "Niveau": "Avertissement",
+                                "Liste": "",
+                                "ItemId": "@{string(coalesce('', ''))}",
+                                "IdObjet": "@{coalesce('', '')}",
+                                "Message": "@{'N-35 : aucun destinataire résolu, notification non envoyée'}",
+                                "DetailErreur": "@{string(coalesce('', ''))}",
+                                "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                              }
+                            },
+                            "runAfter": {}
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "DestOK_N35": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Transition_non_appliquee_ALT_T04": {
+                        "type": "Workflow",
+                        "inputs": {
+                          "host": {
+                            "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                          },
+                          "body": {
+                            "CodeFlux": "PA-09b",
+                            "Niveau": "Avertissement",
+                            "Liste": "Alternants",
+                            "ItemId": "@{string(coalesce(items('Pour_alternant')?['ID'], ''))}",
+                            "IdObjet": "@{coalesce(coalesce(items('Pour_alternant')?['IdHNCS'], string(items('Pour_alternant')?['ID'])), '')}",
+                            "Message": "@{concat('ALT-T04 (FLUX) non appliquée : ', if(equals(toLower(string(coalesce(body('Verifier_ALT_T04')?['Autorise'], false))), 'true'), concat('Contrôle(s) non satisfait(s) : ', join(union(body('Controles_echec_ALT_T04'), body('Controles_inconnus_ALT_T04')), ' ; ')), coalesce(body('Verifier_ALT_T04')?['Motif'], '')))}",
+                            "DetailErreur": "@{string(coalesce('', ''))}",
+                            "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                          }
+                        },
+                        "runAfter": {}
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Controles_echec_ALT_T04": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              },
+              "runAfter": {
+                "Fin_approchante": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Erreur": {
+          "type": "Scope",
+          "actions": {
+            "Detail_erreur": {
+              "type": "Compose",
+              "inputs": "@string(result('Principal'))",
+              "runAfter": {}
+            },
+            "Journaliser_erreur": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-09b",
+                  "Niveau": "Erreur",
+                  "Liste": "",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'Échec de l''exécution du flux PA-09b'}",
+                  "DetailErreur": "@{string(coalesce(substring(outputs('Detail_erreur'), 0, min(length(outputs('Detail_erreur')), 8000)), ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Detail_erreur": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Terminer_en_echec": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "HNCS_ECHEC",
+                  "message": "Échec du flux PA-09b : voir le journal des flux"
+                }
+              },
+              "runAfter": {
+                "Journaliser_erreur": [
+                  "Succeeded",
+                  "Failed",
+                  "TimedOut",
+                  "Skipped"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Principal": [
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        },
+        "Terminer": {
+          "type": "Terminate",
+          "inputs": {
+            "runStatus": "Succeeded"
+          },
+          "runAfter": {
+            "Erreur": [
+              "Skipped"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

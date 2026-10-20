@@ -1,0 +1,26 @@
+[
+  {
+    "IdHNCS": "MOB-2026-9001",
+    "Title": "Démonstration PRA à un client fictif",
+    "Livrable": "LIV-2026-9001",
+    "DateMobilisation": "@J-10",
+    "TypeMobilisation": "Démonstration",
+    "Responsable": "@persona:DIR_RD"
+  },
+  {
+    "IdHNCS": "MOB-2026-9002",
+    "Title": "Réponse à un appel d'offres fictif",
+    "Livrable": "LIV-2026-9001",
+    "DateMobilisation": "@J-5",
+    "TypeMobilisation": "Réponse à appel d'offres",
+    "Responsable": "@persona:RD1"
+  },
+  {
+    "IdHNCS": "MOB-2026-9003",
+    "Title": "Avant-vente automatisation",
+    "Livrable": "LIV-2026-9009",
+    "DateMobilisation": "@J-60",
+    "TypeMobilisation": "Avant-vente",
+    "Responsable": "@persona:RD2"
+  }
+]

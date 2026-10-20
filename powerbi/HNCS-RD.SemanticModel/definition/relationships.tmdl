@@ -1,0 +1,107 @@
+relationship a688d7d7-a2b1-5dcf-8610-210e7c747d52
+	fromColumn: Candidatures.OffreId
+	toColumn: Offres.Id
+
+relationship c1887e4c-449b-59c9-bd3d-d97b5e4c0f68
+	fromColumn: Candidatures.EtablissementId
+	toColumn: Etablissements.Id
+
+relationship b91ae93e-d9b0-5a88-a7d7-0684ac0e4e94
+	fromColumn: Candidatures.DateReceptionJour
+	toColumn: Calendrier.Date
+
+relationship 0d0b9f2f-a8dd-5403-bd69-33b851881dfc
+	fromColumn: Entretiens.CandidatureId
+	toColumn: Candidatures.Id
+
+relationship 2ac2bfbf-10ea-5184-943d-fcf2c36d4829
+	fromColumn: Alternants.EtablissementId
+	toColumn: Etablissements.Id
+
+relationship ba4bc181-bcb6-562f-9d5e-f5f29516acfa
+	fromColumn: Alternants.PoleId
+	toColumn: Poles.Id
+
+relationship d873c10c-25c1-5682-abee-447812c658b5
+	isActive: false
+	fromColumn: Alternants.ReferentPrincipalId
+	toColumn: Referents.Id
+
+relationship 68a47488-c66b-514d-b774-10bf6805b4d7
+	isActive: false
+	fromColumn: Alternants.CandidatureSourceId
+	toColumn: Candidatures.Id
+
+relationship a12fbdc8-0125-5295-b5cd-98fd9518d68b
+	fromColumn: Affectations.AlternantId
+	toColumn: Alternants.Id
+
+relationship a3dbe9b8-bc7b-5c04-ae8d-789b1d44a5d0
+	fromColumn: Affectations.SujetId
+	toColumn: SujetsRD.Id
+
+relationship d1e520ac-8c4e-57d3-9b37-8bf97b698643
+	fromColumn: Affectations.ReferentId
+	toColumn: Referents.Id
+
+relationship defa16a8-0557-509f-b565-8fe434c4d73e
+	fromColumn: Livrables.AffectationId
+	toColumn: Affectations.Id
+
+relationship c186a9e4-d88d-5e73-80bb-3369b02724bf
+	fromColumn: Livrables.ModeleId
+	toColumn: RegistreModeles.Id
+
+relationship da3854c2-672b-5c2b-831c-54eea5a7c4ff
+	fromColumn: Livrables.Echeance
+	toColumn: Calendrier.Date
+
+relationship c62ebbd4-673f-53a0-a5a4-d132eb6fb12b
+	fromColumn: ComptesRendus.AffectationId
+	toColumn: Affectations.Id
+
+relationship 84abe522-8e50-5b69-b26d-12baa5a82b56
+	fromColumn: ComptesRendus.Echeance
+	toColumn: Calendrier.Date
+
+relationship e5410cf9-3d67-5b38-91ae-489e6400fdcc
+	fromColumn: SujetDomaine.SujetId
+	toColumn: SujetsRD.Id
+
+relationship 516cb269-7400-5be3-927b-f669b83aa309
+	fromColumn: SujetDomaine.DomaineId
+	toColumn: DomainesCibles.Id
+
+relationship 000e1a3d-d7cf-54d0-8557-61d1eab72bfb
+	fromColumn: Conventions.EtablissementId
+	toColumn: Etablissements.Id
+
+relationship c15d77c0-6c59-5c87-885c-4e956e088174
+	fromColumn: BilansAlternance.AlternantId
+	toColumn: Alternants.Id
+
+relationship b44af90a-8d0d-5619-87ae-6321f34d40c6
+	isActive: false
+	fromColumn: CommunicationsRD.LivrableSourceId
+	toColumn: Livrables.Id
+
+relationship 2a0b301f-f84c-54e1-87a0-58bc33ef003b
+	fromColumn: CommunicationsRD.DateEffective
+	toColumn: Calendrier.Date
+
+relationship edd5f6bc-ec8d-5840-a57d-8034b37ff2e4
+	isActive: false
+	fromColumn: Mobilisations.LivrableId
+	toColumn: Livrables.Id
+
+relationship f0e25b78-c397-5ce1-815b-1ba4649f68da
+	fromColumn: Mobilisations.DateMobilisation
+	toColumn: Calendrier.Date
+
+relationship b6802789-4482-5095-8651-241d849235f1
+	fromColumn: ActionsIntegration.AlternantId
+	toColumn: Alternants.Id
+
+relationship 41b8a605-f3cf-5885-b73c-57dc2d11a1d5
+	fromColumn: GitlabSync.SujetId
+	toColumn: SujetsRD.Id

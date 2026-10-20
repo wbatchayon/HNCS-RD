@@ -1,0 +1,67 @@
+table DomainesCibles
+	lineageTag: 74eb4682-93e1-5f6c-b405-dcdb7e4a9580
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 2edda62c-a0ad-5d7f-9453-ed76f74b5fa2
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 41d41c0c-f305-5d83-ab36-bd325ee53e6b
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 765c8ae8-028d-5b71-a998-f82b42b32144
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column PoleId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a4cd63ec-da04-5d9b-89be-b91cff3fb4c9
+		summarizeBy: none
+		sourceColumn: PoleId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cible
+		dataType: boolean
+		lineageTag: 7281c3c7-567d-5129-8ff2-3f10697f8ec3
+		summarizeBy: none
+		sourceColumn: Cible
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: ba7dae19-0143-5232-9562-7c9bc67b188c
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DomainesCibles = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("DomainesCibles", {"Id", "IdHNCS", "Title", "PoleId", "Cible", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"PoleId", "int"}, {"Cible", "bool"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "PoleId", "Cible", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

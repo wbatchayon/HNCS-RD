@@ -1,0 +1,123 @@
+table GitlabSync
+	lineageTag: 6a85e702-ef66-5f40-b11e-1878ccd8c816
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: a525b377-c01b-5cc1-8156-dc3afe1ac929
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column SujetId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7daaff4b-9bde-5875-a7fc-e04a5f0e05ff
+		summarizeBy: none
+		sourceColumn: SujetId
+
+		annotation SummarizationSetBy = Automatic
+
+	column GitlabProjetId
+		dataType: int64
+		formatString: 0
+		lineageTag: 23c564a1-e8b0-5d05-b72c-f0309586d296
+		summarizeBy: none
+		sourceColumn: GitlabProjetId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Milestone
+		dataType: string
+		lineageTag: ed06d78b-a898-51fe-a5c5-d2c349a3c9d0
+		summarizeBy: none
+		sourceColumn: Milestone
+
+		annotation SummarizationSetBy = Automatic
+
+	column MilestoneEcheance
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: a4835e6b-0465-5e16-835e-8a1220bcbdad
+		summarizeBy: none
+		sourceColumn: MilestoneEcheance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column MilestoneEtat
+		dataType: string
+		lineageTag: 69306fee-78fa-55ee-903f-321fa0236f9b
+		summarizeBy: none
+		sourceColumn: MilestoneEtat
+
+		annotation SummarizationSetBy = Automatic
+
+	column IssuesOuvertes
+		dataType: int64
+		formatString: 0
+		lineageTag: 6b487334-8e77-5313-8053-0655bebde000
+		summarizeBy: none
+		sourceColumn: IssuesOuvertes
+
+		annotation SummarizationSetBy = Automatic
+
+	column IssuesFermees
+		dataType: int64
+		formatString: 0
+		lineageTag: 662e331c-7a5a-5caf-b678-610f33e85e4b
+		summarizeBy: none
+		sourceColumn: IssuesFermees
+
+		annotation SummarizationSetBy = Automatic
+
+	column MRsOuvertes
+		dataType: int64
+		formatString: 0
+		lineageTag: a5bf1c49-c207-55ed-92dc-b979b407430e
+		summarizeBy: none
+		sourceColumn: MRsOuvertes
+
+		annotation SummarizationSetBy = Automatic
+
+	column EcartEcheance
+		dataType: boolean
+		lineageTag: c439dcf7-1abd-574f-acc8-51edd469d1af
+		summarizeBy: none
+		sourceColumn: EcartEcheance
+
+		annotation SummarizationSetBy = Automatic
+
+	column Orpheline
+		dataType: boolean
+		lineageTag: f2a15c9a-60d2-5a52-aeb4-0d2fbaee07c7
+		summarizeBy: none
+		sourceColumn: Orpheline
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateSynchro
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: e0232651-3148-57d2-aa34-2555dd805c0e
+		summarizeBy: none
+		sourceColumn: DateSynchro
+
+		annotation SummarizationSetBy = Automatic
+
+	partition GitlabSync = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("GitlabSync", {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "Orpheline", "DateSynchro"}, {}, true),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"SujetId", "int"}, {"GitlabProjetId", "int"}, {"Milestone", "text"}, {"MilestoneEcheance", "date"}, {"MilestoneEtat", "text"}, {"IssuesOuvertes", "int"}, {"IssuesFermees", "int"}, {"MRsOuvertes", "int"}, {"EcartEcheance", "bool"}, {"Orpheline", "bool"}, {"DateSynchro", "datetime"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "SujetId", "GitlabProjetId", "Milestone", "MilestoneEcheance", "MilestoneEtat", "IssuesOuvertes", "IssuesFermees", "MRsOuvertes", "EcartEcheance", "Orpheline", "DateSynchro"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

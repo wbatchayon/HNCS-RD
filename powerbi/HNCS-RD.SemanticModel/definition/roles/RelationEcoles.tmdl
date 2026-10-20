@@ -1,0 +1,27 @@
+role RelationEcoles
+	modelPermission: read
+
+	tablePermission Candidatures = FALSE ()
+
+	tablePermission Entretiens = FALSE ()
+
+	tablePermission ActionsIntegration = FALSE ()
+
+	tablePermission Livrables = FALSE ()
+
+	tablePermission ComptesRendus = FALSE ()
+
+	tablePermission Mobilisations = FALSE ()
+
+	tablePermission GitlabSync = FALSE ()
+
+	tablePermission Parametres = Parametres[Cle] = "Delai.SeuilAttenteCandidatureJours"
+
+	tablePermission HistoriqueStatuts = FALSE ()
+
+	tablePermission Alternants
+		columnPermission NomAffichage
+			metadataPermission: none
+
+	annotation HNCS_Membres = Responsables de la relation école (G_ECO) (affectation dans le service Power BI, H-16)
+

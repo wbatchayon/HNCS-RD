@@ -1,0 +1,10 @@
+[
+  {
+    "IdHNCS": "DOM-2026-9001",
+    "Title": "Mainframe (domaine retiré, recette)",
+    "Pole": "POL-P2",
+    "Description": "Domaine retiré : ne doit pas entrer dans la couverture.",
+    "Cible": true,
+    "Statut": "Inactif"
+  }
+]

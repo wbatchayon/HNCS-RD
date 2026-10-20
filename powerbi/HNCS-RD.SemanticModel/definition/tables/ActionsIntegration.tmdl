@@ -1,0 +1,96 @@
+table ActionsIntegration
+	lineageTag: 48023e65-31ff-55b5-b6de-bf60e28c2b4b
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: dad726fa-ce10-53ac-8cd6-61424e7c1028
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: bea69fc1-a13c-53f5-af04-76769015e913
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Contexte
+		dataType: string
+		lineageTag: dec3f927-06e9-55f3-8640-0fc2e008e85c
+		summarizeBy: none
+		sourceColumn: Contexte
+
+		annotation SummarizationSetBy = Automatic
+
+	column Categorie
+		dataType: string
+		lineageTag: 011ea729-eac7-5cab-a2e6-6bc876f220b3
+		summarizeBy: none
+		sourceColumn: Categorie
+
+		annotation SummarizationSetBy = Automatic
+
+	column CandidatureId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: f99f41c7-080c-569b-b9fe-4e8bd34081cf
+		summarizeBy: none
+		sourceColumn: CandidatureId
+
+		annotation SummarizationSetBy = Automatic
+
+	column AlternantId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7725b7a7-755b-5664-88b3-5614a90f687e
+		summarizeBy: none
+		sourceColumn: AlternantId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Echeance
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 5d9411c0-3680-5b5f-bd79-de0f1ea3ce83
+		summarizeBy: none
+		sourceColumn: Echeance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Bloquante
+		dataType: boolean
+		lineageTag: 5326045f-28b4-5fad-8cec-3135ce08ceb1
+		summarizeBy: none
+		sourceColumn: Bloquante
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 451e1a16-b070-5c9c-b84e-60e8dd986720
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition ActionsIntegration = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("ActionsIntegration", {"Id", "IdHNCS", "Contexte", "Categorie", "CandidatureId", "AlternantId", "Echeance", "Bloquante", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Contexte", "text"}, {"Categorie", "text"}, {"CandidatureId", "int"}, {"AlternantId", "int"}, {"Echeance", "date"}, {"Bloquante", "bool"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Contexte", "Categorie", "CandidatureId", "AlternantId", "Echeance", "Bloquante", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

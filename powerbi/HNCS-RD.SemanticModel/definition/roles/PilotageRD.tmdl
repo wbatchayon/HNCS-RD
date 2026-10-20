@@ -1,0 +1,5 @@
+role PilotageRD
+	modelPermission: read
+
+	annotation HNCS_Membres = Direction R&D, équipe R&D (affectation dans le service Power BI, H-16)
+

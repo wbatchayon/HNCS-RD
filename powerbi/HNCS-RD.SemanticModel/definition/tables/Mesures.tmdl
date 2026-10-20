@@ -1,0 +1,363 @@
+table Mesures
+	lineageTag: 8d8ebae2-714c-5311-84aa-285cd4550bef
+
+	measure 'Candidatures reçues' = COUNTROWS ( Candidatures )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: 4aa4c4e9-f730-52f8-87c5-e18d4a61bb46
+
+	measure 'Candidatures actives' = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstActive] = TRUE () )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: 51a717e5-3700-5d9a-a86f-533cfff16766
+
+	measure 'Seuil attente (j)' =
+			VAR v = LOOKUPVALUE ( Parametres[Valeur], Parametres[Cle], "Delai.SeuilAttenteCandidatureJours" )
+			RETURN IF ( ISBLANK ( v ), 10, IFERROR ( VALUE ( v ), 10 ) )
+		formatString: 0
+		displayFolder: Recrutement
+		lineageTag: 2fc039b4-9e06-5908-94cc-98779045b9f8
+
+	measure 'Candidatures en attente' =
+			VAR Seuil = [Seuil attente (j)]
+			RETURN COUNTROWS ( FILTER ( Candidatures, Candidatures[EstActive] && DATEDIFF ( COALESCE ( Candidatures[DateStatut], Candidatures[DateReception] ), NOW (), DAY ) > Seuil ) )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: ecf518c4-9a30-5350-9cd8-25735522b897
+
+	measure 'Délai moyen de présélection (j)' = AVERAGE ( Candidatures[DelaiPreselectionJours] )
+		formatString: #,##0.0
+		displayFolder: Recrutement
+		lineageTag: 264ccfd2-a1af-56fa-b465-26cfd2b27c20
+
+	measure 'Délai moyen de traitement (j)' = AVERAGE ( Candidatures[DelaiTraitementJours] )
+		formatString: #,##0.0
+		displayFolder: Recrutement
+		lineageTag: 5dca9207-a677-51a4-8dc8-ba0d8f392fa1
+
+	measure 'Candidatures analysées' = CALCULATE ( COUNTROWS ( Candidatures ), NOT ISBLANK ( Candidatures[DateDecisionPreselection] ) )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: df2294b6-794a-58fc-bf4f-3baf3e032667
+
+	measure 'Candidatures présélectionnées' = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[EstPreselectionnee] = TRUE () )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: e801bd46-75a9-5b61-9320-3067de8419a5
+
+	measure 'Taux de présélection' = DIVIDE ( [Candidatures présélectionnées], [Candidatures analysées] )
+		formatString: 0.0%
+		displayFolder: Recrutement
+		lineageTag: 9acba8bb-6456-5142-a123-e77ce454bb74
+
+	measure 'Entretiens réalisés' = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = "Réalisé" )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: 2522a509-4731-5ae0-9bdd-d193609a5060
+
+	measure 'Candidatures avec entretien réalisé' = CALCULATE ( DISTINCTCOUNT ( Entretiens[CandidatureId] ), Entretiens[Statut] = "Réalisé" )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: 26b93cd4-ea0f-5a80-8dc8-ceb4dbff15e4
+
+	measure 'Entretiens à venir' = CALCULATE ( COUNTROWS ( Entretiens ), Entretiens[Statut] = "Planifié", Entretiens[DateHeure] >= NOW () )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: 0f2c9760-7ea0-5d91-a92a-1093265bd84e
+
+	measure 'Candidatures retenues' = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] IN { "Retenue", "Formalités en cours", "Intégrée" } )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: 12ecdc59-e70a-558e-9e80-a97fd3533672
+
+	measure 'Candidatures intégrées' = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[Statut] = "Intégrée" )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: c910ca20-fa6f-5734-84d3-45fbd2db6371
+
+	measure 'Taux de transformation' = DIVIDE ( [Candidatures intégrées], [Candidatures reçues] )
+		formatString: 0.0%
+		displayFolder: Recrutement
+		lineageTag: ef828a17-3f74-5a18-8533-a22fd9145aab
+
+	measure 'Doublons signalés' = CALCULATE ( COUNTROWS ( Candidatures ), Candidatures[DoublonPotentiel] = TRUE (), Candidatures[DoublonVerifie] = FALSE () )
+		formatString: #,##0
+		displayFolder: Recrutement
+		lineageTag: 3237f7f7-ede2-59ca-add2-9d70090e4b07
+
+	measure 'Alternants actifs' = CALCULATE ( COUNTROWS ( Alternants ), Alternants[Statut] IN { "Actif", "Fin planifiée" } )
+		formatString: #,##0
+		displayFolder: Effectifs
+		lineageTag: 17fbfba7-1bcd-554a-b9e0-91380a7e5fbc
+
+	measure 'Alternants accueillis' = COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { "Actif", "Suspendu", "Fin planifiée", "Terminé", "Clôturé" } && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) ) )
+		formatString: #,##0
+		displayFolder: Effectifs
+		lineageTag: 6b6d1d8b-ed07-5e5b-900b-e49970622e87
+
+	measure 'Alternants présents sur la période' =
+			VAR DebutP = MIN ( Calendrier[Date] )
+			VAR FinP = MAX ( Calendrier[Date] )
+			RETURN COUNTROWS ( FILTER ( Alternants, Alternants[Statut] <> "À intégrer" && ( ISBLANK ( Alternants[DateFinReelle] ) || Alternants[DateFinReelle] >= Alternants[DateDebut] ) && Alternants[DateDebut] <= FinP && COALESCE ( Alternants[DateFinReelle], Alternants[DateFin] ) >= DebutP ) )
+		formatString: #,##0
+		displayFolder: Effectifs
+		lineageTag: e04be4cf-bdc2-50a7-a1ca-9da3bad19980
+
+	measure 'Affectations actives' = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { "Active", "À risque", "Bloquée" } )
+		formatString: #,##0
+		displayFolder: Effectifs
+		lineageTag: 057a4b76-358e-5862-9883-1b2aa18f2c31
+
+	measure 'Affectations sans référent' = CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { "À préparer", "Active", "À risque", "Bloquée" }, ISBLANK ( Affectations[ReferentId] ) )
+		formatString: #,##0
+		displayFolder: Effectifs
+		lineageTag: ba65db31-62db-5876-b2be-bb29aed95d38
+
+	measure 'Affectations incomplètes' =
+			COUNTROWS (
+				FILTER (
+					Affectations,
+					Affectations[Statut] IN { "À préparer", "Active", "À risque", "Bloquée" }
+						&& ( ISBLANK ( Affectations[ReferentId] ) || ISBLANK ( Affectations[DateFin] ) || COUNTROWS ( RELATEDTABLE ( Livrables ) ) = 0 )
+				)
+			)
+		formatString: #,##0
+		displayFolder: Effectifs
+		lineageTag: 38e19877-09fe-5104-abdb-846efaf7d556
+
+	measure 'Alternants sans affectation active' = COUNTROWS ( FILTER ( Alternants, Alternants[Statut] IN { "Actif", "Fin planifiée" } && CALCULATE ( COUNTROWS ( Affectations ), Affectations[Statut] IN { "Active", "À risque", "Bloquée" } ) = 0 ) )
+		formatString: #,##0
+		displayFolder: Effectifs
+		lineageTag: 12bf48c0-9451-57e2-8255-c96c0c0bd7da
+
+	measure 'Taux de charge référent' = DIVIDE ( CALCULATE ( DISTINCTCOUNT ( Affectations[AlternantId] ), Affectations[Statut] IN { "Active", "À risque", "Bloquée" } ), SUM ( Referents[CapaciteIndicative] ) )
+		formatString: 0.0%
+		displayFolder: Effectifs
+		lineageTag: 808903ad-cfad-5867-98f1-afc449432b97
+
+	measure Livrables = COUNTROWS ( Livrables )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: e1892ec9-bd36-5839-9f98-e7812e8ed33f
+
+	measure 'Livrables validés' = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { "Validé", "Archivé / clôturé" } )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: b5585abd-7f18-5d9d-8258-47028f94debe
+
+	measure 'Livrables soumis à revue' = CALCULATE ( COUNTROWS ( Livrables ), NOT ISBLANK ( Livrables[DatePremierDepot] ) )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: b793504e-27f3-5b4f-b5cd-a5fb74afa3ff
+
+	measure 'Taux de validation' = DIVIDE ( [Livrables validés], [Livrables soumis à revue] )
+		formatString: 0.0%
+		displayFolder: Livrables
+		lineageTag: 1cc5f258-9d0a-5027-a518-2fbaa0121d38
+
+	measure 'Livrables en retard' = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { "À produire", "En cours", "Corrections demandées" } && Livrables[Echeance] < TODAY () ) )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: f4082730-f027-5351-9a1d-612494593457
+
+	measure 'Livrables arrivés à échéance' = COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> "Suspendu / abandonné" ) )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: d4330c5f-e662-5988-9164-a36b1d5a846f
+
+	measure 'Taux de remise à l''heure' =
+			DIVIDE (
+				COUNTROWS ( FILTER ( Livrables, Livrables[Echeance] <= TODAY () && Livrables[Statut] <> "Suspendu / abandonné" && NOT ISBLANK ( Livrables[DatePremierDepot] ) && Livrables[DatePremierDepotJour] <= Livrables[Echeance] ) ),
+				[Livrables arrivés à échéance]
+			)
+		formatString: 0.0%
+		displayFolder: Livrables
+		lineageTag: 016e2e29-8a8d-5627-b8c9-fa00dc1483b5
+
+	measure 'Taux de validation au premier passage' =
+			DIVIDE (
+				CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { "Validé", "Archivé / clôturé" }, Livrables[NbCorrections] = 0 ),
+				[Livrables soumis à revue]
+			)
+		formatString: 0.0%
+		displayFolder: Livrables
+		lineageTag: 509a329e-be41-5274-a51f-f91880eaec57
+
+	measure 'Taux de capitalisation' =
+			DIVIDE (
+				CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = "Archivé / clôturé", Livrables[CapitalisationComplete] = TRUE () ),
+				CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] IN { "Validé", "Archivé / clôturé" } )
+			)
+		formatString: 0.0%
+		displayFolder: Livrables
+		lineageTag: 6534d01a-8265-5ae2-b4bb-bcf5946daa58
+
+	measure 'Corrections en cours' = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = "Corrections demandées" )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: 346d739f-2d75-53b6-859a-348ffddabb35
+
+	measure 'Échéances à 14 jours' = COUNTROWS ( FILTER ( Livrables, Livrables[Statut] IN { "À produire", "En cours", "Corrections demandées" } && Livrables[Echeance] >= TODAY () && Livrables[Echeance] <= TODAY () + 14 ) )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: f26ab2f4-c407-566a-8989-363e37ff8ce4
+
+	measure 'Livrables sans modèle' = CALCULATE ( COUNTROWS ( Livrables ), ISBLANK ( Livrables[ModeleId] ), Livrables[Statut] <> "Suspendu / abandonné" )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: bc13aad5-c3c2-5306-985d-d1d0d4e90e8c
+
+	measure 'POC réalisés' = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = "Archivé / clôturé", Livrables[TypeLivrable] = "POC / démonstrateur", Livrables[DoDComplete] = TRUE () )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: eef1b2b2-20ec-5462-b2f9-1da51825a815
+
+	measure 'Plans de stratégie formalisés' = CALCULATE ( COUNTROWS ( Livrables ), Livrables[Statut] = "Archivé / clôturé", Livrables[TypeLivrable] = "Plan de stratégie", Livrables[DoDComplete] = TRUE () )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: 3ebdcb9c-eef7-55a8-80a4-8de190f1053b
+
+	measure 'Couverture des domaines cibles' =
+			VAR DomCibles = FILTER ( ALL ( DomainesCibles ), DomainesCibles[Cible] = TRUE () && DomainesCibles[Statut] = "Actif" )
+			VAR SujetsValides = SELECTCOLUMNS ( FILTER ( ALL ( Livrables ), Livrables[Statut] IN { "Validé", "Archivé / clôturé" } ), "SujetId", RELATED ( Affectations[SujetId] ) )
+			VAR Couverts = FILTER ( DomCibles, NOT ISEMPTY ( FILTER ( ALL ( SujetDomaine ), SujetDomaine[DomaineId] = DomainesCibles[Id] && SujetDomaine[SujetId] IN SujetsValides ) ) )
+			RETURN DIVIDE ( COUNTROWS ( Couverts ), COUNTROWS ( DomCibles ) )
+		formatString: 0.0%
+		displayFolder: Livrables
+		lineageTag: f7c9509f-8ef7-520b-90d3-251468248f56
+
+	measure 'Sujets bloqués' = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { "Bloqué", "À arbitrer" } )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: 24cb04bd-6f7a-58a6-b4e6-c118501a4004
+
+	measure 'Sujets actifs' = CALCULATE ( COUNTROWS ( SujetsRD ), SujetsRD[Statut] IN { "Priorisé", "En cours", "Bloqué" } )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: f0179d5e-41db-5bfc-a13f-2fa9b1c05061
+
+	measure 'Mobilisations commerciales' = COUNTROWS ( Mobilisations )
+		formatString: #,##0
+		displayFolder: Livrables
+		lineageTag: 5ffffcea-2fe2-5459-98c6-1d425f89b296
+
+	measure 'Comptes rendus attendus' = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[Echeance] <= TODAY () )
+		formatString: #,##0
+		displayFolder: Comptes rendus
+		lineageTag: 89421e5a-a520-573f-8f13-1bd894b056f8
+
+	measure 'Comptes rendus manquants' = COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Statut] = "Non remis" || ( ComptesRendus[Statut] IN { "Attendu", "En rédaction" } && ComptesRendus[Echeance] < TODAY () ) ) )
+		formatString: #,##0
+		displayFolder: Comptes rendus
+		lineageTag: 598bb6d7-2c9d-55af-b9ab-c1dad84af829
+
+	measure 'Taux de remise des comptes rendus' =
+			DIVIDE (
+				COUNTROWS ( FILTER ( ComptesRendus, ComptesRendus[Echeance] <= TODAY () && NOT ISBLANK ( ComptesRendus[DateRemise] ) && DATE ( YEAR ( ComptesRendus[DateRemise] ), MONTH ( ComptesRendus[DateRemise] ), DAY ( ComptesRendus[DateRemise] ) ) <= ComptesRendus[Echeance] ) ),
+				[Comptes rendus attendus]
+			)
+		formatString: 0.0%
+		displayFolder: Comptes rendus
+		lineageTag: 1bdfa1f6-60c5-54d2-b502-6a5be18a5c92
+
+	measure 'Blocages signalés' = CALCULATE ( COUNTROWS ( ComptesRendus ), ComptesRendus[BlocageSignale] = TRUE () )
+		formatString: #,##0
+		displayFolder: Comptes rendus
+		lineageTag: 4823693d-d3e1-52b7-89b8-3980f11ff103
+
+	measure 'Avancement moyen (dernier CR)' =
+			AVERAGEX (
+				VALUES ( Affectations[Id] ),
+				VAR DernierePeriode = CALCULATE ( MAX ( ComptesRendus[PeriodeFin] ), ComptesRendus[Statut] IN { "Remis", "Validé", "À compléter" } )
+				RETURN CALCULATE ( MAX ( ComptesRendus[Avancement] ), ComptesRendus[PeriodeFin] = DernierePeriode )
+			)
+		formatString: #,##0.0
+		displayFolder: Comptes rendus
+		lineageTag: b183aa78-9cd6-57d8-9dd9-a7eb5145184a
+
+	measure 'Partenariats académiques actifs' = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = "Signée / active", Conventions[TypeConvention] IN { "Convention de partenariat", "Sponsoring" } )
+		formatString: #,##0
+		displayFolder: Écoles
+		lineageTag: 57f18b28-41b6-5798-9abd-01b535c549f2
+
+	measure 'Conventions à renouveler' = CALCULATE ( COUNTROWS ( Conventions ), Conventions[Statut] = "À renouveler" )
+		formatString: #,##0
+		displayFolder: Écoles
+		lineageTag: 0e7751eb-1e97-516c-a431-6fe62fa1b610
+
+	measure 'Établissements collaborants' = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] IN { "Établissement d'accueil", "Partenariat à évaluer", "Partenaire actif" } )
+		formatString: #,##0
+		displayFolder: Écoles
+		lineageTag: c4cebf58-ea3b-54e6-8ef6-4afd5c28113a
+
+	measure 'Partenariats à évaluer' = CALCULATE ( COUNTROWS ( Etablissements ), Etablissements[Statut] = "Partenariat à évaluer" )
+		formatString: #,##0
+		displayFolder: Écoles
+		lineageTag: c54186fe-9659-5838-8014-3b0b4ec0b58b
+
+	measure 'Bilans réalisés' = CALCULATE ( COUNTROWS ( BilansAlternance ), BilansAlternance[Statut] = "Réalisé" )
+		formatString: #,##0
+		displayFolder: Écoles
+		lineageTag: 4655ef51-7e22-51e9-9be7-d29395e22670
+
+	measure 'Communications publiées' = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] = "Publiée", CommunicationsRD[Externe] = TRUE () )
+		formatString: #,##0
+		displayFolder: Communications
+		lineageTag: f3c8bac7-78ce-5332-918b-1c8f4f38604f
+
+	measure 'Communications en préparation' = CALCULATE ( COUNTROWS ( CommunicationsRD ), CommunicationsRD[Statut] IN { "Idée", "À préparer", "En rédaction", "En revue", "Validée", "Programmée" } )
+		formatString: #,##0
+		displayFolder: Communications
+		lineageTag: f0ad41e2-024d-54c5-97c8-ef6bc924603f
+
+	measure 'Livrables valorisés' = CALCULATE ( DISTINCTCOUNTNOBLANK ( CommunicationsRD[LivrableSourceId] ), CommunicationsRD[Statut] = "Publiée" )
+		formatString: #,##0
+		displayFolder: Communications
+		lineageTag: 804b4010-1fc0-5e02-956b-09836badc643
+
+	measure 'Actions en retard' = COUNTROWS ( FILTER ( ActionsIntegration, ActionsIntegration[Statut] IN { "À faire", "En cours", "Bloquée" } && ActionsIntegration[Echeance] < TODAY () ) )
+		formatString: #,##0
+		displayFolder: Qualité
+		lineageTag: 3a16227b-9a82-5b4c-b241-399670dbc29c
+
+	measure 'Transitions refusées' = CALCULATE ( COUNTROWS ( HistoriqueStatuts ), HistoriqueStatuts[Resultat] = "Refusée et annulée" )
+		formatString: #,##0
+		displayFolder: Qualité
+		lineageTag: e02298d6-45ea-5356-8327-756b2fddb9d9
+
+	measure 'Écarts d''échéance GitLab' = CALCULATE ( COUNTROWS ( GitlabSync ), GitlabSync[EcartEcheance] = TRUE (), GitlabSync[Orpheline] = FALSE () )
+		formatString: #,##0
+		displayFolder: Qualité
+		lineageTag: 22b25e7d-d4cc-570e-9233-94f38930a4e4
+
+	measure Cible = SELECTEDVALUE ( Objectifs[Cible] )
+		formatString: #,##0.##
+		displayFolder: Objectifs
+		lineageTag: e34bcdd0-d68e-5757-b4ad-7bbce5d66453
+
+	measure 'Dernière actualisation' = MAX ( Mesures[DerniereActualisation] )
+		formatString: dd/MM/yyyy HH:mm
+		displayFolder: Technique
+		lineageTag: 573c2232-f62d-57f3-af88-88f5052cd6c4
+
+	column DerniereActualisation
+		dataType: dateTime
+		isHidden
+		formatString: dd/MM/yyyy HH:mm
+		lineageTag: 807dd53b-2625-57c6-99e6-df930c29e28e
+		summarizeBy: none
+		sourceColumn: DerniereActualisation
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Mesures = m
+		mode: import
+		source =
+				let
+					// Table de mesures : une seule ligne portant l'horodatage de l'actualisation (heure de Paris).
+					Source = #table(type table [DerniereActualisation = datetime], {{fnHeureParis(DateTimeZone.FixedUtcNow())}})
+				in
+					Source
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,88 @@
+table BilansAlternance
+	lineageTag: fb45f43d-7502-5caf-beb3-c5fc304c39d0
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 78694238-86f6-5bb5-9d42-e5cf35c71996
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: e98b436f-099c-5cd8-b9ee-dca80e924a4f
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column AlternantId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 1df6a51e-9632-5922-965a-49326f3a0609
+		summarizeBy: none
+		sourceColumn: AlternantId
+
+		annotation SummarizationSetBy = Automatic
+
+	column EtablissementId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 8c4c5396-a446-5d3a-939f-cac7c255805d
+		summarizeBy: none
+		sourceColumn: EtablissementId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateBilan
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: c813847f-3e73-5448-be0b-7dd75c429a99
+		summarizeBy: none
+		sourceColumn: DateBilan
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column QualiteCollaborationEcole
+		dataType: string
+		lineageTag: afce81c2-38dc-506f-9a9c-d1ae830da819
+		summarizeBy: none
+		sourceColumn: QualiteCollaborationEcole
+
+		annotation SummarizationSetBy = Automatic
+
+	column RecommandationPartenariat
+		dataType: string
+		lineageTag: 0530d23c-5ec2-51d2-8dfc-31c161ffb78a
+		summarizeBy: none
+		sourceColumn: RecommandationPartenariat
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 98f79502-2681-53fa-9cb4-57c11cb0d9c2
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition BilansAlternance = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("BilansAlternance", {"Id", "IdHNCS", "AlternantId", "EtablissementId", "DateBilan", "QualiteCollaborationEcole", "RecommandationPartenariat", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"AlternantId", "int"}, {"EtablissementId", "int"}, {"DateBilan", "date"}, {"QualiteCollaborationEcole", "text"}, {"RecommandationPartenariat", "text"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "AlternantId", "EtablissementId", "DateBilan", "QualiteCollaborationEcole", "RecommandationPartenariat", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

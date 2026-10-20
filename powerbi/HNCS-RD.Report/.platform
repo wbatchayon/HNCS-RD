@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "HNCS-RD"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "4df6941e-77f6-5628-ad62-9d51357cd061"
+  }
+}

@@ -1,0 +1,1267 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_outlook"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      },
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_teams": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_teams"
+        },
+        "api": {
+          "name": "shared_teams"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "hncs_SiteUrl (hncs_SiteUrl)": {
+          "defaultValue": "https://contoso.sharepoint.com/sites/HNCS-RD",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_SiteUrl",
+            "description": "URL du site SharePoint HNCS-R&D (sans barre finale)"
+          }
+        }
+      },
+      "triggers": {
+        "Recurrence": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Week",
+            "interval": 1,
+            "schedule": {
+              "weekDays": [
+                "Monday"
+              ],
+              "hours": [
+                "8"
+              ],
+              "minutes": [
+                0
+              ]
+            },
+            "timeZone": "Romance Standard Time"
+          }
+        }
+      },
+      "actions": {
+        "Principal": {
+          "type": "Scope",
+          "actions": {
+            "Lire_parametres": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Paramètres",
+                  "$filter": "Categorie eq 'Destinataires' or Categorie eq 'Délais' or Categorie eq 'Fonctionnalités' or Categorie eq 'Conservation' or Categorie eq 'Liens' or Categorie eq 'Gouvernance' or Categorie eq 'Canaux'",
+                  "$top": 500
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {}
+            },
+            "Parametres_cles_valeurs": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Lire_parametres')?['value']",
+                "select": "@concat('\"', replace(item()?['Title'], '\"', ''), '\":', if(empty(item()?['Valeur']), 'null', concat('\"', replace(replace(item()?['Valeur'], '\\', '\\\\'), '\"', '\\\"'), '\"')))"
+              },
+              "runAfter": {
+                "Lire_parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parametres": {
+              "type": "Compose",
+              "inputs": "@json(concat('{', join(body('Parametres_cles_valeurs'), ','), '}'))",
+              "runAfter": {
+                "Parametres_cles_valeurs": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Aujourdhui": {
+              "type": "Compose",
+              "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')",
+              "runAfter": {
+                "Parametres": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Membres_G_DRD": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "parameters/method": "GET",
+                  "parameters/uri": "_api/web/sitegroups/getbyname('HNCS-RD-DirectionRD')/users?$select=Email",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata",
+                    "Content-Type": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Aujourdhui": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Emails_G_DRD": {
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Membres_G_DRD')?['value']",
+                "select": "@toLower(coalesce(item()?['Email'], ''))"
+              },
+              "runAfter": {
+                "Membres_G_DRD": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_parametre_comite_different": {
+              "type": "If",
+              "expression": "@not(equals(coalesce(outputs('Parametres')?['Gouvernance.ComiteJourHeure'], 'Lundi 08:00'), 'Lundi 08:00'))",
+              "actions": {
+                "Parametre_comite_non_applique": {
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                    },
+                    "body": {
+                      "CodeFlux": "PA-11",
+                      "Niveau": "Avertissement",
+                      "Liste": "",
+                      "ItemId": "@{string(coalesce('', ''))}",
+                      "IdObjet": "@{coalesce('', '')}",
+                      "Message": "@{'Gouvernance.ComiteJourHeure diffère de « Lundi 08:00 » : la récurrence du flux doit être modifiée à la main'}",
+                      "DetailErreur": "@{string(coalesce('', ''))}",
+                      "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Emails_G_DRD": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_retards": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Livrables",
+                  "$filter": "EnRetard eq 1",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Si_parametre_comite_different": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filtrer_retards": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Lire_retards')?['value']",
+                "where": "@less(if(empty(item()?['Echeance']), '', formatDateTime(convertTimeZone(item()?['Echeance'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), addDays(outputs('Aujourdhui'), mul(-1, int(coalesce(outputs('Parametres')?['Delai.EscaladeComiteJours'], '7'))), 'yyyy-MM-dd'))"
+              },
+              "runAfter": {
+                "Lire_retards": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_retards": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Filtrer_retards')",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Livrable",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  },
+                  {
+                    "header": "Échéance",
+                    "value": "@if(empty(item()?['Echeance']), '', formatDateTime(convertTimeZone(item()?['Echeance'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Filtrer_retards": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_echeances": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Livrables",
+                  "$filter": "Statut eq 'À produire' or Statut eq 'En cours' or Statut eq 'Corrections demandées'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_retards": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filtrer_echeances": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Lire_echeances')?['value']",
+                "where": "@and(not(empty(item()?['Echeance'])), greaterOrEquals(if(empty(item()?['Echeance']), '', formatDateTime(convertTimeZone(item()?['Echeance'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), outputs('Aujourdhui')), lessOrEquals(if(empty(item()?['Echeance']), '', formatDateTime(convertTimeZone(item()?['Echeance'], 'UTC', 'Romance Standard Time'), 'yyyy-MM-dd')), addDays(outputs('Aujourdhui'), 14, 'yyyy-MM-dd')))"
+              },
+              "runAfter": {
+                "Lire_echeances": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_echeances": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Filtrer_echeances')",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Livrable",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  },
+                  {
+                    "header": "Échéance",
+                    "value": "@if(empty(item()?['Echeance']), '', formatDateTime(convertTimeZone(item()?['Echeance'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Filtrer_echeances": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_cr_non_remis": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Comptes rendus de suivi",
+                  "$filter": "Statut eq 'Non remis'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_echeances": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_cr_non_remis": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Lire_cr_non_remis')?['value']",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Compte rendu",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  },
+                  {
+                    "header": "Échéance",
+                    "value": "@if(empty(item()?['Echeance']), '', formatDateTime(convertTimeZone(item()?['Echeance'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Lire_cr_non_remis": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_blocages": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Comptes rendus de suivi",
+                  "$filter": "BlocageSignale eq 1 and Statut ne 'Validé'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_cr_non_remis": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_blocages": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Lire_blocages')?['value']",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Compte rendu",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  },
+                  {
+                    "header": "Échéance",
+                    "value": "@if(empty(item()?['Echeance']), '', formatDateTime(convertTimeZone(item()?['Echeance'], 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Lire_blocages": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_affectations": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Affectations",
+                  "$filter": "Statut eq 'À risque' or Statut eq 'Bloquée'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_blocages": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_affectations": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Lire_affectations')?['value']",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Identifiant",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Lire_affectations": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_sujets": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Sujets R&D",
+                  "$filter": "Statut eq 'Bloqué' or Statut eq 'À arbitrer'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_affectations": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_sujets": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Lire_sujets')?['value']",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Identifiant",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Lire_sujets": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_conventions": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Conventions et partenariats",
+                  "$filter": "Statut eq 'À renouveler'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_sujets": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_conventions": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Lire_conventions')?['value']",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Identifiant",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Lire_conventions": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_etablissements": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Écoles et établissements",
+                  "$filter": "Statut eq 'Partenariat à évaluer'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_conventions": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_etablissements": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Lire_etablissements')?['value']",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Identifiant",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Lire_etablissements": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Lire_communications": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Communications R&D",
+                  "$filter": "Statut eq 'En revue'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_etablissements": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_communications": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Lire_communications')?['value']",
+                "format": "HTML",
+                "columns": [
+                  {
+                    "header": "Identifiant",
+                    "value": "@item()?['IdHNCS']"
+                  },
+                  {
+                    "header": "Statut",
+                    "value": "@item()?['Statut']?['Value']"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Lire_communications": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_en_attente": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+                  "table": "Candidatures",
+                  "$filter": "Statut ne 'Intégrée' and Statut ne 'Non retenue' and Statut ne 'Clôturée'",
+                  "$top": 5000
+                },
+                "authentication": "@parameters('$authentication')",
+                "retryPolicy": {
+                  "type": "exponential",
+                  "count": 4,
+                  "interval": "PT10S"
+                }
+              },
+              "runAfter": {
+                "Tableau_communications": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_1": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'Reçue')"
+              },
+              "runAfter": {
+                "Candidatures_en_attente": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_2": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'À analyser')"
+              },
+              "runAfter": {
+                "Candidatures_statut_1": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_3": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'En cours d''analyse')"
+              },
+              "runAfter": {
+                "Candidatures_statut_2": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_4": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'Présélectionnée')"
+              },
+              "runAfter": {
+                "Candidatures_statut_3": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_5": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'Transmise à l''administration')"
+              },
+              "runAfter": {
+                "Candidatures_statut_4": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_6": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'Entretien planifié')"
+              },
+              "runAfter": {
+                "Candidatures_statut_5": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_7": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'Entretien réalisé')"
+              },
+              "runAfter": {
+                "Candidatures_statut_6": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_8": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'En attente de décision')"
+              },
+              "runAfter": {
+                "Candidatures_statut_7": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_9": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'Retenue')"
+              },
+              "runAfter": {
+                "Candidatures_statut_8": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Candidatures_statut_10": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Candidatures_en_attente')?['value']",
+                "where": "@equals(item()?['Statut']?['Value'], 'Formalités en cours')"
+              },
+              "runAfter": {
+                "Candidatures_statut_9": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Tableau_candidatures": {
+              "type": "Compose",
+              "inputs": "@concat('<table><tr><th>Statut</th><th>Nombre</th></tr>', '<tr><td>Reçue</td><td>', string(length(body('Candidatures_statut_1'))), '</td></tr>', '<tr><td>À analyser</td><td>', string(length(body('Candidatures_statut_2'))), '</td></tr>', '<tr><td>En cours d''analyse</td><td>', string(length(body('Candidatures_statut_3'))), '</td></tr>', '<tr><td>Présélectionnée</td><td>', string(length(body('Candidatures_statut_4'))), '</td></tr>', '<tr><td>Transmise à l''administration</td><td>', string(length(body('Candidatures_statut_5'))), '</td></tr>', '<tr><td>Entretien planifié</td><td>', string(length(body('Candidatures_statut_6'))), '</td></tr>', '<tr><td>Entretien réalisé</td><td>', string(length(body('Candidatures_statut_7'))), '</td></tr>', '<tr><td>En attente de décision</td><td>', string(length(body('Candidatures_statut_8'))), '</td></tr>', '<tr><td>Retenue</td><td>', string(length(body('Candidatures_statut_9'))), '</td></tr>', '<tr><td>Formalités en cours</td><td>', string(length(body('Candidatures_statut_10'))), '</td></tr>', '</table>')",
+              "runAfter": {
+                "Candidatures_statut_10": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Synthese_comite": {
+              "type": "Compose",
+              "inputs": "@concat('<h3>Livrables en retard (escaladés)</h3>', body('Tableau_retards'), '<h3>Échéances des 14 prochains jours</h3>', body('Tableau_echeances'), '<h3>Comptes rendus non remis</h3>', body('Tableau_cr_non_remis'), '<h3>Blocages signalés</h3>', body('Tableau_blocages'), '<h3>Affectations à risque ou bloquées</h3>', body('Tableau_affectations'), '<h3>Sujets bloqués ou à arbitrer</h3>', body('Tableau_sujets'), '<h3>Conventions à renouveler</h3>', body('Tableau_conventions'), '<h3>Établissements : partenariat à évaluer</h3>', body('Tableau_etablissements'), '<h3>Communications en revue</h3>', body('Tableau_communications'), '<h3>Candidatures en attente (nombre par statut)</h3>', outputs('Tableau_candidatures'))",
+              "runAfter": {
+                "Tableau_candidatures": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Synthese_direction": {
+              "type": "Compose",
+              "inputs": "@concat('<table><tr><th>Indicateur</th><th>Nombre</th></tr>', '<tr><td>Livrables en retard (escaladés)</td><td>', string(length(body('Filtrer_retards'))), '</td></tr>', '<tr><td>Échéances des 14 prochains jours</td><td>', string(length(body('Filtrer_echeances'))), '</td></tr>', '<tr><td>Comptes rendus non remis</td><td>', string(length(body('Lire_cr_non_remis')?['value'])), '</td></tr>', '<tr><td>Blocages signalés</td><td>', string(length(body('Lire_blocages')?['value'])), '</td></tr>', '<tr><td>Affectations à risque ou bloquées</td><td>', string(length(body('Lire_affectations')?['value'])), '</td></tr>', '<tr><td>Sujets bloqués ou à arbitrer</td><td>', string(length(body('Lire_sujets')?['value'])), '</td></tr>', '<tr><td>Conventions à renouveler</td><td>', string(length(body('Lire_conventions')?['value'])), '</td></tr>', '<tr><td>Établissements : partenariat à évaluer</td><td>', string(length(body('Lire_etablissements')?['value'])), '</td></tr>', '<tr><td>Communications en revue</td><td>', string(length(body('Lire_communications')?['value'])), '</td></tr>', '</table><h3>Points d''arbitrage : sujets bloqués ou à arbitrer</h3>', body('Tableau_sujets'), '<h3>Candidatures en attente</h3>', outputs('Tableau_candidatures'))",
+              "runAfter": {
+                "Synthese_comite": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Dest_N42": {
+              "type": "Select",
+              "inputs": {
+                "from": "@split(concat(coalesce(join(body('Emails_G_DRD'), ';'), '')), ';')",
+                "select": "@toLower(trim(item()))"
+              },
+              "runAfter": {
+                "Synthese_direction": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "DestOK_N42": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Dest_N42')",
+                "where": "@not(empty(item()))"
+              },
+              "runAfter": {
+                "Dest_N42": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_destinataires_N42": {
+              "type": "If",
+              "expression": "@greater(length(body('DestOK_N42')), 0)",
+              "actions": {
+                "Envoyer_N42": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                      "connectionName": "shared_office365",
+                      "operationId": "SharedMailboxSendEmailV2"
+                    },
+                    "parameters": {
+                      "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                      "body/To": "@{join(union(body('DestOK_N42'), body('DestOK_N42')), ';')}",
+                      "body/Subject": "[HNCS-R&D][N-42] Synthèse Comité R&D du @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}",
+                      "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-42] Synthèse Comité R&amp;D du @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Synthèse opérationnelle préparée pour le Comité R&amp;D du @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}.</p>\n@{outputs('Synthese_comite')}\n<p><a href=\"@{coalesce(outputs('Parametres')?['Lien.RapportPowerBI'], '')}\">Ouvrir le rapport Power BI</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                      "body/Importance": "Normal"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {
+                  "Sans_destinataire_N42": {
+                    "type": "Workflow",
+                    "inputs": {
+                      "host": {
+                        "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                      },
+                      "body": {
+                        "CodeFlux": "PA-11",
+                        "Niveau": "Avertissement",
+                        "Liste": "",
+                        "ItemId": "@{string(coalesce('', ''))}",
+                        "IdObjet": "@{coalesce('', '')}",
+                        "Message": "@{'N-42 : aucun destinataire résolu, notification non envoyée'}",
+                        "DetailErreur": "@{string(coalesce('', ''))}",
+                        "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                      }
+                    },
+                    "runAfter": {}
+                  }
+                }
+              },
+              "runAfter": {
+                "DestOK_N42": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_canal_comite": {
+              "type": "If",
+              "expression": "@and(contains(coalesce(outputs('Parametres')?['Lien.CanalComite'], ''), 'groupId='), contains(coalesce(outputs('Parametres')?['Lien.CanalComite'], ''), '/l/channel/'))",
+              "actions": {
+                "Publier_canal_comite": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                      "connectionName": "shared_teams",
+                      "operationId": "PostMessageToConversation"
+                    },
+                    "parameters": {
+                      "poster": "Flow bot",
+                      "location": "Channel",
+                      "body/recipient/groupId": "@{first(split(last(split(coalesce(outputs('Parametres')?['Lien.CanalComite'], ''), 'groupId=')), '&'))}",
+                      "body/recipient/channelId": "@{decodeUriComponent(first(split(last(split(coalesce(outputs('Parametres')?['Lien.CanalComite'], ''), '/l/channel/')), '/')))}",
+                      "body/messageBody": "<p><strong>[HNCS-R&amp;D][N-42] Synthèse Comité R&amp;D du @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))}</strong></p>@{outputs('Synthese_comite')}<p><a href=\"@{coalesce(outputs('Parametres')?['Lien.RapportPowerBI'], '')}\">Rapport Power BI</a></p>"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Si_destinataires_N42": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Canal_comite_echec": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-11",
+                  "Niveau": "Avertissement",
+                  "Liste": "",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'N-42 : publication dans le canal Teams du comité impossible'}",
+                  "DetailErreur": "@{string(coalesce('', ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Si_canal_comite": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Si_premier_lundi_du_mois": {
+              "type": "If",
+              "expression": "@and(lessOrEquals(int(formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'dd')), 7), not(contains(createArray(1, 4, 7, 10), int(formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'MM')))))",
+              "actions": {
+                "Dest_N43": {
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@split(concat(coalesce(join(body('Emails_G_DRD'), ';'), '')), ';')",
+                    "select": "@toLower(trim(item()))"
+                  },
+                  "runAfter": {}
+                },
+                "DestOK_N43": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@body('Dest_N43')",
+                    "where": "@not(empty(item()))"
+                  },
+                  "runAfter": {
+                    "Dest_N43": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Si_destinataires_N43": {
+                  "type": "If",
+                  "expression": "@greater(length(body('DestOK_N43')), 0)",
+                  "actions": {
+                    "Envoyer_N43": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                          "connectionName": "shared_office365",
+                          "operationId": "SharedMailboxSendEmailV2"
+                        },
+                        "parameters": {
+                          "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                          "body/To": "@{join(union(body('DestOK_N43'), body('DestOK_N43')), ';')}",
+                          "body/Subject": "[HNCS-R&D][N-43] Synthèse @{'Point Direction'} à relire et transmettre",
+                          "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-43] Synthèse @{'Point Direction'} à relire et transmettre</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Synthèse agrégée : @{'Point Direction'} du @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))} (sans nom de personne), à relire par la Direction R&amp;D puis à transmettre à la Direction Générale.</p>\n@{outputs('Synthese_direction')}\n<p><a href=\"@{coalesce(outputs('Parametres')?['Lien.RapportPowerBI'], '')}\">Ouvrir le rapport Power BI</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                          "body/Importance": "Normal"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Sans_destinataire_N43": {
+                        "type": "Workflow",
+                        "inputs": {
+                          "host": {
+                            "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                          },
+                          "body": {
+                            "CodeFlux": "PA-11",
+                            "Niveau": "Avertissement",
+                            "Liste": "",
+                            "ItemId": "@{string(coalesce('', ''))}",
+                            "IdObjet": "@{coalesce('', '')}",
+                            "Message": "@{'N-43 : aucun destinataire résolu, notification non envoyée'}",
+                            "DetailErreur": "@{string(coalesce('', ''))}",
+                            "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                          }
+                        },
+                        "runAfter": {}
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "DestOK_N43": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Canal_comite_echec": [
+                  "Succeeded",
+                  "Skipped"
+                ]
+              }
+            },
+            "Si_premier_lundi_du_trimestre": {
+              "type": "If",
+              "expression": "@and(lessOrEquals(int(formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'dd')), 7), contains(createArray(1, 4, 7, 10), int(formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time'), 'MM'))))",
+              "actions": {
+                "Dest_N43_2": {
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@split(concat(coalesce(join(body('Emails_G_DRD'), ';'), '')), ';')",
+                    "select": "@toLower(trim(item()))"
+                  },
+                  "runAfter": {}
+                },
+                "DestOK_N43_2": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@body('Dest_N43_2')",
+                    "where": "@not(empty(item()))"
+                  },
+                  "runAfter": {
+                    "Dest_N43_2": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Si_destinataires_N43_2": {
+                  "type": "If",
+                  "expression": "@greater(length(body('DestOK_N43_2')), 0)",
+                  "actions": {
+                    "Envoyer_N43_2": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                          "connectionName": "shared_office365",
+                          "operationId": "SharedMailboxSendEmailV2"
+                        },
+                        "parameters": {
+                          "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], '')}",
+                          "body/To": "@{join(union(body('DestOK_N43_2'), body('DestOK_N43_2')), ';')}",
+                          "body/Subject": "[HNCS-R&D][N-43] Synthèse @{'Revue trimestrielle'} à relire et transmettre",
+                          "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-43] Synthèse @{'Revue trimestrielle'} à relire et transmettre</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Synthèse agrégée : @{'Revue trimestrielle'} du @{if(empty(outputs('Aujourdhui')), '', formatDateTime(convertTimeZone(outputs('Aujourdhui'), 'UTC', 'Romance Standard Time'), 'dd/MM/yyyy'))} (sans nom de personne), à relire par la Direction R&amp;D puis à transmettre à la Direction Générale.</p>\n@{outputs('Synthese_direction')}\n<p><a href=\"@{coalesce(outputs('Parametres')?['Lien.RapportPowerBI'], '')}\">Ouvrir le rapport Power BI</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                          "body/Importance": "Normal"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "retryPolicy": {
+                          "type": "exponential",
+                          "count": 4,
+                          "interval": "PT10S"
+                        }
+                      },
+                      "runAfter": {}
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Sans_destinataire_N43_2": {
+                        "type": "Workflow",
+                        "inputs": {
+                          "host": {
+                            "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                          },
+                          "body": {
+                            "CodeFlux": "PA-11",
+                            "Niveau": "Avertissement",
+                            "Liste": "",
+                            "ItemId": "@{string(coalesce('', ''))}",
+                            "IdObjet": "@{coalesce('', '')}",
+                            "Message": "@{'N-43 : aucun destinataire résolu, notification non envoyée'}",
+                            "DetailErreur": "@{string(coalesce('', ''))}",
+                            "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                          }
+                        },
+                        "runAfter": {}
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "DestOK_N43_2": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Si_premier_lundi_du_mois": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Erreur": {
+          "type": "Scope",
+          "actions": {
+            "Detail_erreur": {
+              "type": "Compose",
+              "inputs": "@string(result('Principal'))",
+              "runAfter": {}
+            },
+            "Journaliser_erreur": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8f895e3b-a283-5633-abec-4f84f6a2eac8"
+                },
+                "body": {
+                  "CodeFlux": "PA-11",
+                  "Niveau": "Erreur",
+                  "Liste": "",
+                  "ItemId": "@{string(coalesce('', ''))}",
+                  "IdObjet": "@{coalesce('', '')}",
+                  "Message": "@{'Échec de l''exécution du flux PA-11'}",
+                  "DetailErreur": "@{string(coalesce(substring(outputs('Detail_erreur'), 0, min(length(outputs('Detail_erreur')), 8000)), ''))}",
+                  "RunUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}"
+                }
+              },
+              "runAfter": {
+                "Detail_erreur": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Terminer_en_echec": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "HNCS_ECHEC",
+                  "message": "Échec du flux PA-11 : voir le journal des flux"
+                }
+              },
+              "runAfter": {
+                "Journaliser_erreur": [
+                  "Succeeded",
+                  "Failed",
+                  "TimedOut",
+                  "Skipped"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Principal": [
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        },
+        "Terminer": {
+          "type": "Terminate",
+          "inputs": {
+            "runStatus": "Succeeded"
+          },
+          "runAfter": {
+            "Erreur": [
+              "Skipped"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

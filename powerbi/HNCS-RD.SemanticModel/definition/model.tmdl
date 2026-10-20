@@ -1,0 +1,44 @@
+model Model
+	culture: fr-FR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: fr-FR
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["SiteUrl", "fnLireListeSharePoint", "fnHeureParis", "fnTyperColonnes", "Poles", "Referents", "Etablissements", "Offres", "DomainesCibles", "SujetsRD", "SujetDomaine", "RegistreModeles", "Candidatures", "Entretiens", "Alternants", "Affectations", "Livrables", "ComptesRendus", "ActionsIntegration", "Conventions", "BilansAlternance", "CommunicationsRD", "Mobilisations", "HistoriqueStatuts", "GitlabSync", "Parametres", "Mesures"]
+
+ref table Poles
+ref table Referents
+ref table Etablissements
+ref table Offres
+ref table DomainesCibles
+ref table SujetsRD
+ref table SujetDomaine
+ref table RegistreModeles
+ref table Candidatures
+ref table Entretiens
+ref table Alternants
+ref table Affectations
+ref table Livrables
+ref table ComptesRendus
+ref table ActionsIntegration
+ref table Conventions
+ref table BilansAlternance
+ref table CommunicationsRD
+ref table Mobilisations
+ref table HistoriqueStatuts
+ref table GitlabSync
+ref table Parametres
+ref table Calendrier
+ref table Objectifs
+ref table Mesures
+
+ref role Direction
+ref role PilotageRD
+ref role Administration
+ref role RelationEcoles
+ref role Referent

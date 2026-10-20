@@ -1,0 +1,141 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "02c8b3d3f9818b5d1b1b",
+  "position": {
+    "x": 16,
+    "y": 460,
+    "z": 15000,
+    "height": 250,
+    "width": 1248,
+    "tabOrder": 15000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Affectations"
+                    }
+                  },
+                  "Property": "IdHNCS"
+                }
+              },
+              "queryRef": "Affectations.IdHNCS",
+              "displayName": "Affectation"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Alternants"
+                    }
+                  },
+                  "Property": "IdHNCS"
+                }
+              },
+              "queryRef": "Alternants.IdHNCS",
+              "displayName": "Alternant"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SujetsRD"
+                    }
+                  },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "SujetsRD.Title",
+              "displayName": "Sujet"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Referents"
+                    }
+                  },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "Referents.Title",
+              "displayName": "Référent"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Affectations"
+                    }
+                  },
+                  "Property": "DateDebut"
+                }
+              },
+              "queryRef": "Affectations.DateDebut"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Affectations"
+                    }
+                  },
+                  "Property": "DateFin"
+                }
+              },
+              "queryRef": "Affectations.DateFin"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Affectations"
+                    }
+                  },
+                  "Property": "Statut"
+                }
+              },
+              "queryRef": "Affectations.Statut"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Affectations'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

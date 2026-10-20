@@ -1,0 +1,65 @@
+table RegistreModeles
+	lineageTag: 5b84c293-91fd-5395-87a3-97109b223c5e
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: d30e5595-23b7-5765-9e3e-a2c4c8b38900
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: cb976742-bcfd-5ddb-aa0f-11a6fe2f198b
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: fbb1feb6-b473-528b-b7cd-b0fb91c14958
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column TypeModele
+		dataType: string
+		lineageTag: 9696c998-21dd-5f0f-8aa4-94935a42f1e0
+		summarizeBy: none
+		sourceColumn: TypeModele
+
+		annotation SummarizationSetBy = Automatic
+
+	column Version
+		dataType: string
+		lineageTag: 139ff4ae-da4c-5db7-a403-73c2d40632b4
+		summarizeBy: none
+		sourceColumn: Version
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: d8f23145-ee32-5b43-8f20-65f694db2597
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	partition RegistreModeles = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("RegistreModeles", {"Id", "IdHNCS", "Title", "TypeModele", "Version", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"TypeModele", "text"}, {"Version", "text"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "TypeModele", "Version", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

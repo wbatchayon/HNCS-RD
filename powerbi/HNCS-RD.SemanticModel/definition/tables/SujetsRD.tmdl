@@ -1,0 +1,123 @@
+table SujetsRD
+	lineageTag: 9e1c67dc-da5a-5aef-a0f7-c7e0c0b3b20d
+
+	column Id
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 55090045-a2c8-5ca2-9865-128dcf63c852
+		summarizeBy: none
+		sourceColumn: Id
+
+		annotation SummarizationSetBy = Automatic
+
+	column IdHNCS
+		dataType: string
+		lineageTag: 86006349-704a-5db6-89d5-dfb81f6d10b2
+		summarizeBy: none
+		sourceColumn: IdHNCS
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 2aa3dc91-e65e-5552-b0cf-a20a188a01e2
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column TypeSujet
+		dataType: string
+		lineageTag: a2631f2e-73a9-5269-8796-23bcd2e84f5c
+		summarizeBy: none
+		sourceColumn: TypeSujet
+
+		annotation SummarizationSetBy = Automatic
+
+	column PoleId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: eba2b619-0e3e-5b57-8e71-80dc5897cb76
+		summarizeBy: none
+		sourceColumn: PoleId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Priorite
+		dataType: string
+		lineageTag: 95168462-502e-5190-8982-60724ad91bef
+		summarizeBy: none
+		sourceColumn: Priorite
+
+		annotation SummarizationSetBy = Automatic
+
+	column ReferentId
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: ce4acf1f-29da-598b-bb2f-79dde70fa9ca
+		summarizeBy: none
+		sourceColumn: ReferentId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateDebutPrevue
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 12ffeca3-7b4e-51bf-82be-1dfa2c1c1870
+		summarizeBy: none
+		sourceColumn: DateDebutPrevue
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateFinPrevue
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: ec96bd1f-7118-5c97-b787-a96a51484cb6
+		summarizeBy: none
+		sourceColumn: DateFinPrevue
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column GitlabProjetId
+		dataType: int64
+		formatString: 0
+		lineageTag: bfea33f9-23df-58e3-a8d6-6bb43ac8fd52
+		summarizeBy: none
+		sourceColumn: GitlabProjetId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statut
+		dataType: string
+		lineageTag: 0968e961-728f-54dc-91a1-3d78794ce149
+		summarizeBy: none
+		sourceColumn: Statut
+
+		annotation SummarizationSetBy = Automatic
+
+	column PoleNom = LOOKUPVALUE ( Poles[Title], Poles[Id], SujetsRD[PoleId] )
+		dataType: string
+		lineageTag: b8a8f6c8-d016-5156-b235-8f9c67b8d594
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition SujetsRD = m
+		mode: import
+		source =
+				let
+					Source = fnLireListeSharePoint("SujetsRD", {"Id", "IdHNCS", "Title", "TypeSujet", "PoleId", "Priorite", "ReferentId", "DateDebutPrevue", "DateFinPrevue", "GitlabProjetId", "Statut"}, {}, false),
+					Typee = fnTyperColonnes(Source, {{"Id", "int"}, {"IdHNCS", "text"}, {"Title", "text"}, {"TypeSujet", "text"}, {"PoleId", "int"}, {"Priorite", "text"}, {"ReferentId", "int"}, {"DateDebutPrevue", "date"}, {"DateFinPrevue", "date"}, {"GitlabProjetId", "int"}, {"Statut", "text"}}),
+					Resultat = Table.SelectColumns(Typee, {"Id", "IdHNCS", "Title", "TypeSujet", "PoleId", "Priorite", "ReferentId", "DateDebutPrevue", "DateFinPrevue", "GitlabProjetId", "Statut"})
+				in
+					Resultat
+
+	annotation PBI_ResultType = Table
+

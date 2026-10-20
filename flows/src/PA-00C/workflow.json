@@ -1,0 +1,327 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_outlook"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      },
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "hncs_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "hncs_SiteUrl (hncs_SiteUrl)": {
+          "defaultValue": "https://contoso.sharepoint.com/sites/HNCS-RD",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_SiteUrl",
+            "description": "URL du site SharePoint HNCS-R&D (sans barre finale)"
+          }
+        },
+        "hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)": {
+          "defaultValue": "svc-hncs-rd@contoso.com",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_ServiceAccountEmail",
+            "description": "Adresse du compte de service des flux (rôle FLUX)"
+          }
+        },
+        "hncs_SupportEmail (hncs_SupportEmail)": {
+          "defaultValue": "support-rd@contoso.com",
+          "type": "String",
+          "metadata": {
+            "schemaName": "hncs_SupportEmail",
+            "description": "Adresse du support des flux (N-99, N-98)"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Button",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "CodeFlux": {
+                  "title": "CodeFlux",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Code du flux appelant",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "Niveau": {
+                  "title": "Niveau",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Info, Avertissement ou Erreur",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "Liste": {
+                  "title": "Liste",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Nom interne de la liste concernée",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "ItemId": {
+                  "title": "ItemId",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "ID SharePoint (texte, facultatif)",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "IdObjet": {
+                  "title": "IdObjet",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "IdHNCS",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "Message": {
+                  "title": "Message",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Message sans donnée personnelle",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "DetailErreur": {
+                  "title": "DetailErreur",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Détail technique",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "RunUrl": {
+                  "title": "RunUrl",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Lien vers l'exécution",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "CodeFlux",
+                "Niveau",
+                "Message"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Creer_journal": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "PostItem"
+            },
+            "parameters": {
+              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+              "table": "Journal des flux",
+              "item/Title": "@{triggerBody()?['CodeFlux']}",
+              "item/Niveau/Value": "@{triggerBody()?['Niveau']}",
+              "item/Liste": "@{coalesce(triggerBody()?['Liste'], '')}",
+              "item/ItemId": "@if(empty(triggerBody()?['ItemId']), null, int(triggerBody()?['ItemId']))",
+              "item/IdObjet": "@{coalesce(triggerBody()?['IdObjet'], '')}",
+              "item/Message": "@{triggerBody()?['Message']}",
+              "item/DetailErreur": "@{coalesce(triggerBody()?['DetailErreur'], '')}",
+              "item/RunUrl": "@{coalesce(triggerBody()?['RunUrl'], '')}",
+              "item/DateEvenement": "@{utcNow()}",
+              "item/StatutReprise/Value": "@{if(equals(triggerBody()?['Niveau'], 'Erreur'), 'À reprendre', 'Sans objet')}"
+            },
+            "authentication": "@parameters('$authentication')",
+            "retryPolicy": {
+              "type": "exponential",
+              "count": 4,
+              "interval": "PT10S"
+            }
+          },
+          "runAfter": {}
+        },
+        "Lire_parametres": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('hncs_SiteUrl (hncs_SiteUrl)')",
+              "table": "Paramètres",
+              "$filter": "Categorie eq 'Destinataires'",
+              "$top": 100
+            },
+            "authentication": "@parameters('$authentication')",
+            "retryPolicy": {
+              "type": "exponential",
+              "count": 4,
+              "interval": "PT10S"
+            }
+          },
+          "runAfter": {
+            "Creer_journal": [
+              "Succeeded",
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        },
+        "Parametres_cles_valeurs": {
+          "type": "Select",
+          "inputs": {
+            "from": "@coalesce(body('Lire_parametres')?['value'], createArray())",
+            "select": "@concat('\"', replace(item()?['Title'], '\"', ''), '\":', if(empty(item()?['Valeur']), 'null', concat('\"', replace(replace(item()?['Valeur'], '\\', '\\\\'), '\"', '\\\"'), '\"')))"
+          },
+          "runAfter": {
+            "Lire_parametres": [
+              "Succeeded",
+              "Failed",
+              "TimedOut"
+            ]
+          }
+        },
+        "Parametres": {
+          "type": "Compose",
+          "inputs": "@json(concat('{', join(coalesce(body('Parametres_cles_valeurs'), createArray()), ','), '}'))",
+          "runAfter": {
+            "Parametres_cles_valeurs": [
+              "Succeeded",
+              "Failed",
+              "Skipped"
+            ]
+          }
+        },
+        "Si_niveau_erreur": {
+          "type": "If",
+          "expression": "@equals(triggerBody()?['Niveau'], 'Erreur')",
+          "actions": {
+            "Dest_N99": {
+              "type": "Select",
+              "inputs": {
+                "from": "@split(concat(coalesce(parameters('hncs_SupportEmail (hncs_SupportEmail)'), '')), ';')",
+                "select": "@toLower(trim(item()))"
+              },
+              "runAfter": {}
+            },
+            "DestOK_N99": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Dest_N99')",
+                "where": "@not(empty(item()))"
+              },
+              "runAfter": {
+                "Dest_N99": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Si_destinataires_N99": {
+              "type": "If",
+              "expression": "@greater(length(body('DestOK_N99')), 0)",
+              "actions": {
+                "Envoyer_N99": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                      "connectionName": "shared_office365",
+                      "operationId": "SharedMailboxSendEmailV2"
+                    },
+                    "parameters": {
+                      "body/MailboxAddress": "@{coalesce(outputs('Parametres')?['Destinataires.BoiteRD'], parameters('hncs_ServiceAccountEmail (hncs_ServiceAccountEmail)'))}",
+                      "body/To": "@{join(union(body('DestOK_N99'), body('DestOK_N99')), ';')}",
+                      "body/Subject": "[HNCS-R&D][N-99] Erreur du flux @{triggerBody()?['CodeFlux']}",
+                      "body/Body": "<html>\n<head><meta charset=\"utf-8\"><title>[HNCS-R&amp;D][N-99] Erreur du flux @{triggerBody()?['CodeFlux']}</title></head>\n<body style=\"font-family:'Segoe UI',Arial,sans-serif;font-size:14px;color:#222222\">\n<p>Bonjour,</p>\n<p>Le flux <strong>@{triggerBody()?['CodeFlux']}</strong> a rencontré une erreur.</p>\n<ul><li>Message : @{triggerBody()?['Message']}</li><li>Objet : @{coalesce(triggerBody()?['IdObjet'], '')} (liste @{coalesce(triggerBody()?['Liste'], '')})</li></ul>\n<p>Procédure de reprise : (1) corriger la cause ; (2) <a href=\"@{coalesce(triggerBody()?['RunUrl'], '')}\">resoumettre l'exécution</a> ; (3) passer « Statut de reprise » à « Reprise effectuée » dans le journal.</p>\n<p><a href=\"@{concat(parameters('hncs_SiteUrl (hncs_SiteUrl)'), '/Lists/JournalFlux')}\">Ouvrir le journal des flux</a></p>\n<p style=\"color:#666666;font-size:12px\">Message automatique du système de suivi R&amp;D HNCS : ne pas répondre. Aucune pièce jointe n'est jamais transmise : les documents sont accessibles par lien, selon vos droits.</p>\n</body>\n</html>",
+                      "body/Importance": "Normal"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "retryPolicy": {
+                      "type": "exponential",
+                      "count": 4,
+                      "interval": "PT10S"
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "DestOK_N99": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Parametres": [
+              "Succeeded",
+              "Failed"
+            ]
+          }
+        },
+        "Repondre": {
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "IdJournal": "@{string(coalesce(body('Creer_journal')?['ID'], ''))}"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "IdJournal": {
+                  "title": "IdJournal",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Si_niveau_erreur": [
+              "Succeeded",
+              "Failed",
+              "Skipped",
+              "TimedOut"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

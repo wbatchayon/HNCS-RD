@@ -1,0 +1,92 @@
+[
+  {
+    "Title": "PA-02",
+    "Niveau": "Erreur",
+    "Liste": "Candidatures",
+    "ItemId": "@id:CAND-2026-9007",
+    "IdObjet": "CAND-2026-9007",
+    "Message": "Échec du partage du dossier CV avec l'administration ; la candidature reste « Présélectionnée ».",
+    "DetailErreur": "Action « Accorder l'accès » : 503 Service Unavailable après 4 tentatives.",
+    "RunUrl": "https://flows.example.org/environments/recette/runs/testdata-run-jf-0001",
+    "DateEvenement": "@J-1T16:01",
+    "StatutReprise": "À reprendre"
+  },
+  {
+    "Title": "PA-06",
+    "Niveau": "Erreur",
+    "Liste": "Livrables",
+    "ItemId": "@id:LIV-2026-9003",
+    "IdObjet": "LIV-2026-9003",
+    "Message": "Échec d'envoi du rappel N-24.",
+    "DetailErreur": "Office 365 Outlook : 429 Too Many Requests.",
+    "RunUrl": "https://flows.example.org/environments/recette/runs/testdata-run-jf-0002",
+    "DateEvenement": "@J-4T07:01",
+    "StatutReprise": "Reprise effectuée",
+    "CommentaireReprise": "Exécution resoumise le lendemain, rappel envoyé une seule fois."
+  },
+  {
+    "Title": "PA-08b",
+    "Niveau": "Erreur",
+    "Liste": "ComptesRendus",
+    "ItemId": "@id:CR-2026-9004",
+    "IdObjet": "CR-2026-9004",
+    "Message": "Échec de mise à jour de la prochaine échéance.",
+    "DetailErreur": "Élément verrouillé par une modification concurrente.",
+    "RunUrl": "https://flows.example.org/environments/recette/runs/testdata-run-jf-0003",
+    "DateEvenement": "@J-9T06:46",
+    "StatutReprise": "Abandonnée",
+    "CommentaireReprise": "Rattrapé au passage planifié suivant (aucune reprise nécessaire)."
+  },
+  {
+    "Title": "PA-01b",
+    "Niveau": "Avertissement",
+    "Liste": "Candidatures",
+    "ItemId": "@id:CAND-2026-9005",
+    "IdObjet": "CAND-2026-9005",
+    "Message": "Pièce jointe refusée (type non autorisé) ; candidature créée.",
+    "RunUrl": "https://flows.example.org/environments/recette/runs/testdata-run-jf-0004",
+    "DateEvenement": "@J-3T07:56",
+    "StatutReprise": "Sans objet"
+  },
+  {
+    "Title": "PA-05",
+    "Niveau": "Avertissement",
+    "Liste": "Affectations",
+    "ItemId": "@id:AFF-2026-9001",
+    "IdObjet": "AFF-2026-9001",
+    "Message": "Modification de champs verrouillés annulée (Referent) ; N-91 envoyé.",
+    "RunUrl": "https://flows.example.org/environments/recette/runs/testdata-run-jf-0005",
+    "DateEvenement": "@J-6T11:12",
+    "StatutReprise": "Sans objet"
+  },
+  {
+    "Title": "PA-04",
+    "Niveau": "Info",
+    "Liste": "Alternants",
+    "ItemId": "@id:ALT-2026-9001",
+    "IdObjet": "ALT-2026-9001",
+    "Message": "Fiche alternant créée et checklist d'accueil générée.",
+    "RunUrl": "https://flows.example.org/environments/recette/runs/testdata-run-jf-0006",
+    "DateEvenement": "@J-140T15:01",
+    "StatutReprise": "Sans objet"
+  },
+  {
+    "Title": "PA-07",
+    "Niveau": "Info",
+    "Liste": "Livrables",
+    "ItemId": "@id:LIV-2026-9001",
+    "IdObjet": "LIV-2026-9001",
+    "Message": "Livrable capitalisé (archivé, document de référence).",
+    "RunUrl": "https://flows.example.org/environments/recette/runs/testdata-run-jf-0007",
+    "DateEvenement": "@J-22T10:05",
+    "StatutReprise": "Sans objet"
+  },
+  {
+    "Title": "PA-00D",
+    "Niveau": "Info",
+    "Message": "Identifiants attribués : 0.",
+    "RunUrl": "https://flows.example.org/environments/recette/runs/testdata-run-jf-0008",
+    "DateEvenement": "@JT06:00",
+    "StatutReprise": "Sans objet"
+  }
+]
